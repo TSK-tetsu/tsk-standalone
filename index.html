@@ -75,6 +75,15 @@
   .jobMsg { margin: 6px 20px 0; font-size: 14px; font-weight: 700; line-height: 1.5; color: var(--sub); }
   .jobMsg.err { color: #A3261B; }
   .jobMsg:empty { display: none; }
+  @media screen and (min-width: 900px) {
+    #app { max-width: 1040px; }
+    .stack.models { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .topgrid { display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 0; align-items: start; }
+    .topgrid .nameBox { grid-column: 1 / -1; }
+    .topgrid .jobMsg { grid-column: 1 / -1; order: 9; }
+    .groups { column-count: 2; column-gap: 0; }
+    .groups .gsec { display: block; break-inside: avoid; -webkit-column-break-inside: avoid; padding-bottom: 2px; }
+  }
   .stack { margin: 20px 16px 0; display: flex; flex-direction: column; gap: 10px; }
   .big { width: 100%; min-height: 80px; padding: 0 16px 0 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); box-shadow: 0 1px 0 rgba(11,31,58,.05); text-align: left; display: flex; align-items: center; gap: 12px; font-family: 'Zen Old Mincho', 'Hiragino Mincho ProN', serif; font-size: 24px; font-weight: 700; }
   .big.tall { min-height: 92px; font-size: 28px; }
@@ -731,6 +740,55 @@ tfoot td{font-weight:700;background:var(--well)}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 
 :host(.framed) .bd-body>.app{min-height:0}
+/* ---- 10/7 UI：カードを詰める・納期をカードで入れる・済みを畳む・スケジュール表の案件名 ---- */
+.card{padding:10px 12px 10px;margin-bottom:8px;gap:2px 10px}
+.card .item{font-size:16px}
+.card .dates{font-size:14px;align-items:center;margin-top:0}
+.card .act{margin-top:6px}
+.card .act .b-sm{min-height:38px;padding:6px 12px;font-size:14px}
+.pill{padding:4px 10px;font-size:12px}
+.duein{height:34px;border:2px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);padding:0 6px;font-size:14px;font-weight:700;max-width:150px}
+.duein:focus{border-color:var(--navy);outline:none}
+.due.nodue .duein{border-style:dashed;color:var(--muted)}
+details.done{margin:12px 0 0;border:2px dashed var(--line);border-radius:12px;padding:0 10px}
+details.done[open]{padding-bottom:6px}
+details.done>summary{list-style:none;cursor:pointer;padding:10px 4px;font-size:14px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:8px}
+details.done>summary::-webkit-details-marker{display:none}
+details.done>summary::before{content:"▸";font-size:13px}
+details.done[open]>summary::before{content:"▾"}
+.cal td.lab b{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cal td.lab small{white-space:normal}
+/* ---- スケジュール表 ---- */
+.nav button{min-width:0;font-size:11px}
+.calwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;background:var(--card);border-radius:var(--r);box-shadow:var(--shadow)}
+.cal{border-collapse:separate;border-spacing:0;font-size:12px}
+.cal th,.cal td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:0;text-align:center;min-width:36px;width:36px}
+.cal thead th{background:var(--well);color:var(--muted);font-weight:700;padding:3px 0;line-height:1.25}
+.cal thead th.mo{text-align:left;padding:5px 8px;font-size:13px;color:var(--ink);border-right:2px solid var(--line)}
+.cal thead th b{display:block;font-size:14px;color:var(--ink)}
+.cal .lab{position:sticky;left:0;z-index:2;background:var(--card);min-width:128px;width:128px;max-width:128px;text-align:left;padding:7px 8px;border-right:2px solid var(--navy)}
+.cal thead .lab{background:var(--well);z-index:3;font-size:12px}
+.cal td.lab{cursor:pointer}
+.cal td.lab .k{display:inline-block;background:var(--navy);color:var(--gold);border-radius:6px;padding:1px 6px;font-size:11px;font-weight:900;letter-spacing:.03em}
+.cal td.lab b{display:block;font-size:14px;line-height:1.3;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal td.lab small{display:block;font-size:11px;color:var(--muted);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal td.lab small.late{color:var(--red)}
+.cal td.d{height:58px;vertical-align:middle}
+.cal .we{background:color-mix(in srgb,var(--line) 38%,var(--card))}
+.cal td.span{background:color-mix(in srgb,var(--gold) 13%,var(--card))}
+.cal td.span.we{background:color-mix(in srgb,var(--gold) 20%,var(--card))}
+.cal .today{box-shadow:inset 2px 0 0 var(--red),inset -2px 0 0 var(--red)}
+.cal thead th.today{background:var(--red);color:#fff}.cal thead th.today b{color:#fff}
+.cal .mk{display:flex;align-items:center;justify-content:center;width:28px;height:24px;margin:2px auto;border:0;border-radius:7px;color:#fff;font-size:13px;font-weight:900;padding:0;background:var(--st0)}
+.cal .mk.s1{background:var(--st1)}.cal .mk.s2{background:var(--st2)}.cal .mk.s3{background:var(--st3)}.cal .mk.s4{background:var(--st4)}.cal .mk.late{background:var(--red)}
+.cal .dl{display:flex;align-items:center;justify-content:center;width:28px;height:24px;margin:2px auto;border-radius:7px;background:var(--gold);color:var(--navy);font-size:12px;font-weight:900;box-shadow:0 2px 0 var(--gold-dk)}
+.callist{display:flex;flex-direction:column;gap:8px;margin:0 0 14px}
+.callist .ci{display:flex;align-items:center;gap:10px;border:2px solid var(--line);border-radius:12px;background:var(--card);padding:10px 12px;text-align:left;width:100%}
+.callist .ci b{flex:1;min-width:0;font-size:16px}
+.callist .ci small{display:block;font-size:13px;color:var(--muted);font-weight:500}
+.callist .pill{grid-column:auto;grid-row:auto}
+:host(.mode-d) .cal th,:host(.mode-d) .cal td{min-width:38px;width:38px}
+:host(.mode-d) .cal .lab{min-width:220px;width:220px;max-width:220px}
 /* ---- 一覧：案件ごとの帯と間隔・状態ごとの色・仕入先ごとのまとまり ---- */
 :host{--st0:#7C8798;--st1:#C97A12;--st2:#2F6FD0;--st3:#2E9E68;--st4:#1C3A6B}
 .grp{margin:0 0 38px}
@@ -782,6 +840,7 @@ tfoot td{font-weight:700;background:var(--well)}
       <button class="b b-gold" id="sideAdd">＋ 発注を追加</button>
       <button data-view="pj"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>案件・工事番号</button>
       <button data-view="list" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>一覧<span class="badge" id="badgeSide" hidden>0</span></button>
+      <button data-view="cal"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>スケジュール</button>
       <button data-view="memo"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>議事録・タスク<span class="badge" id="badgeTaskSide" hidden>0</span></button>
       <button data-view="ledger"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>月末台帳</button>
     </aside>
@@ -809,6 +868,8 @@ tfoot td{font-weight:700;background:var(--well)}
       </section>
 
       <section class="view" id="view-pj"><div id="pjlist" class="pjgrid"></div></section>
+
+      <section class="view" id="view-cal"><div id="cal"></div></section>
 
       <section class="view" id="view-memo">
         <div class="memo">
@@ -840,6 +901,7 @@ tfoot td{font-weight:700;background:var(--well)}
   <nav class="nav" aria-label="画面切替">
     <button data-view="pj"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/></svg>案件</button>
     <button data-view="list" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>一覧<span class="badge" id="badgeNav" hidden>0</span></button>
+      <button data-view="cal"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>予定</button>
     <button class="fab" id="fab" aria-label="発注を追加"><span><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><small>追加</small></button>
     <button data-view="ledger"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>台帳</button>
     <button data-view="memo"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>議事録<span class="badge" id="badgeTaskNav" hidden>0</span></button>
@@ -989,6 +1051,7 @@ function showView(v){
   root.querySelectorAll(".view").forEach(e=>e.classList.toggle("active",e.id==="view-"+v));
   root.querySelectorAll("[data-view]").forEach(b=>{ if(b.dataset.view===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   if(v==="ledger") renderLedger();
+  if(v==="cal") renderCal();
   ($(".framed .content")||window).scrollTo?.({top:0});
 }
 root.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
@@ -1021,11 +1084,15 @@ function renderList(){
   el.innerHTML=keys.map(key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]); const lateN=g.filter(isLate).length;
-    return `<section class="grp" data-key="${esc(key)}"><div class="grp-h">${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span>${L.spec?`<span class="spec">${esc(L.spec)}</span>`:""}${L.delivery?`<span class="dlv">納品 ${fmtDW(L.delivery)}</span>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${supBlocks(g)}</section>`;
+    return `<section class="grp" data-key="${esc(key)}"><div class="grp-h">${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span>${L.spec?`<span class="spec">${esc(L.spec)}</span>`:""}${L.delivery?`<span class="dlv">納品 ${fmtDW(L.delivery)}</span>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${grpBody(key,g)}</section>`;
   }).join("");
   el.insertAdjacentHTML("afterbegin",`<div class="legend">${STATUSES.map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span></div>`);
 }
 // 案件の中を仕入先ごとにまとめる。並びは、その仕入先でいちばん早い納期の順（g は納期順に並んでいる）。
+// 入荷・検収が済んだ発注は「済み」に畳む。開いた状態は、画面を描き直しても覚えておく。
+const openDone=new Set();
+function grpBody(key,g){ if(filter==="done") return supBlocks(g); const open=g.filter(o=>STATUSES.indexOf(o.status)<3), done=g.filter(o=>STATUSES.indexOf(o.status)>=3);
+  return supBlocks(open)+(done.length?`<details class="done" data-key="${esc(key)}" ${openDone.has(key)?"open":""}><summary>済み（入荷・検収）${done.length}件</summary>${supBlocks(done)}</details>`:""); }
 function supBlocks(g){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>`<div class="sup-h"><b>${esc(s)}</b>${l.length}件</div><div class="grid">${l.map(card).join("")}</div>`).join(""); }
 function card(o){
   const si=STATUSES.indexOf(o.status); const late=isLate(o); const next=si<4?STATUSES[si+1]:null;
@@ -1033,9 +1100,12 @@ function card(o){
     <div class="item">${esc(o.item)}${o.qty>1?`<span class="qty">×${o.qty}</span>`:""}</div><span class="pill s${si}">${esc(o.status)}</span>
     ${o.part?`<div class="from">${esc(o.part)}${o.note?"　※ "+esc(o.note):""}</div>`:""}${o.gone?`<div class="gone">仕様書から外れました</div>`:""}
     <div class="sup">${esc(o.supplier)}</div>
-    <div class="dates"><span><b>発注</b>${fmtD(o.orderDate)}</span><span class="due ${late?"late":""}"><b>納期</b>${fmtD(o.due)}${late?"　遅延":""}</span></div>
+    <div class="dates">${o.orderDate?`<span><b>発注</b>${fmtD(o.orderDate)}</span>`:""}<span class="due ${late?"late":""} ${o.due?"":"nodue"}"><b>納期</b>${canWrite?`<input type="date" class="duein" data-id="${o.id}" value="${esc(o.due||"")}" aria-label="${esc(o.item)} の納期予定">`:fmtD(o.due)}${late?"　遅延":""}</span></div>
     <div class="act">${next&&canWrite?`<button class="b b-sm ${si>=2?"b-green":"b-navy"}" data-act="next">${esc(next)}にする</button>`:""}${si>0&&canWrite?`<button class="b b-sm b-ghost back" data-act="prev" aria-label="${esc(STATUSES[si-1])}に戻す" title="${esc(STATUSES[si-1])}に戻す">戻す</button>`:""}<button class="b b-sm b-ghost" data-act="open">詳細</button></div></article>`;
 }
+$("#list").addEventListener("toggle",e=>{ const d=e.target; if(d.matches&&d.matches("details.done")){ if(d.open) openDone.add(d.dataset.key); else openDone.delete(d.dataset.key); } },true);
+$("#list").addEventListener("change",async e=>{ const t=e.target.closest(".duein"); if(!t) return; const o=orders.find(x=>x.id===t.dataset.id); if(!o||(o.due||"")===t.value) return;
+  try{ await saveOrder(o.id,{...strip(o),due:t.value,updatedAt:new Date().toISOString()}); toast(t.value?`納期を ${fmtD(t.value)} にしました`:"納期を消しました"); }catch{ toast("更新できませんでした"); } });
 $("#list").addEventListener("click",async e=>{
   const sp=e.target.closest("button[data-spec]"); if(sp){ bridge.openSpec(sp.dataset.spec); return; }
   const b=e.target.closest("button[data-act]"); if(!b) return;
@@ -1070,6 +1140,46 @@ $("#pjlist").addEventListener("click",e=>{
   if(b.dataset.act==="spec"&&p) bridge.openSpec(p.specId);
   if(b.dataset.act==="editpj"&&p) openEditPj(p);
   if(b.dataset.act==="addto") openAdd(p?p.id:null);
+});
+
+/* ---------- スケジュール表 ---------- */
+// 行＝案件（納期の近い順）、列＝日付。金の「納」＝お客様への納品日、数字の印＝その日に入る予定の発注の件数。
+// 印の色は、その日の発注のうちいちばん進んでいない状態の色。納期を過ぎて未入荷なら赤。今日から納品日までを薄い金で塗る。
+function addDays(d,n){ const t=new Date(d+"T00:00:00"); t.setDate(t.getDate()+n); return t.toLocaleDateString("sv-SE"); }
+function renderCal(){
+  const el=$("#cal"), today=todayStr();
+  const keys=new Map(); projects.forEach(p=>keys.set(p.id,{p,g:[]}));
+  orders.forEach(o=>{ const k=pjKey(o); if(!keys.has(k)) keys.set(k,{p:null,g:[]}); keys.get(k).g.push(o); });
+  const rows=[...keys.entries()].sort((a,b)=>pjCompare(a[0],a[1].g[0]||{projectId:a[0]},b[0],b[1].g[0]||{projectId:b[0]}));
+  if(!rows.length){ el.innerHTML=`<div class="empty"><b>まだ予定がありません</b>仕様書に納品日を入れるか、発注に納期予定を入れると、ここに並びます。</div>`; return; }
+  let last=addDays(today,35);
+  rows.forEach(([k,v])=>{ if(v.p&&v.p.delivery&&v.p.delivery>last) last=v.p.delivery; v.g.forEach(o=>{ if(o.due&&o.due>last&&STATUSES.indexOf(o.status)<3) last=o.due; }); });
+  const start=addDays(today,-3), cap=addDays(today,90); if(last>cap) last=cap; last=addDays(last,2);
+  const days=[]; for(let d=start; d<=last; d=addDays(d,1)) days.push(d);
+  const wd="日月火水木金土", dow=d=>new Date(d+"T00:00:00").getDay();
+  const months=[]; days.forEach(d=>{ const m=d.slice(0,7); if(months.length&&months[months.length-1].m===m) months[months.length-1].n++; else months.push({m,n:1}); });
+  const head=`<thead><tr><th class="lab" rowspan="2">案件</th>${months.map(x=>`<th class="mo" colspan="${x.n}">${+x.m.slice(0,4)}年${+x.m.slice(5)}月</th>`).join("")}</tr><tr>${days.map(d=>`<th class="${dow(d)%6===0?"we":""} ${d===today?"today":""}"><b>${+d.slice(8)}</b>${d===today?"今日":wd[dow(d)]}</th>`).join("")}</tr></thead>`;
+  const body=rows.map(([key,{p,g}])=>{
+    const L=p?{k:p.k||"",who:p.client||"（宛先未入力）",delivery:p.delivery||""}:pjLabel(g[0]);
+    const lateBefore=g.filter(o=>isLate(o)&&o.due<start).length, noDue=g.filter(o=>!o.due&&STATUSES.indexOf(o.status)<3).length;
+    const cells=days.map(d=>{
+      const due=g.filter(o=>o.due===d); let inner="";
+      if(L.delivery===d) inner+=`<span class="dl" title="納品日">納</span>`;
+      if(due.length){ const late=due.some(isLate); const si=Math.min(...due.map(o=>Math.max(0,STATUSES.indexOf(o.status)))); inner+=`<button type="button" class="mk s${si} ${late?"late":""}" data-key="${esc(key)}" data-d="${d}" aria-label="${fmtD(d)} 納期 ${due.length}件">${due.length}</button>`; }
+      const span=L.delivery&&d>=today&&d<=L.delivery;
+      return `<td class="d ${dow(d)%6===0?"we":""} ${span?"span":""} ${d===today?"today":""}">${inner}</td>`;
+    }).join("");
+    return `<tr><td class="lab" data-key="${esc(key)}">${L.k?`<span class="k">${esc(L.k)}</span>`:""}<b>${esc(L.who)}</b><small>${L.delivery?`納品 ${fmtDW(L.delivery)}`:"納品日 未定"}${noDue?`　納期未定 ${noDue}`:""}</small>${lateBefore?`<small class="late">これより前に遅延 ${lateBefore}件</small>`:""}</td>${cells}</tr>`;
+  }).join("");
+  el.innerHTML=`<div class="legend"><span><i style="background:var(--gold)"></i>納＝納品日</span>${STATUSES.map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span><span>数字＝その日に入る発注の件数</span></div><div class="calwrap"><table class="cal">${head}<tbody>${body}</tbody></table></div><p class="hint" style="margin-top:10px">横にスクロールできます。数字を押すと、その日の発注が開きます。案件名を押すと一覧へ移ります。</p>`;
+}
+$("#cal").addEventListener("click",e=>{
+  const mk=e.target.closest(".mk");
+  if(mk){ const list=orders.filter(o=>pjKey(o)===mk.dataset.key&&o.due===mk.dataset.d); if(!list.length) return; const L=pjLabel(list[0]);
+    openSheet(`<h2>${fmtDW(mk.dataset.d)} に入る予定</h2><div class="lead">${esc([L.k,L.who].filter(Boolean).join("　"))}</div><div class="callist">${list.map(o=>{ const si=Math.max(0,STATUSES.indexOf(o.status)); return `<button type="button" class="ci" data-id="${o.id}"><b>${esc(o.item)}${o.qty>1?` ×${o.qty}`:""}<small>${esc(o.supplier||"仕入先 未定")}${isLate(o)?"　遅延":""}</small></b><span class="pill s${si}">${esc(o.status)}</span></button>`; }).join("")}</div><div class="btns"><button class="b b-ghost" data-cl="1" style="flex:1">閉じる</button></div>`);
+    sheet.onclick=ev=>{ const ci=ev.target.closest(".ci"); if(ci){ const o=orders.find(x=>x.id===ci.dataset.id); sheet.onclick=null; if(o) openDetail(o); return; } if(ev.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
+    return; }
+  const lab=e.target.closest("td.lab"); if(lab) showGroup(lab.dataset.key);
 });
 
 function showGroup(key){ setFilter("all"); showView("list"); const el=[...root.querySelectorAll(".grp")].find(s=>s.dataset.key===key); el?.scrollIntoView({block:"start"}); }
@@ -1302,7 +1412,7 @@ async function saveTask(id,data){ if(db) await db.collection("tasks").doc(id).se
 async function deleteTask(id){ if(db) await db.collection("tasks").doc(id).delete(); else { tasks=tasks.filter(t=>t.id!==id); onData(); } }
 async function saveMeeting(id,data){ if(db) await db.collection("meetings").doc(id).set(data); else { meetings.push({id,...data}); onData(); } }
 async function saveProject(id,data){ if(db) await db.collection("projects").doc(id).set(data); else { const i=projects.findIndex(p=>p.id===id); if(i>=0) projects[i]={id,...data}; else projects.push({id,...data}); onData(); } }
-function onData(){ renderList(); renderPj(); renderTasks(); if($("#view-ledger").classList.contains("active")) renderLedger(); listeners.forEach(f=>{ try{ f(); }catch{} }); }
+function onData(){ renderList(); renderPj(); renderTasks(); if($("#view-ledger").classList.contains("active")) renderLedger(); if($("#view-cal").classList.contains("active")) renderCal(); listeners.forEach(f=>{ try{ f(); }catch{} }); }
 function markReady(){ if(!(ordersReady&&projectsReady)) return; while(waiting.length) waiting.shift()(); }
 
 /* ---------- 仕様書アプリとの連携 ---------- */
@@ -1651,8 +1761,8 @@ return api;
     return '';
   }
   function screenModels() {
-    return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() +
-      '<div class="stack">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' + savedHtml() +
+    return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
+      '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
       (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="spacer"></div>';
   }
   function savedHtml() {
@@ -1678,16 +1788,16 @@ return api;
         return '<button type="button" class="row" data-act="edit" data-id="' + f.k + '" data-i="' + i + '"><span class="k">' + (i === 0 ? f.label : '') + '</span><span class="v"><span>' + esc(l.name) + '</span>' + (l.note ? '<span class="nt">備考：' + esc(l.note) + '</span>' : '') + (sp && l.price != null ? '<span class="p">' + yen(l.price) + '</span>' : '') + '</span>' + CHEV + '</button>';
       }).join('') + (store.readOnly || lines.length >= MAXL ? '' : '<button type="button" class="more" data-act="edit" data-id="' + f.k + '" data-i="-1">' + PLUS + 'もう1つ追加</button>');
     }).join(''); }
-    var rows = GROUPS.map(function (g) { var gt = sp ? groupTotal(v, g.id, u) : 0; var vn = vendorOf(g.id); return '<div class="grp"><span>' + g.name + '</span>' + (gt ? '<small>' + yen(gt) + '</small>' : '') + '</div><div class="list">' +
-      '<button type="button" class="row vend" data-act="vendor" data-id="' + g.id + '"><span class="k">発注先</span><span class="v">' + (vn ? '<span>' + esc(vn) + '</span>' : '') + '</span>' + (store.readOnly ? '' : CHEV) + '</button>' + rowsOf(fieldsOf(g.id)) + '</div>'; }).join('');
+    var rows = GROUPS.map(function (g) { var gt = sp ? groupTotal(v, g.id, u) : 0; var vn = vendorOf(g.id); return '<section class="gsec"><div class="grp"><span>' + g.name + '</span>' + (gt ? '<small>' + yen(gt) + '</small>' : '') + '</div><div class="list">' +
+      '<button type="button" class="row vend" data-act="vendor" data-id="' + g.id + '"><span class="k">発注先</span><span class="v">' + (vn ? '<span>' + esc(vn) + '</span>' : '') + '</span>' + (store.readOnly ? '' : CHEV) + '</button>' + rowsOf(fieldsOf(g.id)) + '</div></section>'; }).join('');
     return top({ back: ['toModels', '最初の画面に戻る'], step: 3, title: esc(m.name), tag: esc(c.name), titleAct: store.readOnly ? null : 'changeModel' }) +
       noticeHtml() +
-      '<div class="nameBox"><label for="specName">名前（だれ・どこ向け）</label><textarea id="specName" class="grow" rows="1" maxlength="60" autocomplete="off" placeholder="例：○○店 向け"' + (store.readOnly ? ' readonly' : '') + '>' + esc(nameInBox()) + '</textarea></div>' +
+      '<div class="topgrid"><div class="nameBox"><label for="specName">名前（だれ・どこ向け）</label><textarea id="specName" class="grow" rows="1" maxlength="60" autocomplete="off" placeholder="例：○○店 向け"' + (store.readOnly ? ' readonly' : '') + '>' + esc(nameInBox()) + '</textarea></div>' +
       '<div class="dateBox"><label for="specJob">工事番号</label><input id="specJob" type="text" maxlength="30" autocomplete="off" inputmode="text" autocapitalize="characters" placeholder="例：K260115" value="' + esc(jobNo()) + '"' + (store.readOnly ? ' readonly' : '') + '></div><div class="jobMsg" id="jobMsg">' + esc(jobNote(jobNo())) + '</div>' +
       '<div class="unitsBox"><span class="lb">台数</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsDown" aria-label="台数を減らす"' + (u <= 1 ? ' disabled' : '') + '>−</button>') + '<span class="n">' + u + '台</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsUp" aria-label="台数を増やす"' + (u >= 99 ? ' disabled' : '') + '>＋</button>') + '</div>' +
-      '<div class="dateBox"><label for="specDate">納品日</label><input id="specDate" type="date" value="' + esc(deliveryDay()) + '"' + (store.readOnly ? ' disabled' : '') + '></div>' +
+      '<div class="dateBox"><label for="specDate">納品日</label><input id="specDate" type="date" value="' + esc(deliveryDay()) + '"' + (store.readOnly ? ' disabled' : '') + '></div></div>' +
       (store.readOnly ? '' : '<div class="stack" style="margin-top:10px">' + switchHtml() + '</div>') +
-      rows + '<div class="note">' + FIELDS.length + '項目中 ' + filled + '項目 入力済み</div>' +
+      '<div class="groups">' + rows + '</div><div class="note">' + FIELDS.length + '項目中 ' + filled + '項目 入力済み</div>' +
       (!memoText().trim() && !ui.memoOpen ? (store.readOnly ? '' : '<div class="stack" style="margin-top:12px"><button type="button" class="btn soft" data-act="openMemo">＋ 全体の備考を書く</button></div>') :
       '<div class="memoBox"><label for="specMemo">全体の備考（任意）</label><small>品ごとの備考は、それぞれの品を押して入れます。ここは全体に関わることだけ。</small><textarea id="specMemo" maxlength="300" placeholder="例：納品時の注意など"' + (store.readOnly ? ' readonly' : '') + '>' + esc(memoText()) + '</textarea></div>') +
       linkBox() +
