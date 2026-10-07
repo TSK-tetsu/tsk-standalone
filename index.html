@@ -844,6 +844,114 @@ tfoot td{font-weight:700;background:var(--well)}
 .grp .gact{display:flex;gap:8px;margin:10px 0 2px}
 .grp .gact .b{flex:1}
 .grp .gact .b-ghost{flex:0 0 auto}
+/* ---- 状態の札はボタン（押すとその状態だけ表示） ---- */
+.grp .gsum button.st{border:0;font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:rgba(0,0,0,.1)}
+.grp .gsum button.st.none{border:1.5px dashed var(--line)}
+.grp .gsum .st.on{box-shadow:0 0 0 2px var(--card),0 0 0 5px var(--navy)}
+.grp .gsum .st.dim{opacity:.4}
+.grp .gsum .gfnote{flex:0 0 100%;font-size:12px;font-weight:500;color:var(--muted);margin-top:2px}
+/* ---- スケジュール：読むための表示 ---- */
+.cdlist{display:flex;flex-direction:column;gap:8px;margin:0 0 6px}
+.cd{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;align-items:center;text-align:left;border:0;border-radius:14px;background:var(--card);box-shadow:var(--shadow);padding:10px 12px;font-family:inherit;color:var(--ink);width:100%}
+.cd .dlv{grid-row:1/3;display:inline-flex;flex-direction:column;align-items:center;gap:0;min-width:104px;background:var(--gold);color:var(--navy);border-radius:10px;padding:6px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.cd .dlv b{font-size:19px;font-weight:900;line-height:1.2}
+.cd .dlv small{font-size:13px;font-weight:900}
+.cd .dlv.none{background:transparent;border:1.5px dashed var(--line);color:var(--muted);font-size:13px;padding:14px 8px}
+.cd .dlv.over{background:var(--red);color:#fff}
+.cd>b{font-size:16px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cd>small{font-size:13px;color:var(--muted);font-weight:700}
+.cd>small em{font-style:normal;color:var(--red)}
+.agw{margin:22px 2px 4px;padding-bottom:5px;border-bottom:3px solid var(--navy);font-size:17px;font-weight:900;color:var(--ink)}
+.agw.red{border-color:var(--red);color:var(--red)}
+.agd{display:flex;align-items:baseline;gap:10px;margin:14px 2px 6px}
+.agd b{font-size:19px;font-weight:900;color:var(--ink)}
+.agd span{font-size:13px;font-weight:700;color:var(--muted)}
+.agd.now b,.agd.now span{color:var(--red)}
+.agd.red b{color:var(--red)}
+.ag{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-radius:12px;background:var(--card);box-shadow:var(--shadow);padding:10px 12px;margin-bottom:6px;font-family:inherit;color:var(--ink)}
+.ag>i{flex:0 0 8px;align-self:stretch;border-radius:4px}
+.ag .tx{flex:1;min-width:0}
+.ag .tx b{display:block;font-size:16px;line-height:1.3}
+.ag .tx small{display:block;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag.dl{background:color-mix(in srgb,var(--gold) 22%,var(--card));border:2px solid var(--gold)}
+.ag.dl .tag{background:var(--gold);color:var(--navy);border-radius:8px;padding:3px 10px;font-size:14px;font-weight:900}
+.ag.dl b{font-size:16px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+details.calgrid{margin-top:26px}
+details.calgrid>summary{list-style:none;cursor:pointer;padding:12px 4px;font-size:15px;font-weight:700;color:var(--muted);border-top:2px solid var(--line)}
+details.calgrid>summary::-webkit-details-marker{display:none}
+details.calgrid>summary::before{content:"▸ "}
+details.calgrid[open]>summary::before{content:"▾ "}
+:host(.mode-d) .cdlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+/* ---- クラロワ風：厚みのある札・はっきりした仕切り・盛り上がるタブ／横スワイプで画面切替 ---- */
+.grp .card,.ag,.cd{border:2px solid color-mix(in srgb,var(--navy) 16%,var(--line));border-bottom-width:5px;box-shadow:none}
+.grp .card.mini{border-bottom-width:3px}
+.ag.dl{border-color:var(--gold-dk);border-bottom-width:5px}
+.grp .grp-h{border:2px solid var(--gold);border-bottom-width:5px;box-shadow:inset 0 2px 0 rgba(255,255,255,.14)}
+.grp.open{background:color-mix(in srgb,var(--navy) 5%,transparent);border-radius:16px;padding-bottom:10px;outline:2px solid color-mix(in srgb,var(--navy) 18%,var(--line));outline-offset:2px}
+.grp.open .gact,.grp.open>.sup-h,.grp.open>.grid{margin-left:8px;margin-right:8px}
+.grp .gsum{border:2px solid color-mix(in srgb,var(--navy) 16%,var(--line));border-top:0}
+.grp button.sup-h{background:var(--navy);color:#fff;border-radius:10px;padding:9px 12px;margin-top:14px;width:calc(100% - 16px);border-bottom:4px solid var(--navy-3,#16305c);box-shadow:inset 0 2px 0 rgba(255,255,255,.12)}
+.grp button.sup-h b{color:#fff;font-size:17px}
+.grp button.sup-h .chev{color:var(--gold)}
+.grp button.sup-h::after{display:none}
+.grp button.sup-h.shut{background:var(--card);color:var(--muted);border:2px solid color-mix(in srgb,var(--navy) 16%,var(--line));border-bottom-width:5px;box-shadow:none;width:calc(100% - 16px);margin:8px 8px 0}
+.grp button.sup-h.shut b{color:var(--ink)}
+.grp button.sup-h.shut .chev{color:var(--muted)}
+.grp.open>.grid{border-left:4px solid var(--navy);padding-left:8px;margin-top:8px}
+.grp .gsum .st{border-bottom:3px solid rgba(0,0,0,.22)}
+.grp .gsum .st.none{border-bottom:1.5px dashed var(--line)}
+.chip{border-width:2px;border-bottom-width:4px;font-weight:900}
+.agw{background:var(--navy);color:#fff;border:0;border-radius:10px;padding:8px 12px;border-bottom:4px solid var(--gold)}
+.agw.red{background:var(--red);color:#fff;border-bottom-color:#7A1E14}
+.agd{border-left:5px solid var(--gold);padding-left:10px}
+.agd.red{border-left-color:var(--red)}
+.nav{border-top:3px solid var(--gold)}
+.nav button+button{border-left:1px solid var(--line)}
+.nav button[aria-current="page"]{background:linear-gradient(var(--gold-soft),var(--card) 70%);color:var(--navy);font-weight:900;transform:translateY(-6px);border-radius:12px 12px 0 0;box-shadow:0 -3px 0 var(--gold),0 -6px 14px rgba(0,0,0,.12)}
+.nav button[aria-current="page"] svg{transform:scale(1.2)}
+.nav button{transition:transform .12s ease}
+@keyframes slL{from{transform:translateX(28px);opacity:.25}to{transform:none;opacity:1}}
+@keyframes slR{from{transform:translateX(-28px);opacity:.25}to{transform:none;opacity:1}}
+.content[data-dir="l"] .view.active{animation:slL .2s ease-out}
+.content[data-dir="r"] .view.active{animation:slR .2s ease-out}
+.swhint{text-align:center;font-size:12px;font-weight:700;color:var(--muted);margin:2px 0 10px;letter-spacing:.04em}
+:host(.mode-d) .swhint{display:none}
+/* ---- 「追加」をほかのタブと同じ大きさに／日付で見るカレンダー ---- */
+.nav button.fab{flex:1;align-self:auto;margin-top:0}
+.nav button.fab span{width:auto;height:auto;border-radius:0;background:transparent;box-shadow:none;color:var(--gold-dk)}
+.nav button.fab:active span{transform:none;box-shadow:none}
+.nav button.fab svg{width:26px;height:26px;stroke-width:2.6}
+.nav button.fab small{font-size:12px;font-weight:700;color:var(--gold-dk);margin-top:0}
+.mcal{margin:0 0 22px}
+.mcal h3{margin:0 0 6px;background:var(--navy);color:#fff;border-radius:10px;padding:8px 12px;font-size:18px;font-weight:900;border-bottom:4px solid var(--gold)}
+.mcal .wk{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.mcal .wk.hd span{text-align:center;font-size:13px;font-weight:900;color:var(--muted);padding:2px 0}
+.mcal .wk.hd span:nth-child(6){color:var(--st2)}.mcal .wk.hd span:nth-child(7){color:var(--red)}
+.dcell{min-height:78px;border:2px solid color-mix(in srgb,var(--navy) 14%,var(--line));border-radius:10px;background:var(--card);padding:3px 3px 4px;display:flex;flex-direction:column;align-items:stretch;gap:3px;font-family:inherit;color:var(--ink);text-align:left;overflow:hidden}
+.dcell.out{visibility:hidden}
+.dcell.we{background:color-mix(in srgb,var(--line) 45%,var(--card))}
+.dcell.past{opacity:.55}
+.dcell.has{border-bottom-width:4px}
+.dcell.today{border-color:var(--red);box-shadow:0 0 0 2px var(--red)}
+.dcell .dn{font-size:15px;font-weight:900;line-height:1.1;padding-left:2px}
+.dcell.today .dn{color:var(--red)}
+.dcell .dch{display:block;border-radius:6px;padding:2px 3px;font-size:11px;font-weight:900;line-height:1.25;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.dcell .dch.dl{background:var(--gold);color:var(--navy)}
+.dcell .dch{text-align:center;font-size:12px}
+.dcell .dch i{font-style:normal}
+.dcell .dch .pc{display:none}
+:host(.mode-d) .dcell .dch{text-align:left}
+:host(.mode-d) .dcell .dch .pc{display:inline}
+:host(.mode-d) .dcell .dch .sp{display:none}
+.dcell .dch.late{background:var(--red)}
+:host(.mode-d) .dcell{min-height:104px;padding:6px}
+:host(.mode-d) .dcell .dch{font-size:13px;padding:3px 6px}
+:host(.mode-d) .dcell .dn{font-size:17px}
+details.calmore{margin-top:10px}
+details.calmore>summary{list-style:none;cursor:pointer;padding:12px 4px;font-size:15px;font-weight:700;color:var(--muted);border-top:2px solid var(--line)}
+details.calmore>summary::-webkit-details-marker{display:none}
+details.calmore>summary::before{content:"▸ "}
+details.calmore[open]>summary::before{content:"▾ "}
 .dueclr{height:34px;border:2px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:0 10px;font-size:13px;font-weight:700;margin-left:6px}
 /* ---- 10/7 UI：カードを詰める・納期をカードで入れる・済みを畳む・スケジュール表の案件名 ---- */
 .card{padding:10px 12px 10px;margin-bottom:8px;gap:2px 10px}
@@ -1188,7 +1296,7 @@ function renderList(){
   el.innerHTML=keys.map(key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]||{projectId:key}); const lateN=g.filter(isLate).length;
-    return `<section class="grp ${gOpen(key)?"open":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▾":"▸"}</span>${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span>${L.spec?`<span class="spec">${esc(L.spec)}</span>`:""}${dlvHtml(L.delivery)}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${gSum(g)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
+    return `<section class="grp ${gOpen(key)?"open":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▾":"▸"}</span>${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span>${L.spec?`<span class="spec">${esc(L.spec)}</span>`:""}${dlvHtml(L.delivery)}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
   }).join("");
   el.insertAdjacentHTML("afterbegin",`<div class="legend">${STATUSES.map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span></div>`);
 }
@@ -1196,10 +1304,13 @@ function renderList(){
 // 入荷・検収が済んだ発注は「済み」に畳む。開いた状態は、画面を描き直しても覚えておく。
 const openDone=new Set(), openGrp=new Set();
 // 一覧は案件ごとに畳んでおく。帯を押すと開く。絞り込み中（要確認・遅延など）は、該当するものが見えるよう全部開く。
-function gOpen(key){ return filter!=="all"||openGrp.has(key); }
-function gSum(g){ if(!g.length) return `<div class="gsum"><span class="st none">発注はまだありません</span></div>`; const late=g.filter(isLate).length, nodue=g.filter(o=>!o.due&&STATUSES.indexOf(o.status)<3).length; return `<div class="gsum"><div class="bar">${STATUSES.map((s,i)=>{ const n=g.filter(o=>o.status===s).length; return n?`<i style="width:${n/g.length*100}%;background:${SCOL[i]}"></i>`:""; }).join("")}</div>${STATUSES.map((s,i)=>{ const n=g.filter(o=>o.status===s).length; return n?`<span class="st" style="background:${SCOL[i]}">${s}<b>${n}</b></span>`:""; }).join("")}${late?`<span class="st late">遅延<b>${late}</b></span>`:""}${nodue?`<span class="st none">納期未定<b>${nodue}</b></span>`:""}</div>`; }
-function grpBody(key,g){ return supBlocks(g); }
-function supBlocks(g){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>{ const id=pjKey(l[0])+"|"+s, shut=filter==="all"&&!openSup.has(id), ls=[...l].sort((a,b)=>(a.status===STATUSES[4])-(b.status===STATUSES[4]));
+const grpF=new Map();   // 案件ごとの絞り込み： "s0"〜"s4"（状態）, "late"（遅延）, "nodue"（納期未定）
+function gMatch(f,o){ return f==="late"?isLate(o):f==="nodue"?(!o.due&&STATUSES.indexOf(o.status)<3):o.status===STATUSES[+f.slice(1)]; }
+function gLabel(f){ return f==="late"?"遅延":f==="nodue"?"納期未定":STATUSES[+f.slice(1)]; }
+function gOpen(key){ return filter!=="all"||openGrp.has(key)||grpF.has(key); }
+function gSum(g,key){ const cur=grpF.get(key)||""; const chip=(f,cls,style,label,n)=>`<button type="button" class="st ${cls} ${cur===f?"on":cur?"dim":""}" data-gf="${f}" aria-pressed="${cur===f}" ${style?`style="background:${style}"`:""}>${label}<b>${n}</b></button>`; if(!g.length) return `<div class="gsum"><span class="st none">発注はまだありません</span></div>`; const late=g.filter(isLate).length, nodue=g.filter(o=>!o.due&&STATUSES.indexOf(o.status)<3).length; return `<div class="gsum"><div class="bar">${STATUSES.map((s,i)=>{ const n=g.filter(o=>o.status===s).length; return n?`<i style="width:${n/g.length*100}%;background:${SCOL[i]}"></i>`:""; }).join("")}</div>${STATUSES.map((s,i)=>{ const n=g.filter(o=>o.status===s).length; return n?chip("s"+i,"",SCOL[i],s,n):""; }).join("")}${late?chip("late","late","","遅延",late):""}${nodue?chip("nodue","none","","納期未定",nodue):""}${cur?`<span class="gfnote">「${gLabel(cur)}」だけ表示中。もう一度押すと全部に戻ります</span>`:""}</div>`; }
+function grpBody(key,g){ const f=grpF.get(key); return f?supBlocks(g.filter(o=>gMatch(f,o)),true):supBlocks(g); }
+function supBlocks(g,force){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>{ const id=pjKey(l[0])+"|"+s, shut=!force&&filter==="all"&&!openSup.has(id), ls=[...l].sort((a,b)=>(a.status===STATUSES[4])-(b.status===STATUSES[4]));
     const mini=STATUSES.map((st,i)=>{ const n=l.filter(o=>o.status===st).length; return n?`<span class="st" style="background:${SCOL[i]}">${st}<b>${n}</b></span>`:""; }).join("");
     return `<button type="button" class="sup-h ${shut?"shut":""}" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▸":"▾"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</button>${shut?"":`<div class="grid">${ls.map(card).join("")}</div>`}`; }).join(""); }
 // 案件を開いたとき、仕入先は畳んだ状態で並ぶ。見出しを押すと開く（開いたものを覚えておく）。絞り込み中は全部開く。
@@ -1223,9 +1334,10 @@ $("#list").addEventListener("change",async e=>{ const t=e.target.closest(".duein
   try{ await saveOrder(o.id,{...strip(o),due:t.value,updatedAt:new Date().toISOString()}); toast(t.value?`納期を ${fmtD(t.value)} にしました`:"納期を消しました"); }catch{ toast("更新できませんでした"); } });
 $("#list").addEventListener("click",async e=>{
   const sp=e.target.closest("button[data-spec]"); if(sp){ bridge.openSpec(sp.dataset.spec); return; }
+  const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv) grpF.delete(fk); else { grpF.set(fk,fv); openGrp.add(fk); } renderList(); return; }
   const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(gp) openEditPj(gp); return; }
   const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)) openSup.delete(k); else openSup.add(k); renderList(); return; }
-  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)) openGrp.delete(k); else openGrp.add(k); renderList(); return; }
+  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ openGrp.delete(k); grpF.delete(k); } else openGrp.add(k); renderList(); return; }
   const dc=e.target.closest(".dueclr"); if(dc){ const od=orders.find(x=>x.id===dc.dataset.id); if(od&&od.due){ try{ await saveOrder(od.id,{...strip(od),due:"",updatedAt:new Date().toISOString()}); toast("納期を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const b=e.target.closest("button[data-act]"); if(!b) return;
   const id=b.closest(".card").dataset.id; const o=orders.find(x=>x.id===id); if(!o) return;
@@ -1265,6 +1377,49 @@ $("#pjlist").addEventListener("click",e=>{
 // 行＝案件（納期の近い順）、列＝日付。金の「納」＝お客様への納品日、数字の印＝その日に入る予定の発注の件数。
 // 印の色は、その日の発注のうちいちばん進んでいない状態の色。納期を過ぎて未入荷なら赤。今日から納品日までを薄い金で塗る。
 function addDays(d,n){ const t=new Date(d+"T00:00:00"); t.setDate(t.getDate()+n); return t.toLocaleDateString("sv-SE"); }
+// 予定を「読む」ための表示：①案件ごとの納品日と残り日数 ②遅れているもの ③これからの予定を日付順に
+function calAgenda(rows,today){
+  const ev=[], pj=[]; let nodue=0;
+  rows.forEach(([key,{p,g}])=>{ const L=p?{who:p.client||"（宛先未入力）",delivery:p.delivery||""}:pjLabel(g[0]||{projectId:key});
+    const open=g.filter(o=>STATUSES.indexOf(o.status)<3); nodue+=open.filter(o=>!o.due).length;
+    pj.push({key,who:L.who,delivery:L.delivery||"",open:open.length,late:g.filter(isLate).length});
+    if(L.delivery) ev.push({d:L.delivery,t:0,key,who:L.who});
+    open.forEach(o=>{ if(o.due) ev.push({d:o.due,t:1,key,who:L.who,o}); }); });
+  const day=d=>Math.round((new Date(d+"T00:00:00")-new Date(today+"T00:00:00"))/86400000);
+  const rel=d=>{ const n=day(d); return n===0?"今日":n===1?"明日":n>0?`あと${n}日`:`${-n}日前`; };
+  const item=e=>e.t===0?`<button type="button" class="ag dl" data-ckey="${esc(e.key)}"><span class="tag">納品</span><b>${esc(e.who)}</b></button>`
+    :`<button type="button" class="ag" data-oid="${e.o.id}"><i style="background:${SCOL[Math.max(0,STATUSES.indexOf(e.o.status))]}"></i><span class="tx"><b>${esc(e.o.item)}${e.o.qty>1?` ×${e.o.qty}`:""}</b><small>${esc(e.o.supplier||"仕入先 未定")}　${esc(e.who)}</small></span><span class="pill s${Math.max(0,STATUSES.indexOf(e.o.status))}">${esc(e.o.status)}</span></button>`;
+  const head=`<div class="cdlist">${pj.map(x=>`<button type="button" class="cd" data-ckey="${esc(x.key)}">${dlvHtml(x.delivery)}<b>${esc(x.who)}</b><small>${x.late?`<em>遅延 ${x.late}</em>　`:""}未入荷 ${x.open}</small></button>`).join("")}</div>`;
+  const late=ev.filter(e=>e.d<today).sort((a,b)=>a.d.localeCompare(b.d)), next=ev.filter(e=>e.d>=today).sort((a,b)=>a.d.localeCompare(b.d)||a.t-b.t);
+  const mon=new Date(today+"T00:00:00"); mon.setDate(mon.getDate()-((mon.getDay()+6)%7)); const wk=d=>Math.floor((new Date(d+"T00:00:00")-mon)/604800000);
+  let out="", lastW=-1, lastD="";
+  next.forEach(e=>{ const w=wk(e.d); if(w!==lastW){ lastW=w; out+=`<div class="agw">${w===0?"今週":w===1?"来週":`${fmtD(addDays(mon.toLocaleDateString("sv-SE"),w*7))} の週`}</div>`; }
+    if(e.d!==lastD){ lastD=e.d; out+=`<div class="agd ${day(e.d)===0?"now":""}"><b>${fmtDW(e.d)}</b><span>${rel(e.d)}</span></div>`; } out+=item(e); });
+  return head+(late.length?`<div class="agw red">過ぎているもの ${late.length}件</div>${late.map(e=>`<div class="agd red"><b>${fmtDW(e.d)}</b><span>${rel(e.d)}</span></div>${item(e)}`).join("")}`:"")
+    +(next.length?out:`<div class="empty" style="margin-top:12px"><b>これからの予定はまだありません</b>発注に納期を入れると、ここに日付順で並びます。</div>`)
+    +(nodue?`<p class="hint" style="margin:12px 2px">納期が未定の発注が ${nodue}件あります。一覧で納期を入れると、ここに並びます。</p>`:"");
+}
+// 月のカレンダー：1日＝1マス。金の札＝お客様への納品、色の札＝その日に入る予定の発注（色はいちばん進んでいない状態、過ぎていれば赤）。
+let calDays=new Map();
+function calMonths(rows,today){
+  calDays=new Map(); const at=d=>{ if(!calDays.has(d)) calDays.set(d,{dl:[],due:[]}); return calDays.get(d); }; let lastDate=today, nodue=0;
+  rows.forEach(([key,{p,g}])=>{ const L=p?{who:p.client||"（宛先未入力）",delivery:p.delivery||""}:pjLabel(g[0]||{projectId:key});
+    if(L.delivery){ at(L.delivery).dl.push({key,who:L.who}); if(L.delivery>lastDate) lastDate=L.delivery; }
+    g.forEach(o=>{ if(STATUSES.indexOf(o.status)>=3) return; if(!o.due){ nodue++; return; } at(o.due).due.push({o,key,who:L.who}); if(o.due>lastDate) lastDate=o.due; }); });
+  const first=new Date(today.slice(0,7)+"-01T00:00:00"), months=[]; let m=new Date(first), capM=new Date(first); capM.setMonth(capM.getMonth()+3);
+  const endM=new Date(lastDate.slice(0,7)+"-01T00:00:00"), minEnd=new Date(first); minEnd.setMonth(minEnd.getMonth()+1);
+  const stop=endM>capM?capM:(endM<minEnd?minEnd:endM);
+  while(m<=stop){ months.push(new Date(m)); m.setMonth(m.getMonth()+1); }
+  const iso=d=>d.toLocaleDateString("sv-SE");
+  const cell=d=>{ const s=iso(d), e=calDays.get(s), w=d.getDay(); let chips="";
+    if(e){ chips+=e.dl.slice(0,2).map(x=>`<span class="dch dl">納<i class="sp">品</i><i class="pc"> ${esc(x.who.replace(/^[（(][^）)]*[）)]/,"").slice(0,5))}</i></span>`).join("");
+      if(e.due.length){ const late=s<today, si=Math.min(...e.due.map(x=>Math.max(0,STATUSES.indexOf(x.o.status)))); chips+=`<span class="dch ${late?"late":""}" style="${late?"":`background:${SCOL[si]}`}"><i class="pc">${late?"遅延":"入荷"} </i>${e.due.length}件</span>`; } }
+    return `<button type="button" class="dcell ${w===0||w===6?"we":""} ${s===today?"today":""} ${s<today?"past":""} ${e?"has":""}" data-day="${s}" ${e?"":"tabindex=-1"} aria-label="${fmtDW(s)}${e?` 予定あり`:""}"><span class="dn">${d.getDate()}</span>${chips}</button>`; };
+  const html=months.map(m0=>{ const y=m0.getFullYear(), mo=m0.getMonth(); const start=new Date(m0); start.setDate(1-((start.getDay()+6)%7)); let weeks="";
+    for(let w=0;w<6;w++){ let row="", any=false; for(let i=0;i<7;i++){ const d=new Date(start); d.setDate(start.getDate()+w*7+i); if(d.getMonth()===mo){ any=true; row+=cell(d); } else row+=`<span class="dcell out"></span>`; } if(any) weeks+=`<div class="wk">${row}</div>`; }
+    return `<section class="mcal"><h3>${y}年${mo+1}月</h3><div class="wk hd">${"月火水木金土日".split("").map(c=>`<span>${c}</span>`).join("")}</div>${weeks}</section>`; }).join("");
+  return `<div class="legend"><span><i style="background:var(--gold)"></i>納＝納品日</span>${STATUSES.slice(0,3).map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span><span>日付を押すと中身が出ます</span></div>${html}${nodue?`<p class="hint" style="margin:0 2px 8px">納期が未定の発注が ${nodue}件あります。一覧で納期を入れると、カレンダーに出ます。</p>`:""}`;
+}
 function renderCal(){
   const el=$("#cal"), today=todayStr();
   const keys=new Map(); projects.forEach(p=>keys.set(p.id,{p,g:[]}));
@@ -1290,9 +1445,15 @@ function renderCal(){
     }).join("");
     return `<tr><td class="lab" data-key="${esc(key)}">${L.k?`<span class="k">${esc(L.k)}</span>`:""}<b>${esc(L.who)}</b><small>${L.delivery?`納品 ${fmtDW(L.delivery)}`:"納品日 未定"}${noDue?`　納期未定 ${noDue}`:""}</small>${lateBefore?`<small class="late">これより前に遅延 ${lateBefore}件</small>`:""}</td>${cells}</tr>`;
   }).join("");
-  el.innerHTML=`<div class="legend"><span><i style="background:var(--gold)"></i>納＝納品日</span>${STATUSES.map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span><span>数字＝その日に入る発注の件数</span></div><div class="calwrap"><table class="cal">${head}<tbody>${body}</tbody></table></div><p class="hint" style="margin-top:10px">横にスクロールできます。数字を押すと、その日の発注が開きます。案件名を押すと一覧へ移ります。</p>`;
+  el.innerHTML=calMonths(rows,today)+`<details class="calmore"><summary>日付順のリストで見る</summary>${calAgenda(rows,today)}</details><details class="calgrid"><summary>案件ごとの表で見る</summary><div class="legend"><span><i style="background:var(--gold)"></i>納＝納品日</span>${STATUSES.map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span><span>数字＝その日に入る発注の件数</span></div><div class="calwrap"><table class="cal">${head}<tbody>${body}</tbody></table></div><p class="hint" style="margin-top:10px">横にスクロールできます。数字を押すと、その日の発注が開きます。案件名を押すと一覧へ移ります。</p></details>`;
 }
 $("#cal").addEventListener("click",e=>{
+  const dc=e.target.closest(".dcell[data-day]"); if(dc){ const ev=calDays.get(dc.dataset.day); if(!ev) return;
+    openSheet(`<h2>${fmtDW(dc.dataset.day)}</h2><div class="lead">${ev.dl.length?`納品 ${ev.dl.length}件　`:""}${ev.due.length?`入荷予定 ${ev.due.length}件`:""}</div><div class="callist">${ev.dl.map(x=>`<button type="button" class="ag dl" data-ckey="${esc(x.key)}"><span class="tag">納品</span><b>${esc(x.who)}</b></button>`).join("")}${ev.due.map(x=>{ const si=Math.max(0,STATUSES.indexOf(x.o.status)); return `<button type="button" class="ag" data-oid="${x.o.id}"><i style="background:${SCOL[si]}"></i><span class="tx"><b>${esc(x.o.item)}${x.o.qty>1?` ×${x.o.qty}`:""}</b><small>${esc(x.o.supplier||"仕入先 未定")}　${esc(x.who)}</small></span><span class="pill s${si}">${esc(x.o.status)}</span></button>`; }).join("")}</div><div class="btns"><button class="b b-ghost" data-cl="1" style="flex:1">閉じる</button></div>`);
+    sheet.onclick=ev2=>{ const a=ev2.target.closest("[data-oid]"), c=ev2.target.closest("[data-ckey]"); if(a){ const o=orders.find(x=>x.id===a.dataset.oid); sheet.onclick=null; if(o) openDetail(o); return; } if(c){ sheet.onclick=null; closeSheet(); showGroup(c.dataset.ckey); return; } if(ev2.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
+    return; }
+  const ao=e.target.closest("[data-oid]"); if(ao){ const o=orders.find(x=>x.id===ao.dataset.oid); if(o) openDetail(o); return; }
+  const ck=e.target.closest("[data-ckey]"); if(ck){ showGroup(ck.dataset.ckey); return; }
   const mk=e.target.closest(".mk");
   if(mk){ const list=orders.filter(o=>pjKey(o)===mk.dataset.key&&o.due===mk.dataset.d); if(!list.length) return; const L=pjLabel(list[0]);
     openSheet(`<h2>${fmtDW(mk.dataset.d)} に入る予定</h2><div class="lead">${esc([L.k,L.who].filter(Boolean).join("　"))}</div><div class="callist">${list.map(o=>{ const si=Math.max(0,STATUSES.indexOf(o.status)); return `<button type="button" class="ci" data-id="${o.id}"><b>${esc(o.item)}${o.qty>1?` ×${o.qty}`:""}<small>${esc(o.supplier||"仕入先 未定")}${isLate(o)?"　遅延":""}</small></b><span class="pill s${si}">${esc(o.status)}</span></button>`; }).join("")}</div><div class="btns"><button class="b b-ghost" data-cl="1" style="flex:1">閉じる</button></div>`);
@@ -1593,6 +1754,17 @@ $("#month").value=todayStr().slice(0,7); $("#m-date").value=todayStr(); onData()
     } else { $("#headCount").textContent="共有なし（この端末のみ）"; ordersReady=projectsReady=true; markReady(); }
   }catch{ $("#headCount").textContent="共有なし（この端末のみ）"; ordersReady=projectsReady=true; markReady(); }
 })();
+/* ---------- 横スワイプで画面を切り替える（一覧 ⇄ 予定 ⇄ 台帳 ⇄ 議事録） ---------- */
+const VIEW_ORDER=["list","cal","ledger","memo"]; let sw0=null;
+const contentEl=$(".content");
+function scrollsSideways(el){ for(let n=el;n&&n!==contentEl;n=n.parentElement){ if(n.matches&&n.matches("input,textarea,select")) return true; if(n.scrollWidth>n.clientWidth+6){ const ox=getComputedStyle(n).overflowX; if(ox==="auto"||ox==="scroll") return true; } } return false; }
+contentEl.addEventListener("touchstart",e=>{ sw0=(e.touches.length===1&&!scrollsSideways(e.target))?{x:e.touches[0].clientX,y:e.touches[0].clientY}:null; },{passive:true});
+contentEl.addEventListener("touchend",e=>{ if(!sw0) return; const t=e.changedTouches[0], dx=t.clientX-sw0.x, dy=t.clientY-sw0.y; sw0=null;
+  if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*2) return;
+  const cur=((root.querySelector(".view.active")||{}).id||"view-list").replace("view-",""), i=VIEW_ORDER.indexOf(cur), n=i+(dx<0?1:-1);
+  if(i<0||n<0||n>=VIEW_ORDER.length) return;
+  contentEl.dataset.dir=dx<0?"l":"r"; showView(VIEW_ORDER[n]); },{passive:true});
+root.querySelectorAll(".view").forEach(v=>{ if(VIEW_ORDER.indexOf(v.id.replace("view-",""))>=0) v.insertAdjacentHTML("afterbegin",'<div class="swhint">◀ 左右にスワイプで画面を切り替え ▶</div>'); });
 return api;
 };
 </script>
@@ -1641,7 +1813,7 @@ return api;
   var CHECK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   var PLUS = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>';
 
-  var ui = { screen: 'models', model: null, config: null, specId: null, draftName: null, draftShow: true, printMode: 'spec', busy: false, printMsg: '', picker: null, line: -1, draft: null, adding: false, deleting: false, confirmOpt: null, editName: null, confirmDelete: false, vendorGroup: null, optFrom: 'picker', optNew: false, masterY: 0, editModel: null, confirmModel: false, memoOpen: false, confirmUnlink: false, swipeId: null, confirmDelId: null };
+  var ui = { screen: 'models', model: null, config: null, specId: null, draftName: null, draftShow: true, printMode: 'spec', busy: false, printMsg: '', picker: null, line: -1, draft: null, adding: false, deleting: false, confirmOpt: null, editName: null, confirmDelete: false, vendorGroup: null, optFrom: 'picker', optNew: false, masterY: 0, editModel: null, confirmModel: false, memoOpen: false, confirmUnlink: false, swipeId: null, confirmDelId: null, fromBoard: false };
   var data = { specs: {}, custom: {}, hidden: {}, prices: {}, models: [] };   // models = [{id, name}] added in the app; specs[id] = {model, config, name, values, updatedAt}; custom[fieldKey] = ['...']
   var store = { db: null, downloads: null, mode: 'loading', readOnly: false, pendingSpecs: {}, pendingCustom: false, pendingModels: false };
   var app = document.getElementById('app');
@@ -1882,7 +2054,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/07 17:20</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/07 18:45</div><div class="spacer"></div>';
   }
   function savedHtml() {
     var ids = Object.keys(data.specs).sort(function (x, y) { return data.specs[y].updatedAt - data.specs[x].updatedAt; });
@@ -1908,7 +2080,7 @@ return api;
     }).join(''); }
     var rows = GROUPS.map(function (g) { var gt = sp ? groupTotal(v, g.id, u) : 0; var vn = vendorOf(g.id); return '<section class="gsec"><div class="grp"><span>' + g.name + '</span>' + (gt ? '<small>' + yen(gt) + '</small>' : '') + '</div><div class="list">' +
       '<button type="button" class="row vend" data-act="vendor" data-id="' + g.id + '"><span class="k">発注先</span><span class="v">' + (vn ? '<span>' + esc(vn) + '</span>' : '') + '</span>' + (store.readOnly ? '' : CHEV) + '</button>' + rowsOf(fieldsOf(g.id)) + '</div></section>'; }).join('');
-    return top({ back: ['toModels', '最初の画面に戻る'], step: 3, title: esc(m.name), tag: esc(c.name), titleAct: store.readOnly ? null : 'changeModel' }) +
+    return top({ back: ui.fromBoard && board ? ['backToBoard', '発注・納期に戻る'] : ['toModels', '最初の画面に戻る'], step: 3, title: esc(m.name), tag: esc(c.name), titleAct: store.readOnly ? null : 'changeModel' }) +
       noticeHtml() +
       '<div class="topgrid"><div class="nameBox"><label for="specName">名前（だれ・どこ向け）</label><textarea id="specName" class="grow" rows="1" maxlength="60" autocomplete="off" placeholder="例：○○店 向け"' + (store.readOnly ? ' readonly' : '') + '>' + esc(nameInBox()) + '</textarea></div>' +
       '<div class="dateBox"><label for="specJob">工事番号</label><input id="specJob" type="text" maxlength="30" autocomplete="off" inputmode="text" autocapitalize="characters" placeholder="例：K260115" value="' + esc(jobNo()) + '"' + (store.readOnly ? ' readonly' : '') + '></div><div class="jobMsg" id="jobMsg">' + esc(jobNote(jobNo())) + '</div>' +
@@ -2278,7 +2450,7 @@ return api;
   }
   function grow(el) { el.style.height = 'auto'; el.style.height = (el.scrollHeight + 4) + 'px'; }
   function growAll() { var els = app.querySelectorAll('textarea.grow'); for (var i = 0; i < els.length; i++) grow(els[i]); }
-  function go(patch) { var stay = Object.keys(patch).length === 1 && 'confirmDelete' in patch; if ('screen' in patch) { ui.memoOpen = false; ui.confirmUnlink = false; ui.swipeId = null; ui.confirmDelId = null; }   /* an empty overall note folds away again */ for (var k in patch) ui[k] = patch[k]; render(); if (!stay) window.scrollTo(0, 0); }
+  function go(patch) { var stay = Object.keys(patch).length === 1 && 'confirmDelete' in patch; if ('screen' in patch) { ui.memoOpen = false; ui.confirmUnlink = false; ui.swipeId = null; ui.confirmDelId = null; if (patch.screen === 'models') ui.fromBoard = false; }   /* an empty overall note folds away again */ for (var k in patch) ui[k] = patch[k]; render(); if (!stay) window.scrollTo(0, 0); }
 
   /* ---------- actions ---------- */
   function openItem(k, i) {
@@ -2347,7 +2519,7 @@ return api;
     saveSpec();
   }
   // ===== 発注・納期ボードとの連携 =====
-  var boardHost = document.getElementById('boardHost'), board = null, mode = 'spec', syncIds = {}, syncTimer = null;
+  var boardHost = document.getElementById('boardHost'), board = null, mode = 'spec', syncIds = {}, syncTimer = null, boardScroll = 0;
   function checkJob(v) { return board ? board.checkK(v) : { ok: true, k: cleanJob(v), msg: '', level: '' }; }
   // What the board needs from one specification. Lines that need no purchase are left out:
   // 無し・未定, anything marked 在庫品 / 支給品, and the frame unless a supplier is named for it (it is built in-house).
@@ -2383,8 +2555,9 @@ return api;
   function openSpecFromBoard(id) {
     var r = data.specs[id];
     if (board) board.close();
+    boardScroll = window.scrollY;
     setMode('spec');
-    if (r) go({ screen: 'spec', model: r.model, config: r.config, specId: id, printMode: 'spec' }); else go({ screen: 'models', model: null, config: null, specId: null });
+    if (r) go({ screen: 'spec', model: r.model, config: r.config, specId: id, printMode: 'spec', fromBoard: true }); else go({ screen: 'models', model: null, config: null, specId: null });
   }
   function boardButton() {
     if (!board) return '';
@@ -2503,7 +2676,8 @@ return api;
     if (ui.screen === 'quote') commitQuote();
     if (ui.screen === 'master') ui.masterY = window.scrollY || 0;
     if (act !== 'removeModel' && ui.confirmModel) ui.confirmModel = false;
-    if (act === 'clearDay') { if (!store.readOnly && record()) { record().delivery = ''; saveSpec(); render(); } }
+    if (act === 'backToBoard') { ui.fromBoard = false; setMode('board'); window.scrollTo(0, boardScroll); }
+    else if (act === 'clearDay') { if (!store.readOnly && record()) { record().delivery = ''; saveSpec(); render(); } }
     else if (act === 'delSaved') { if (!store.readOnly && data.specs[id]) { if (ui.confirmDelId !== id) { ui.confirmDelId = id; render(); } else { ui.specId = id; ui.swipeId = null; ui.confirmDelId = null; removeSpec(); } } }
     else if (act === 'openSaved' && (swipedAt && Date.now() - swipedAt < 400)) { /* the tap that ends a swipe is not an open */ }
     else if (act === 'toBoard') { setMode('board'); board.showHome(); }
