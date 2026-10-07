@@ -346,7 +346,7 @@
 /* ===== 独立版の土台：Claude の代わりに、Googleスプレッドシート（Apps Script）へ読み書きする =====
    アプリ本体は window.claude.use('db' など) を呼ぶだけなので、ここで同じ形の口を用意している。
    - 変更はまずこの端末に反映し、まとめてサーバーへ送る（通信が切れていても入力は続けられる）
-   - 8秒ごと（と画面に戻ったとき）に、他の人の変更を取りに行く
+   - 操作中は3秒ごと（さわっていない間は10秒ごと、画面に戻ったときはすぐ）に、他の人の変更を取りに行く
    - 合言葉（PIN）は初回に入力し、この端末にだけ覚える */
 (function () {
   var CFG = window.TSK_CONFIG || {}, API = String(CFG.API_URL || '').trim(), AI = String(CFG.AI_URL || '').trim();
@@ -381,6 +381,44 @@
     return pinWait;
   }
   function pin() { try { return localStorage.getItem(K_PIN) || ''; } catch (e) { return ''; } }
+  var K_NAME = 'tsk-sa-name';
+  function myName() { try { return localStorage.getItem(K_NAME) || ''; } catch (e) { return ''; } }
+  // 一度だけ名前を聞く（ほかの人の画面に出る「◯◯さんが変更」の表示用。空のままでも使える）
+  function askName() {
+    try { if (localStorage.getItem(K_NAME) != null) return; } catch (e) { return; }
+    var w = document.createElement('div');
+    w.style.cssText = 'position:fixed;inset:0;z-index:9990;background:rgba(5,14,30,.82);display:flex;align-items:center;justify-content:center;padding:20px;font-family:sans-serif';
+    w.innerHTML = '<div style="background:#fff;color:#132033;border-radius:18px;padding:22px 20px;max-width:360px;width:100%"><div style="font-size:19px;font-weight:700;margin-bottom:6px">お名前</div><div style="font-size:14px;color:#60708A;line-height:1.6;margin-bottom:12px">変更したとき、ほかの人の画面に「◯◯さんが変更」と出すための名前です。入力はこの端末で1回だけです。</div><input type="text" maxlength="12" autocomplete="off" placeholder="例：社長、川内" style="width:100%;box-sizing:border-box;height:52px;border:2px solid #9AA7BA;border-radius:10px;padding:0 12px;font-size:18px"><button type="button" style="margin-top:14px;width:100%;height:52px;border:0;border-radius:12px;background:#0B1F3A;color:#fff;font-size:17px;font-weight:700">決定</button></div>';
+    document.body.appendChild(w);
+    var inp = w.querySelector('input'), go = function () { try { localStorage.setItem(K_NAME, inp.value.trim().slice(0, 12)); } catch (e) {} w.remove(); };
+    w.querySelector('button').addEventListener('click', go); inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+  }
+  // ---- ほかの人の変更が届いたときのお知らせ ----
+  var noteBox = null, noteTimer = null, noteList = [];
+  function describe(d, cur) {
+    var col = d.path.split('/')[0], nw = d.deleted ? null : d.data, old = cur ? cur.data : null, who = nw && nw._by ? nw._by + 'さん：' : '';
+    if (col === 'orders') {
+      var item = '「' + ((nw || old || {}).item || '発注') + '」';
+      if (!nw || nw.hidden) return old && !old.hidden ? who + item + ' を削除' : null;
+      if (!old) return who + item + ' を追加';
+      if (old.status !== nw.status) return who + item + ' ' + old.status + ' → ' + nw.status;
+      if ((old.due || '') !== (nw.due || '')) return who + item + ' 納期 ' + (nw.due ? nw.due.slice(5).replace('-', '/') : '未定');
+      if ((old.supplier || '') !== (nw.supplier || '')) return who + item + ' 仕入先 ' + (nw.supplier || '未定');
+      return null;
+    }
+    if (col === 'specs') { var nm = '仕様書「' + ((nw || old || {}).name || '名前なし') + '」'; return !nw ? nm + ' を削除' : who + nm + (old ? ' を変更' : ' を作成'); }
+    if (col === 'tasks') return nw && !old ? who + 'タスク「' + (nw.title || '') + '」を追加' : null;
+    return null;
+  }
+  function notify(lines) {
+    if (!lines.length) return;
+    noteList = lines.concat(noteList).slice(0, 30);
+    if (!noteBox) { noteBox = document.createElement('button'); noteBox.type = 'button'; noteBox.style.cssText = 'position:fixed;left:50%;top:calc(52px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:9980;width:min(92%,420px);text-align:left;padding:10px 14px;border-radius:14px;border:2px solid #D4AF37;background:#0B1F3A;color:#fff;font:500 14px/1.5 sans-serif;box-shadow:0 8px 22px rgba(0,0,0,.35)'; noteBox.addEventListener('click', function () { noteBox.style.display = 'none'; noteList = []; }); document.body.appendChild(noteBox); }
+    var esc = function (t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); };
+    noteBox.innerHTML = '<b style="display:block;color:#F0D98A;font-size:13px;margin-bottom:2px">ほかの人の変更 ' + noteList.length + '件（押すと閉じます）</b>' + noteList.slice(0, 4).map(esc).join('<br>') + (noteList.length > 4 ? '<br>ほか ' + (noteList.length - 4) + '件' : '');
+    noteBox.style.display = 'block';
+    clearTimeout(noteTimer); noteTimer = setTimeout(function () { if (noteBox) noteBox.style.display = 'none'; noteList = []; }, 12000);
+  }
 
   // ---- サーバーとのやり取り（本文は text/plain で送る：事前確認の通信が要らない） ----
   function call(body) {
@@ -427,19 +465,25 @@
   }
   function pull() {
     return call({ action: 'pull', since: since }).then(function (j) {
-      var changed = []; (j.docs || []).forEach(function (d) { if (apply(d)) changed.push(d.path); });
+      var changed = [], notes = []; (j.docs || []).forEach(function (d) { var cur = docs[d.path], n = pulled ? describe(d, cur) : null; if (apply(d)) { changed.push(d.path); if (n) notes.push(n); } });
+      notify(notes);
       if (j.now > since) since = j.now;
       var first = !ready, firstPull = !pulled; ready = true; pulled = true; persist();
       if (first) subs.forEach(deliver); else if (changed.length) fire(changed);
-      if (firstPull) offerSeed();
+      if (firstPull) { offerSeed(); askName(); }
     });
   }
   function tick() { return flush().then(pull).catch(function () { if (!ready) { ready = true; subs.forEach(deliver); } }); }   // no connection: carry on with what this device remembers
-  function loop() { clearTimeout(timer); tick().then(function () { timer = setTimeout(loop, document.hidden ? POLL * 4 : POLL); }); }
+  // 取りに行く間隔：操作している間は3秒、2分さわっていなければ10秒、画面を見ていないときは30秒。
+  var lastActive = Date.now();
+  ['pointerdown', 'keydown', 'touchstart'].forEach(function (n) { document.addEventListener(n, function () { var idle = Date.now() - lastActive > 120000; lastActive = Date.now(); if (idle) loop(); }, { passive: true, capture: true }); });
+  function delay() { return document.hidden ? 30000 : (Date.now() - lastActive < 120000 ? 3000 : 10000); }
+  function loop() { clearTimeout(timer); tick().then(function () { timer = setTimeout(loop, delay()); }); }
   document.addEventListener('visibilitychange', function () { if (!document.hidden) loop(); });
 
   function write(op, path, data) {
     var cur = docs[path], had = outbox[path];
+    if (op === 'set' && data && typeof data === 'object' && myName()) { data = clone(data); data._by = myName(); }
     outbox[path] = { op: op, data: op === 'set' ? clone(data) : null, base: had ? had.base : (inflight && inflight[path] ? null : (cur ? cur.t : 0)) };
     if (op === 'set') docs[path] = { data: clone(data), t: cur ? cur.t : 0 }; else delete docs[path];
     persist(); fire([path]);
@@ -1838,7 +1882,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/07 15:19</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/07 17:20</div><div class="spacer"></div>';
   }
   function savedHtml() {
     var ids = Object.keys(data.specs).sort(function (x, y) { return data.specs[y].updatedAt - data.specs[x].updatedAt; });
