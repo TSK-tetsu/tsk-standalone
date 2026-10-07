@@ -84,6 +84,14 @@
     .groups { column-count: 2; column-gap: 0; }
     .groups .gsec { display: block; break-inside: avoid; -webkit-column-break-inside: avoid; padding-bottom: 2px; }
   }
+  .bar { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
+  .head.first { padding-top: calc(4px + env(safe-area-inset-top, 0px)); }
+  .dateBox .clr { flex: 0 0 auto; height: 44px; padding: 0 12px; border: 2px solid var(--edge); border-radius: 10px; background: var(--card); color: var(--sub); font-size: 14px; font-weight: 700; }
+  .sw { position: relative; overflow: hidden; border-bottom: 1px solid var(--line); }
+  .sw:last-child { border-bottom: none; }
+  .sw .saved { position: relative; z-index: 1; border-bottom: none; transition: transform .18s ease; }
+  .sw.open .saved { transform: translateX(-104px); }
+  .sw .swdel { position: absolute; top: 0; right: 0; bottom: 0; width: 104px; border: none; background: #A3261B; color: #FFFFFF; font-size: 15px; font-weight: 700; }
   .stack { margin: 20px 16px 0; display: flex; flex-direction: column; gap: 10px; }
   .big { width: 100%; min-height: 80px; padding: 0 16px 0 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); box-shadow: 0 1px 0 rgba(11,31,58,.05); text-align: left; display: flex; align-items: center; gap: 12px; font-family: 'Zen Old Mincho', 'Hiragino Mincho ProN', serif; font-size: 24px; font-weight: 700; }
   .big.tall { min-height: 92px; font-size: 28px; }
@@ -740,6 +748,19 @@ tfoot td{font-weight:700;background:var(--well)}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 
 :host(.framed) .bd-body>.app{min-height:0}
+/* ---- 10/7 夕：案件を畳む・上端の見切れ・納期の「未定」 ---- */
+.top{top:0;padding-top:env(safe-area-inset-top,0px)}
+.grp{scroll-margin-top:calc(76px + env(safe-area-inset-top,0px));margin:0 0 14px}
+.grp.open{margin-bottom:34px}
+.grp-h{cursor:pointer;margin:0;min-height:52px}
+.grp-h .chev{color:var(--gold);font-size:15px;width:14px;flex:0 0 14px}
+.gsum{display:flex;flex-wrap:wrap;gap:4px 12px;background:var(--card);border-radius:0 0 12px 12px;margin:-4px 0 0;padding:12px 12px 9px;font-size:13px;font-weight:700;color:var(--muted);box-shadow:var(--shadow)}
+.gsum i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.gsum .late{color:var(--red)}
+.grp.open .gsum{margin-bottom:4px}
+.grp .grp-h .tosp{color:var(--gold-soft)}
+.grp .grp-h .who{flex:1 1 0;min-width:140px}
+.dueclr{height:34px;border:2px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:0 10px;font-size:13px;font-weight:700;margin-left:6px}
 /* ---- 10/7 UI：カードを詰める・納期をカードで入れる・済みを畳む・スケジュール表の案件名 ---- */
 .card{padding:10px 12px 10px;margin-bottom:8px;gap:2px 10px}
 .card .item{font-size:16px}
@@ -1084,13 +1105,16 @@ function renderList(){
   el.innerHTML=keys.map(key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]); const lateN=g.filter(isLate).length;
-    return `<section class="grp" data-key="${esc(key)}"><div class="grp-h">${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span>${L.spec?`<span class="spec">${esc(L.spec)}</span>`:""}${L.delivery?`<span class="dlv">納品 ${fmtDW(L.delivery)}</span>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${grpBody(key,g)}</section>`;
+    return `<section class="grp ${gOpen(key)?"open":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▾":"▸"}</span>${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span>${L.spec?`<span class="spec">${esc(L.spec)}</span>`:""}${L.delivery?`<span class="dlv">納品 ${fmtDW(L.delivery)}</span>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${gSum(g)}${gOpen(key)?grpBody(key,g):""}</section>`;
   }).join("");
   el.insertAdjacentHTML("afterbegin",`<div class="legend">${STATUSES.map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span></div>`);
 }
 // 案件の中を仕入先ごとにまとめる。並びは、その仕入先でいちばん早い納期の順（g は納期順に並んでいる）。
 // 入荷・検収が済んだ発注は「済み」に畳む。開いた状態は、画面を描き直しても覚えておく。
-const openDone=new Set();
+const openDone=new Set(), openGrp=new Set();
+// 一覧は案件ごとに畳んでおく。帯を押すと開く。絞り込み中（要確認・遅延など）は、該当するものが見えるよう全部開く。
+function gOpen(key){ return filter!=="all"||openGrp.has(key); }
+function gSum(g){ const late=g.filter(isLate).length, nodue=g.filter(o=>!o.due&&STATUSES.indexOf(o.status)<3).length; return `<div class="gsum">${STATUSES.map((s,i)=>{ const n=g.filter(o=>o.status===s).length; return n?`<span><i style="background:${SCOL[i]}"></i>${s} ${n}</span>`:""; }).join("")}${late?`<span class="late">遅延 ${late}</span>`:""}${nodue?`<span>納期未定 ${nodue}</span>`:""}</div>`; }
 function grpBody(key,g){ if(filter==="done") return supBlocks(g); const open=g.filter(o=>STATUSES.indexOf(o.status)<3), done=g.filter(o=>STATUSES.indexOf(o.status)>=3);
   return supBlocks(open)+(done.length?`<details class="done" data-key="${esc(key)}" ${openDone.has(key)?"open":""}><summary>済み（入荷・検収）${done.length}件</summary>${supBlocks(done)}</details>`:""); }
 function supBlocks(g){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>`<div class="sup-h"><b>${esc(s)}</b>${l.length}件</div><div class="grid">${l.map(card).join("")}</div>`).join(""); }
@@ -1100,7 +1124,7 @@ function card(o){
     <div class="item">${esc(o.item)}${o.qty>1?`<span class="qty">×${o.qty}</span>`:""}</div><span class="pill s${si}">${esc(o.status)}</span>
     ${o.part?`<div class="from">${esc(o.part)}${o.note?"　※ "+esc(o.note):""}</div>`:""}${o.gone?`<div class="gone">仕様書から外れました</div>`:""}
     <div class="sup">${esc(o.supplier)}</div>
-    <div class="dates">${o.orderDate?`<span><b>発注</b>${fmtD(o.orderDate)}</span>`:""}<span class="due ${late?"late":""} ${o.due?"":"nodue"}"><b>納期</b>${canWrite?`<input type="date" class="duein" data-id="${o.id}" value="${esc(o.due||"")}" aria-label="${esc(o.item)} の納期予定">`:fmtD(o.due)}${late?"　遅延":""}</span></div>
+    <div class="dates">${o.orderDate?`<span><b>発注</b>${fmtD(o.orderDate)}</span>`:""}<span class="due ${late?"late":""} ${o.due?"":"nodue"}"><b>納期</b>${canWrite?`<input type="date" class="duein" data-id="${o.id}" value="${esc(o.due||"")}" aria-label="${esc(o.item)} の納期予定">${o.due?`<button type="button" class="dueclr" data-id="${o.id}" aria-label="納期を未定に戻す">未定</button>`:""}`:fmtD(o.due)}${late?"　遅延":""}</span></div>
     <div class="act">${next&&canWrite?`<button class="b b-sm ${si>=2?"b-green":"b-navy"}" data-act="next">${esc(next)}にする</button>`:""}${si>0&&canWrite?`<button class="b b-sm b-ghost back" data-act="prev" aria-label="${esc(STATUSES[si-1])}に戻す" title="${esc(STATUSES[si-1])}に戻す">戻す</button>`:""}<button class="b b-sm b-ghost" data-act="open">詳細</button></div></article>`;
 }
 $("#list").addEventListener("toggle",e=>{ const d=e.target; if(d.matches&&d.matches("details.done")){ if(d.open) openDone.add(d.dataset.key); else openDone.delete(d.dataset.key); } },true);
@@ -1108,6 +1132,8 @@ $("#list").addEventListener("change",async e=>{ const t=e.target.closest(".duein
   try{ await saveOrder(o.id,{...strip(o),due:t.value,updatedAt:new Date().toISOString()}); toast(t.value?`納期を ${fmtD(t.value)} にしました`:"納期を消しました"); }catch{ toast("更新できませんでした"); } });
 $("#list").addEventListener("click",async e=>{
   const sp=e.target.closest("button[data-spec]"); if(sp){ bridge.openSpec(sp.dataset.spec); return; }
+  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)) openGrp.delete(k); else openGrp.add(k); renderList(); return; }
+  const dc=e.target.closest(".dueclr"); if(dc){ const od=orders.find(x=>x.id===dc.dataset.id); if(od&&od.due){ try{ await saveOrder(od.id,{...strip(od),due:"",updatedAt:new Date().toISOString()}); toast("納期を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const b=e.target.closest("button[data-act]"); if(!b) return;
   const id=b.closest(".card").dataset.id; const o=orders.find(x=>x.id===id); if(!o) return;
   if(b.dataset.act==="open"){ openDetail(o); return; }
@@ -1182,7 +1208,7 @@ $("#cal").addEventListener("click",e=>{
   const lab=e.target.closest("td.lab"); if(lab) showGroup(lab.dataset.key);
 });
 
-function showGroup(key){ setFilter("all"); showView("list"); const el=[...root.querySelectorAll(".grp")].find(s=>s.dataset.key===key); el?.scrollIntoView({block:"start"}); }
+function showGroup(key){ openGrp.add(key); setFilter("all"); showView("list"); const el=[...root.querySelectorAll(".grp")].find(s=>s.dataset.key===key); el?.scrollIntoView({block:"start"}); }
 
 /* ---------- sheet infra ---------- */
 const scrim=$("#scrim"), sheet=$("#sheet");
@@ -1522,7 +1548,7 @@ return api;
   var CHECK = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   var PLUS = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>';
 
-  var ui = { screen: 'models', model: null, config: null, specId: null, draftName: null, draftShow: true, printMode: 'spec', busy: false, printMsg: '', picker: null, line: -1, draft: null, adding: false, deleting: false, confirmOpt: null, editName: null, confirmDelete: false, vendorGroup: null, optFrom: 'picker', optNew: false, masterY: 0, editModel: null, confirmModel: false, memoOpen: false, confirmUnlink: false };
+  var ui = { screen: 'models', model: null, config: null, specId: null, draftName: null, draftShow: true, printMode: 'spec', busy: false, printMsg: '', picker: null, line: -1, draft: null, adding: false, deleting: false, confirmOpt: null, editName: null, confirmDelete: false, vendorGroup: null, optFrom: 'picker', optNew: false, masterY: 0, editModel: null, confirmModel: false, memoOpen: false, confirmUnlink: false, swipeId: null, confirmDelId: null };
   var data = { specs: {}, custom: {}, hidden: {}, prices: {}, models: [] };   // models = [{id, name}] added in the app; specs[id] = {model, config, name, values, updatedAt}; custom[fieldKey] = ['...']
   var store = { db: null, downloads: null, mode: 'loading', readOnly: false, pendingSpecs: {}, pendingCustom: false, pendingModels: false };
   var app = document.getElementById('app');
@@ -1770,8 +1796,7 @@ return api;
     if (!ids.length) return '';
     return '<div class="sec">保存した仕様書</div><div class="list">' + ids.map(function (id) {
       var r = data.specs[id], m = { name: modelLabel(r) }, c = byId(CONFIGS, r.config);
-      return '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + '　' + esc(c.name) + (r.delivery ? '　納品 ' + dayShort(r.delivery) : '') + '</span></span>' + CHEV + '</button>';
-    }).join('') + '</div>';
+      return '<div class="sw' + (ui.swipeId === id ? ' open' : '') + '" data-sw="' + esc(id) + '">' + (store.readOnly ? '' : '<button type="button" class="swdel" data-act="delSaved" data-id="' + esc(id) + '">' + (ui.confirmDelId === id ? '本当に削除' : '削除') + '</button>') + '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + '　' + esc(c.name) + (r.delivery ? '　納品 ' + dayShort(r.delivery) : '') + '</span></span>' + CHEV + '</button></div>'; }).join('') + '</div>';
   }
   function screenConfigs() {
     var m = curModel();
@@ -1795,7 +1820,7 @@ return api;
       '<div class="topgrid"><div class="nameBox"><label for="specName">名前（だれ・どこ向け）</label><textarea id="specName" class="grow" rows="1" maxlength="60" autocomplete="off" placeholder="例：○○店 向け"' + (store.readOnly ? ' readonly' : '') + '>' + esc(nameInBox()) + '</textarea></div>' +
       '<div class="dateBox"><label for="specJob">工事番号</label><input id="specJob" type="text" maxlength="30" autocomplete="off" inputmode="text" autocapitalize="characters" placeholder="例：K260115" value="' + esc(jobNo()) + '"' + (store.readOnly ? ' readonly' : '') + '></div><div class="jobMsg" id="jobMsg">' + esc(jobNote(jobNo())) + '</div>' +
       '<div class="unitsBox"><span class="lb">台数</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsDown" aria-label="台数を減らす"' + (u <= 1 ? ' disabled' : '') + '>−</button>') + '<span class="n">' + u + '台</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsUp" aria-label="台数を増やす"' + (u >= 99 ? ' disabled' : '') + '>＋</button>') + '</div>' +
-      '<div class="dateBox"><label for="specDate">納品日</label><input id="specDate" type="date" value="' + esc(deliveryDay()) + '"' + (store.readOnly ? ' disabled' : '') + '></div></div>' +
+      '<div class="dateBox"><label for="specDate">納品日</label><input id="specDate" type="date" value="' + esc(deliveryDay()) + '"' + (store.readOnly ? ' disabled' : '') + '>' + (deliveryDay() && !store.readOnly ? '<button type="button" class="clr" data-act="clearDay">未定</button>' : '') + '</div></div>' +
       (store.readOnly ? '' : '<div class="stack" style="margin-top:10px">' + switchHtml() + '</div>') +
       '<div class="groups">' + rows + '</div><div class="note">' + FIELDS.length + '項目中 ' + filled + '項目 入力済み</div>' +
       (!memoText().trim() && !ui.memoOpen ? (store.readOnly ? '' : '<div class="stack" style="margin-top:12px"><button type="button" class="btn soft" data-act="openMemo">＋ 全体の備考を書く</button></div>') :
@@ -2160,7 +2185,7 @@ return api;
   }
   function grow(el) { el.style.height = 'auto'; el.style.height = (el.scrollHeight + 4) + 'px'; }
   function growAll() { var els = app.querySelectorAll('textarea.grow'); for (var i = 0; i < els.length; i++) grow(els[i]); }
-  function go(patch) { var stay = Object.keys(patch).length === 1 && 'confirmDelete' in patch; if ('screen' in patch) { ui.memoOpen = false; ui.confirmUnlink = false; }   /* an empty overall note folds away again */ for (var k in patch) ui[k] = patch[k]; render(); if (!stay) window.scrollTo(0, 0); }
+  function go(patch) { var stay = Object.keys(patch).length === 1 && 'confirmDelete' in patch; if ('screen' in patch) { ui.memoOpen = false; ui.confirmUnlink = false; ui.swipeId = null; ui.confirmDelId = null; }   /* an empty overall note folds away again */ for (var k in patch) ui[k] = patch[k]; render(); if (!stay) window.scrollTo(0, 0); }
 
   /* ---------- actions ---------- */
   function openItem(k, i) {
@@ -2292,6 +2317,18 @@ return api;
     Object.keys(data.specs).forEach(function (id) { if (id !== ui.specId && !other && data.specs[id].job && checkJob(data.specs[id].job).k === ck.k) other = data.specs[id]; });
     return other ? 'この番号は「' + (other.name || '名前なし') + '」でも使われています' : (ck.level === 'warn' ? ck.msg : '');
   }
+  // 保存した仕様書：左へスワイプで「削除」を出す。右へスワイプか、ほかの場所を押すと閉じる。
+  var swipe = null, swipedAt = 0;
+  app.addEventListener('touchstart', function (ev) { var w = ev.target.closest && ev.target.closest('.sw'); swipe = w && ev.touches.length === 1 ? { el: w, x: ev.touches[0].clientX, y: ev.touches[0].clientY, done: false } : null; if (!w && ui.swipeId) { ui.swipeId = null; ui.confirmDelId = null; render(); } }, { passive: true });
+  app.addEventListener('touchmove', function (ev) {
+    if (!swipe || swipe.done || store.readOnly) return;
+    var dx = ev.touches[0].clientX - swipe.x, dy = ev.touches[0].clientY - swipe.y;
+    if (Math.abs(dx) < 28 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    swipe.done = true; swipedAt = Date.now();
+    var id = swipe.el.getAttribute('data-sw'), next = dx < 0 ? id : null;
+    if (ui.swipeId !== next) { ui.swipeId = next; ui.confirmDelId = null; render(); }
+  }, { passive: true });
+  app.addEventListener('touchend', function () { if (swipe && swipe.done) swipedAt = Date.now(); swipe = null; }, { passive: true });
   function commitJob() {
     var el = document.getElementById('specJob'); if (!el || store.readOnly) return;
     var ck = checkJob(el.value);
@@ -2373,7 +2410,10 @@ return api;
     if (ui.screen === 'quote') commitQuote();
     if (ui.screen === 'master') ui.masterY = window.scrollY || 0;
     if (act !== 'removeModel' && ui.confirmModel) ui.confirmModel = false;
-    if (act === 'toBoard') { setMode('board'); board.showHome(); }
+    if (act === 'clearDay') { if (!store.readOnly && record()) { record().delivery = ''; saveSpec(); render(); } }
+    else if (act === 'delSaved') { if (!store.readOnly && data.specs[id]) { if (ui.confirmDelId !== id) { ui.confirmDelId = id; render(); } else { ui.specId = id; ui.swipeId = null; ui.confirmDelId = null; removeSpec(); } } }
+    else if (act === 'openSaved' && (swipedAt && Date.now() - swipedAt < 400)) { /* the tap that ends a swipe is not an open */ }
+    else if (act === 'toBoard') { setMode('board'); board.showHome(); }
     else if (act === 'linkBoard') { if (!store.readOnly && board) { var lr = ensureRecord(); lr.board = true; saveSpec(); render(); } }
     else if (act === 'openBoard') { if (board) { var bx = record() && record().board && !store.readOnly ? boardExport(ui.specId) : null, bid = ui.specId; (bx ? board.sync(bx) : Promise.resolve()).then(function () { setMode('board'); setTimeout(function () { board.showProject(bid); }, 60); }); } }
     else if (act === 'unlinkBoard') { if (!store.readOnly && board && record()) { if (!ui.confirmUnlink) go({ confirmUnlink: true }); else { record().board = false; board.unlink(ui.specId); saveSpec(); go({ confirmUnlink: false }); } } }
