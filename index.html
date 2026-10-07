@@ -92,6 +92,7 @@
   .sw .saved { position: relative; z-index: 1; border-bottom: none; transition: transform .18s ease; }
   .sw.open .saved { transform: translateX(-104px); }
   .sw .swdel { position: absolute; top: 0; right: 0; bottom: 0; width: 104px; border: none; background: #A3261B; color: #FFFFFF; font-size: 15px; font-weight: 700; }
+  .ver { margin: 18px 24px 0; text-align: center; font-size: 13px; color: var(--sub); }
   .stack { margin: 20px 16px 0; display: flex; flex-direction: column; gap: 10px; }
   .big { width: 100%; min-height: 80px; padding: 0 16px 0 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); box-shadow: 0 1px 0 rgba(11,31,58,.05); text-align: left; display: flex; align-items: center; gap: 12px; font-family: 'Zen Old Mincho', 'Hiragino Mincho ProN', serif; font-size: 24px; font-weight: 700; }
   .big.tall { min-height: 92px; font-size: 28px; }
@@ -774,6 +775,9 @@ tfoot td{font-weight:700;background:var(--well)}
 .pjgrid .pj .dlv.none{color:var(--muted);border-color:var(--line)}
 .grp .grp-h .dlv.over,.pjgrid .pj .dlv.over{background:var(--red);color:#fff}
 .pjgrid .pj .dlv{margin-bottom:2px}
+.grp button.sup-h{border:0;background:transparent;width:calc(100% - 4px);text-align:left;font-family:inherit;padding:0;-webkit-tap-highlight-color:rgba(11,31,58,.12)}
+.grp button.sup-h.shut{background:var(--card);width:100%;padding:8px 10px}
+.grp-h{-webkit-tap-highlight-color:rgba(255,255,255,.15)}
 .dueclr{height:34px;border:2px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:0 10px;font-size:13px;font-weight:700;margin-left:6px}
 /* ---- 10/7 UI：カードを詰める・納期をカードで入れる・済みを畳む・スケジュール表の案件名 ---- */
 .card{padding:10px 12px 10px;margin-bottom:8px;gap:2px 10px}
@@ -1133,7 +1137,7 @@ function grpBody(key,g){ if(filter==="done") return supBlocks(g); const open=g.f
   return supBlocks(open)+(done.length?`<details class="done" data-key="${esc(key)}" ${openDone.has(key)?"open":""}><summary>済み（入荷・検収）${done.length}件</summary>${supBlocks(done)}</details>`:""); }
 function supBlocks(g){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>{ const id=pjKey(l[0])+"|"+s, shut=shutSup.has(id);
     const mini=STATUSES.map((st,i)=>{ const n=l.filter(o=>o.status===st).length; return n?`<span><i style="background:${SCOL[i]}"></i>${n}</span>`:""; }).join("");
-    return `<div class="sup-h ${shut?"shut":""}" role="button" tabindex="0" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▸":"▾"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</div>${shut?"":`<div class="grid">${l.map(card).join("")}</div>`}`; }).join(""); }
+    return `<button type="button" class="sup-h ${shut?"shut":""}" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▸":"▾"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</button>${shut?"":`<div class="grid">${l.map(card).join("")}</div>`}`; }).join(""); }
 // 仕入先の見出しを押すと、その仕入先の発注を畳む（閉じたものを覚えておく）。
 const shutSup=new Set();
 // 納品日の表示：日付を大きく、残り日数つき。過ぎていれば赤、未入力なら「納品日 未定」。
@@ -1810,7 +1814,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/07 14:58</div><div class="spacer"></div>';
   }
   function savedHtml() {
     var ids = Object.keys(data.specs).sort(function (x, y) { return data.specs[y].updatedAt - data.specs[x].updatedAt; });
