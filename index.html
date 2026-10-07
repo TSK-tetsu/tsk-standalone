@@ -760,6 +760,20 @@ tfoot td{font-weight:700;background:var(--well)}
 .grp.open .gsum{margin-bottom:4px}
 .grp .grp-h .tosp{color:var(--gold-soft)}
 .grp .grp-h .who{flex:1 1 0;min-width:140px}
+/* ---- 10/7 夜：仕入先を畳める・納品日を大きく ---- */
+.grp .sup-h{cursor:pointer;min-height:40px;margin:10px 2px 6px}
+.grp .sup-h .chev{font-size:13px;color:var(--muted);width:12px;flex:0 0 12px}
+.grp .sup-h .mini{display:inline-flex;gap:8px;font-weight:700}
+.grp .sup-h .mini i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:3px;vertical-align:-1px}
+.grp .sup-h.shut{background:var(--card);border-radius:10px;padding:8px 10px;margin:8px 0 0;box-shadow:var(--shadow)}
+.grp .sup-h.shut::after{display:none}
+.grp .grp-h .dlv,.pjgrid .pj .dlv{display:inline-flex;align-items:baseline;gap:6px;background:var(--gold);color:var(--navy);border-radius:10px;padding:5px 12px;font-size:13px;font-weight:700;white-space:nowrap}
+.grp .grp-h .dlv b,.pjgrid .pj .dlv b{font-size:19px;font-weight:900;letter-spacing:.01em}
+.grp .grp-h .dlv small,.pjgrid .pj .dlv small{font-size:13px;font-weight:900}
+.grp .grp-h .dlv.none,.pjgrid .pj .dlv.none{background:transparent;border:1.5px dashed var(--gold);color:var(--gold-soft);font-size:14px}
+.pjgrid .pj .dlv.none{color:var(--muted);border-color:var(--line)}
+.grp .grp-h .dlv.over,.pjgrid .pj .dlv.over{background:var(--red);color:#fff}
+.pjgrid .pj .dlv{margin-bottom:2px}
 .dueclr{height:34px;border:2px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:0 10px;font-size:13px;font-weight:700;margin-left:6px}
 /* ---- 10/7 UI：カードを詰める・納期をカードで入れる・済みを畳む・スケジュール表の案件名 ---- */
 .card{padding:10px 12px 10px;margin-bottom:8px;gap:2px 10px}
@@ -1105,7 +1119,7 @@ function renderList(){
   el.innerHTML=keys.map(key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]); const lateN=g.filter(isLate).length;
-    return `<section class="grp ${gOpen(key)?"open":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▾":"▸"}</span>${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span>${L.spec?`<span class="spec">${esc(L.spec)}</span>`:""}${L.delivery?`<span class="dlv">納品 ${fmtDW(L.delivery)}</span>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${gSum(g)}${gOpen(key)?grpBody(key,g):""}</section>`;
+    return `<section class="grp ${gOpen(key)?"open":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▾":"▸"}</span>${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span>${L.spec?`<span class="spec">${esc(L.spec)}</span>`:""}${dlvHtml(L.delivery)}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${gSum(g)}${gOpen(key)?grpBody(key,g):""}</section>`;
   }).join("");
   el.insertAdjacentHTML("afterbegin",`<div class="legend">${STATUSES.map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span></div>`);
 }
@@ -1117,7 +1131,13 @@ function gOpen(key){ return filter!=="all"||openGrp.has(key); }
 function gSum(g){ const late=g.filter(isLate).length, nodue=g.filter(o=>!o.due&&STATUSES.indexOf(o.status)<3).length; return `<div class="gsum">${STATUSES.map((s,i)=>{ const n=g.filter(o=>o.status===s).length; return n?`<span><i style="background:${SCOL[i]}"></i>${s} ${n}</span>`:""; }).join("")}${late?`<span class="late">遅延 ${late}</span>`:""}${nodue?`<span>納期未定 ${nodue}</span>`:""}</div>`; }
 function grpBody(key,g){ if(filter==="done") return supBlocks(g); const open=g.filter(o=>STATUSES.indexOf(o.status)<3), done=g.filter(o=>STATUSES.indexOf(o.status)>=3);
   return supBlocks(open)+(done.length?`<details class="done" data-key="${esc(key)}" ${openDone.has(key)?"open":""}><summary>済み（入荷・検収）${done.length}件</summary>${supBlocks(done)}</details>`:""); }
-function supBlocks(g){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>`<div class="sup-h"><b>${esc(s)}</b>${l.length}件</div><div class="grid">${l.map(card).join("")}</div>`).join(""); }
+function supBlocks(g){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>{ const id=pjKey(l[0])+"|"+s, shut=shutSup.has(id);
+    const mini=STATUSES.map((st,i)=>{ const n=l.filter(o=>o.status===st).length; return n?`<span><i style="background:${SCOL[i]}"></i>${n}</span>`:""; }).join("");
+    return `<div class="sup-h ${shut?"shut":""}" role="button" tabindex="0" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▸":"▾"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</div>${shut?"":`<div class="grid">${l.map(card).join("")}</div>`}`; }).join(""); }
+// 仕入先の見出しを押すと、その仕入先の発注を畳む（閉じたものを覚えておく）。
+const shutSup=new Set();
+// 納品日の表示：日付を大きく、残り日数つき。過ぎていれば赤、未入力なら「納品日 未定」。
+function dlvHtml(d){ if(!d) return `<span class="dlv none">納品日 未定</span>`; const n=Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000); return `<span class="dlv ${n<0?"over":""}">納品<b>${fmtDW(d)}</b><small>${n>0?`あと${n}日`:n===0?"本日":`${-n}日超過`}</small></span>`; }
 function card(o){
   const si=STATUSES.indexOf(o.status); const late=isLate(o); const next=si<4?STATUSES[si+1]:null;
   return `<article class="card s${si} ${late?"late":""}" data-id="${o.id}">
@@ -1132,6 +1152,7 @@ $("#list").addEventListener("change",async e=>{ const t=e.target.closest(".duein
   try{ await saveOrder(o.id,{...strip(o),due:t.value,updatedAt:new Date().toISOString()}); toast(t.value?`納期を ${fmtD(t.value)} にしました`:"納期を消しました"); }catch{ toast("更新できませんでした"); } });
 $("#list").addEventListener("click",async e=>{
   const sp=e.target.closest("button[data-spec]"); if(sp){ bridge.openSpec(sp.dataset.spec); return; }
+  const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(shutSup.has(k)) shutSup.delete(k); else shutSup.add(k); renderList(); return; }
   const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)) openGrp.delete(k); else openGrp.add(k); renderList(); return; }
   const dc=e.target.closest(".dueclr"); if(dc){ const od=orders.find(x=>x.id===dc.dataset.id); if(od&&od.due){ try{ await saveOrder(od.id,{...strip(od),due:"",updatedAt:new Date().toISOString()}); toast("納期を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const b=e.target.closest("button[data-act]"); if(!b) return;
@@ -1154,7 +1175,7 @@ function renderPj(){
     const n=g.length; const cnt=STATUSES.map(s=>g.filter(o=>o.status===s).length); const lateN=g.filter(isLate).length;
     const nextDue=g.filter(o=>STATUSES.indexOf(o.status)<3&&o.due).map(o=>o.due).sort()[0];
     return `<div class="pj" data-key="${esc(key)}"><div class="row">${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span></div>${L.spec?`<div class="spec">${esc(L.spec)}</div>`:""}
-      <div class="meta">${L.delivery?`<span class="dlv">納品 ${fmtDW(L.delivery)}</span>`:""}<span>${n}件</span><span>入荷済 ${cnt[3]+cnt[4]}/${n}</span>${nextDue?`<span>次の納期 ${fmtD(nextDue)}</span>`:""}${lateN?`<span class="late">遅延 ${lateN}</span>`:""}</div>
+      <div class="meta">${dlvHtml(L.delivery)}<span>${n}件</span><span>入荷済 ${cnt[3]+cnt[4]}/${n}</span>${nextDue?`<span>次の納期 ${fmtD(nextDue)}</span>`:""}${lateN?`<span class="late">遅延 ${lateN}</span>`:""}</div>
       <div class="bar">${n?cnt.map((c,i)=>c?`<i style="width:${c/n*100}%;background:${SCOL[i]}"></i>`:"").join(""):""}</div>
       <div class="act"><button class="b b-sm b-navy" data-act="orders">発注一覧</button>${p&&p.specId?`<button class="b b-sm b-ghost" data-act="spec">仕様書を開く</button>`:p&&canWrite?`<button class="b b-sm b-ghost" data-act="editpj">案件を編集</button>`:""}${canWrite?`<button class="b b-sm b-gold" data-act="addto">＋発注</button>`:""}</div></div>`;
   }).join("");
