@@ -1008,6 +1008,8 @@ details.calmore[open]>summary::before{content:"▾ "}
 .allgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .allgrid .allb{min-height:48px;border:0;border-bottom:4px solid rgba(0,0,0,.25);border-radius:12px;font-weight:900;box-shadow:none}
 .grp .grp-h .who,.grp .card .item{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.dcell .dch{white-space:normal;word-break:keep-all;line-height:1.2;overflow:visible}
+.dcell .dch b{font-weight:900;letter-spacing:.02em}
 .dueclr{height:34px;border:2px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:0 10px;font-size:13px;font-weight:700;margin-left:6px}
 /* ---- 10/7 UI：カードを詰める・納期をカードで入れる・済みを畳む・スケジュール表の案件名 ---- */
 .card{padding:10px 12px 10px;margin-bottom:8px;gap:2px 10px}
@@ -1397,7 +1399,7 @@ $("#list").addEventListener("click",async e=>{
   const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv) grpF.delete(fk); else { grpF.set(fk,fv); openGrp.add(fk); } renderList(); foldIn(grpParts([...root.querySelectorAll(".grp")].find(x=>x.dataset.key===fk))); return; }
   const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(gp) openEditPj(gp); return; }
   const sa=e.target.closest("[data-supall]"); if(sa){ openSupAll(sa.dataset.supall); return; }
-  const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)){ const gr=sh.closest(".sup-row").nextElementSibling; await foldOut(gr&&gr.classList.contains("grid")?[gr]:[]); openSup.delete(k); renderList(); } else { openSup.add(k); renderList(); const nh=[...root.querySelectorAll(".sup-h")].find(x=>x.dataset.sup===k); foldIn(nh?[nh.closest(".sup-row").nextElementSibling]:[]); } return; }
+  const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)){ const gr=sh.closest(".sup-row").nextElementSibling; await foldOut(gr&&gr.classList.contains("grid")?[...gr.children]:[]); openSup.delete(k); renderList(); } else { openSup.add(k); renderList(); const nh=[...root.querySelectorAll(".sup-h")].find(x=>x.dataset.sup===k); const g2=nh&&nh.closest(".sup-row").nextElementSibling; foldIn(g2&&g2.classList.contains("grid")?[...g2.children]:[]); } return; }
   const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); openGrp.delete(k); grpF.delete(k); renderList(); } else { openGrp.add(k); renderList(); foldIn(grpParts([...root.querySelectorAll(".grp")].find(x=>x.dataset.key===k))); } return; }
   const pc=e.target.closest(".planclr"); if(pc){ const op=orders.find(x=>x.id===pc.dataset.id); if(op&&op.planDate){ const ps=STATUSES.indexOf(op.status); try{ await saveOrder(op.id,{...strip(op),planDate:"",status:ps===PLAN?STATUSES[0]:op.status,updatedAt:new Date().toISOString()}); toast("発注予定日を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const dc=e.target.closest(".dueclr"); if(dc){ const od=orders.find(x=>x.id===dc.dataset.id); if(od&&od.due){ try{ await saveOrder(od.id,{...strip(od),due:"",updatedAt:new Date().toISOString()}); toast("納期を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
@@ -1443,7 +1445,7 @@ function addDays(d,n){ const t=new Date(d+"T00:00:00"); t.setDate(t.getDate()+n)
 // 予定を「読む」ための表示：①案件ごとの納品日と残り日数 ②遅れているもの ③これからの予定を日付順に
 function calAgenda(rows,today){
   const ev=[], pj=[]; let nodue=0;
-  rows.forEach(([key,{p,g}])=>{ const L=p?{who:p.client||"（宛先未入力）",delivery:p.delivery||""}:pjLabel(g[0]||{projectId:key});
+  rows.forEach(([key,{p,g}])=>{ const L=p?{k:p.k||"",who:p.client||"（宛先未入力）",delivery:p.delivery||""}:pjLabel(g[0]||{projectId:key});
     const open=g.filter(o=>STATUSES.indexOf(o.status)<ARR); nodue+=open.filter(o=>!o.due).length;
     pj.push({key,who:L.who,delivery:L.delivery||"",open:open.length,late:g.filter(isLate).length});
     if(L.delivery) ev.push({d:L.delivery,t:0,key,who:L.who});
@@ -1466,17 +1468,19 @@ function calAgenda(rows,today){
 let calDays=new Map();
 function calMonths(rows,today){
   calDays=new Map(); const at=d=>{ if(!calDays.has(d)) calDays.set(d,{dl:[],due:[],plan:[]}); return calDays.get(d); }; let lastDate=today, nodue=0;
-  rows.forEach(([key,{p,g}])=>{ const L=p?{who:p.client||"（宛先未入力）",delivery:p.delivery||""}:pjLabel(g[0]||{projectId:key});
-    if(L.delivery){ at(L.delivery).dl.push({key,who:L.who}); if(L.delivery>lastDate) lastDate=L.delivery; }
-    g.forEach(o=>{ if(STATUSES.indexOf(o.status)>=ARR) return; if(o.status===STATUSES[PLAN]&&o.planDate){ at(o.planDate).plan.push({o,key,who:L.who}); if(o.planDate>lastDate) lastDate=o.planDate; } if(!o.due){ nodue++; return; } at(o.due).due.push({o,key,who:L.who}); if(o.due>lastDate) lastDate=o.due; }); });
+  rows.forEach(([key,{p,g}])=>{ const L=p?{k:p.k||"",who:p.client||"（宛先未入力）",delivery:p.delivery||""}:pjLabel(g[0]||{projectId:key});
+    if(L.delivery){ at(L.delivery).dl.push({key,who:L.who,k:L.k||""}); if(L.delivery>lastDate) lastDate=L.delivery; }
+    g.forEach(o=>{ if(STATUSES.indexOf(o.status)>=ARR) return; if(o.status===STATUSES[PLAN]&&o.planDate){ at(o.planDate).plan.push({o,key,who:L.who,k:L.k||""}); if(o.planDate>lastDate) lastDate=o.planDate; } if(!o.due){ nodue++; return; } at(o.due).due.push({o,key,who:L.who,k:L.k||""}); if(o.due>lastDate) lastDate=o.due; }); });
   const first=new Date(today.slice(0,7)+"-01T00:00:00"), months=[]; let m=new Date(first), capM=new Date(first); capM.setMonth(capM.getMonth()+3);
   const endM=new Date(lastDate.slice(0,7)+"-01T00:00:00"), minEnd=new Date(first); minEnd.setMonth(minEnd.getMonth()+1);
   const stop=endM>capM?capM:(endM<minEnd?minEnd:endM);
   while(m<=stop){ months.push(new Date(m)); m.setMonth(m.getMonth()+1); }
   const iso=d=>d.toLocaleDateString("sv-SE");
   const cell=d=>{ const s=iso(d), e=calDays.get(s), w=d.getDay(); let chips="";
-    if(e){ chips+=e.dl.slice(0,2).map(x=>`<span class="dch dl">納<i class="sp">品</i><i class="pc"> ${esc(x.who.replace(/^[（(][^）)]*[）)]/,"").slice(0,5))}</i></span>`).join("");
-      if(e.due.length){ const late=s<today, si=Math.min(...e.due.map(x=>Math.max(0,STATUSES.indexOf(x.o.status)))); chips+=`<span class="dch ${late?"late":""}" style="${late?"":`background:${SCOL[si]}`}"><i class="pc">${late?"遅延":"入荷"} ${e.due.length}件</i><i class="sp">${late?"遅延":"入荷"}${e.due.length}</i></span>`; } if(e.plan.length) chips+=`<span class="dch" style="background:${SCOL[PLAN]}"><i class="pc">発注予定 ${e.plan.length}件</i><i class="sp">発注${e.plan.length}</i></span>`; }
+    if(e){ const byK=list=>{ const m=new Map(); list.forEach(x=>{ if(!m.has(x.key)) m.set(x.key,[]); m.get(x.key).push(x); }); return [...m.values()]; };
+      chips+=e.dl.slice(0,3).map(x=>`<span class="dch dl">納${k3(x.k)?`<b>${k3(x.k)}</b>`:`<i class="sp">品</i>`}<i class="pc"> ${esc(x.who.replace(/^[（(][^）)]*[）)]/,"").slice(0,5))}</i></span>`).join("");
+      byK(e.plan).forEach(l=>{ chips+=`<span class="dch" style="background:${SCOL[PLAN]}">${k3(l[0].k)?`<b>${k3(l[0].k)}</b> `:""}<i class="pc">発注予定 </i><i class="sp">発</i>${l.length}件</span>`; });
+      byK(e.due).forEach(l=>{ const late=s<today, si=Math.min(...l.map(x=>Math.max(0,STATUSES.indexOf(x.o.status)))); chips+=`<span class="dch ${late?"late":""}" style="${late?"":`background:${SCOL[si]}`}">${k3(l[0].k)?`<b>${k3(l[0].k)}</b> `:""}<i class="pc">${late?"遅延":"入荷"} </i>${l.length}件</span>`; }); }
     return `<button type="button" class="dcell ${w===0||w===6?"we":""} ${s===today?"today":""} ${s<today?"past":""} ${e?"has":""}" data-day="${s}" ${e?"":"tabindex=-1"} aria-label="${fmtDW(s)}${e?` 予定あり`:""}"><span class="dn">${d.getDate()}</span>${chips}</button>`; };
   const html=months.map(m0=>{ const y=m0.getFullYear(), mo=m0.getMonth(); const start=new Date(m0); start.setDate(1-((start.getDay()+6)%7)); let weeks="";
     for(let w=0;w<6;w++){ let row="", any=false; for(let i=0;i<7;i++){ const d=new Date(start); d.setDate(start.getDate()+w*7+i); if(d.getMonth()===mo){ any=true; row+=cell(d); } else row+=`<span class="dcell out"></span>`; } if(any) weeks+=`<div class="wk">${row}</div>`; }
@@ -1512,7 +1516,7 @@ function renderCal(){
 }
 $("#cal").addEventListener("click",e=>{
   const dc=e.target.closest(".dcell[data-day]"); if(dc){ const ev=calDays.get(dc.dataset.day); if(!ev) return;
-    openSheet(`<h2>${fmtDW(dc.dataset.day)}</h2><div class="lead">${ev.dl.length?`納品 ${ev.dl.length}件　`:""}${ev.plan.length?`発注予定 ${ev.plan.length}件　`:""}${ev.due.length?`入荷予定 ${ev.due.length}件`:""}</div><div class="callist">${ev.dl.map(x=>`<button type="button" class="ag dl" data-ckey="${esc(x.key)}"><span class="tag">納品</span><b>${esc(x.who)}</b></button>`).join("")}${ev.plan.concat(ev.due).map(x=>{ const si=Math.max(0,STATUSES.indexOf(x.o.status)); return `<button type="button" class="ag" data-oid="${x.o.id}"><i style="background:${SCOL[si]}"></i><span class="tx"><b>${esc(x.o.item)} ×${x.o.qty||1}</b><small>${esc(x.o.supplier||"仕入先 未定")}　${esc(x.who)}</small></span><span class="pill s${si}">${esc(x.o.status)}</span></button>`; }).join("")}</div><div class="btns"><button class="b b-ghost" data-cl="1" style="flex:1">閉じる</button></div>`);
+    openSheet(`<h2>${fmtDW(dc.dataset.day)}</h2><div class="lead">${ev.dl.length?`納品 ${ev.dl.length}件　`:""}${ev.plan.length?`発注予定 ${ev.plan.length}件　`:""}${ev.due.length?`入荷予定 ${ev.due.length}件`:""}</div><div class="callist">${ev.dl.map(x=>`<button type="button" class="ag dl" data-ckey="${esc(x.key)}"><span class="tag">納品</span><b>${x.k?esc(x.k)+"　":""}${esc(x.who)}</b></button>`).join("")}${ev.plan.concat(ev.due).map(x=>{ const si=Math.max(0,STATUSES.indexOf(x.o.status)); return `<button type="button" class="ag" data-oid="${x.o.id}"><i style="background:${SCOL[si]}"></i><span class="tx"><b>${esc(x.o.item)} ×${x.o.qty||1}</b><small>${x.k?esc(x.k)+"　":""}${esc(x.o.supplier||"仕入先 未定")}　${esc(x.who)}</small></span><span class="pill s${si}">${esc(x.o.status)}</span></button>`; }).join("")}</div><div class="btns"><button class="b b-ghost" data-cl="1" style="flex:1">閉じる</button></div>`);
     sheet.onclick=ev2=>{ const a=ev2.target.closest("[data-oid]"), c=ev2.target.closest("[data-ckey]"); if(a){ const o=orders.find(x=>x.id===a.dataset.oid); sheet.onclick=null; if(o) openDetail(o); return; } if(c){ sheet.onclick=null; closeSheet(); showGroup(c.dataset.ckey); return; } if(ev2.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
     return; }
   const ao=e.target.closest("[data-oid]"); if(ao){ const o=orders.find(x=>x.id===ao.dataset.oid); if(o) openDetail(o); return; }
@@ -1845,7 +1849,7 @@ function openSupAll(id){
 const calm=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 function grpParts(g){ return g?[...g.children].filter(x=>!x.classList.contains("grp-h")&&!x.classList.contains("gsum")):[]; }
 function foldIn(els){ if(calm) return; els.forEach((el,i)=>{ if(!el||!el.animate) return; const h=el.getBoundingClientRect().height; el.style.overflow="hidden";
-  const a=el.animate([{height:"0px",opacity:0,transform:"translateY(-8px)"},{height:h+"px",opacity:1,transform:"none"}],{duration:240,easing:"cubic-bezier(.2,.8,.2,1)",delay:Math.min(i,8)*28,fill:"backwards"}); a.onfinish=a.oncancel=()=>{ el.style.overflow=""; }; }); }
+  const a=el.animate([{height:"0px",opacity:0,transform:"translateY(-8px)"},{height:h+"px",opacity:1,transform:"none"}],{duration:240,easing:"cubic-bezier(.2,.8,.2,1)",delay:Math.min(i,10)*34,fill:"backwards"}); a.onfinish=a.oncancel=()=>{ el.style.overflow=""; }; }); }
 function foldOut(els){ if(calm) return Promise.resolve(); return Promise.all(els.map(el=>{ if(!el||!el.animate) return null; const h=el.getBoundingClientRect().height; el.style.overflow="hidden"; return el.animate([{height:h+"px",opacity:1},{height:"0px",opacity:0,transform:"translateY(-6px)"}],{duration:170,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{}); })); }
 
 /* ---------- 名前の長押しで変更（案件の宛先・発注の品名） ---------- */
@@ -1868,6 +1872,8 @@ function renamePj(key){ const p=projects.find(x=>x.id===key); if(!p){ toast("こ
   renameSheet("案件の名前を変える","だれ・どこ向け",p.client||"",async v=>{ if(p.specId&&bridge.renameSpec) bridge.renameSpec(p.specId,v); await saveProject(p.id,{...strip(p),client:v,updatedAt:new Date().toISOString()}); }); }
 function renameOrder(id){ const o=orders.find(x=>x.id===id); if(!o) return;
   renameSheet("品名を変える","品名",o.item||"",async v=>{ await saveOrder(o.id,{...strip(o),item:v,updatedAt:new Date().toISOString()}); }); }
+
+function k3(k){ const m=String(k||"").match(/(\d{3})$/); return m?m[1]:""; }   // 工事番号の末尾3桁（K260115 → 115）
 /* ---------- 横スワイプで画面を切り替える（一覧 ⇄ 予定 ⇄ 台帳 ⇄ 議事録） ---------- */
 const VIEW_ORDER=["list","cal","ledger","memo"]; let sw0=null;
 const contentEl=$(".content");
@@ -2168,7 +2174,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 14:51</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 15:02</div><div class="spacer"></div>';
   }
   function savedHtml() {
     var ids = Object.keys(data.specs).sort(function (x, y) { return data.specs[y].updatedAt - data.specs[x].updatedAt; });
