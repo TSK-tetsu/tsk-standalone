@@ -93,6 +93,15 @@
   .sw.open .saved { transform: translateX(-104px); }
   .sw .swdel { position: absolute; top: 0; right: 0; bottom: 0; width: 104px; border: none; background: #A3261B; color: #FFFFFF; font-size: 15px; font-weight: 700; }
   .ver { margin: 18px 24px 0; text-align: center; font-size: 13px; color: var(--sub); }
+  .sheet { --ground: #EDF0F4; --card: #FFFFFF; --ink: #0B1F3A; --sub: #45546B; --line: #DBE1E9; --edge: #A7B2C2; --gold: #7D622F; --on: #0B1F3A; --on-ink: #FFFFFF; --warn: #7A2E22; --warn-bg: #F3DDD6; --press: #E3E8EF; --band: #0B1F3A; --band-2: #12294A; --band-ink: #FFFFFF; --band-sub: #C6D0DE; --band-gold: #D9BC7A; color-scheme: light; }
+  .sheet .top .jobno { display: flex; flex-direction: column; gap: 2px; }
+  .sheet .top .jobno small { font-size: 12px; font-weight: 700; letter-spacing: .12em; color: #45546B; }
+  .sheet .top .jobno b { font-size: 44px; font-weight: 900; line-height: 1; letter-spacing: .03em; font-variant-numeric: tabular-nums; color: #0B1F3A; }
+  .sheet .top .jobno.none b { font-size: 26px; color: #8A94A6; }
+  .sheet .top .rt { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .sheet .top .rt .ttl b { font-size: 24px; }
+  .sheet .top .rt .ttl i { font-size: 14px; }
+  .sheet .top .rt .meta { white-space: nowrap; }
   .stack { margin: 20px 16px 0; display: flex; flex-direction: column; gap: 10px; }
   .big { width: 100%; min-height: 80px; padding: 0 16px 0 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); box-shadow: 0 1px 0 rgba(11,31,58,.05); text-align: left; display: flex; align-items: center; gap: 12px; font-family: 'Zen Old Mincho', 'Hiragino Mincho ProN', serif; font-size: 24px; font-weight: 700; }
   .big.tall { min-height: 92px; font-size: 28px; }
@@ -952,6 +961,15 @@ details.calmore>summary{list-style:none;cursor:pointer;padding:12px 4px;font-siz
 details.calmore>summary::-webkit-details-marker{display:none}
 details.calmore>summary::before{content:"▸ "}
 details.calmore[open]>summary::before{content:"▾ "}
+/* ---- 案件の帯：ベースの機種と台数を大きく ---- */
+.grp .grp-h{padding:14px 14px 12px;row-gap:10px}
+.grp .grp-h .brk{flex:0 0 100%;height:0}
+.grp .grp-h .who{font-size:18px;white-space:normal;line-height:1.35}
+.grp .grp-h .base{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 10px;min-width:0;flex:1 1 0}
+.grp .grp-h .base b{font-size:30px;font-weight:900;color:#fff;line-height:1.15;letter-spacing:.02em}
+.grp .grp-h .base small{font-size:15px;font-weight:700;color:var(--gold-soft);white-space:nowrap}
+.grp .grp-h .units{flex:0 0 auto;align-self:center;background:#fff;color:var(--navy);border-radius:12px;padding:3px 14px 3px 12px;font-size:16px;font-weight:900;border-bottom:4px solid var(--gold);white-space:nowrap}
+.grp .grp-h .units b{font-size:30px;line-height:1.1;margin-right:2px}
 .dueclr{height:34px;border:2px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:0 10px;font-size:13px;font-weight:700;margin-left:6px}
 /* ---- 10/7 UI：カードを詰める・納期をカードで入れる・済みを畳む・スケジュール表の案件名 ---- */
 .card{padding:10px 12px 10px;margin-bottom:8px;gap:2px 10px}
@@ -1296,7 +1314,7 @@ function renderList(){
   el.innerHTML=keys.map(key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]||{projectId:key}); const lateN=g.filter(isLate).length;
-    return `<section class="grp ${gOpen(key)?"open":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▾":"▸"}</span>${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span>${L.spec?`<span class="spec">${esc(L.spec)}</span>`:""}${dlvHtml(L.delivery)}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
+    return `<section class="grp ${gOpen(key)?"open":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▾":"▸"}</span>${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span>${baseHtml(L)}${dlvHtml(L.delivery)}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
   }).join("");
   el.insertAdjacentHTML("afterbegin",`<div class="legend">${STATUSES.map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span></div>`);
 }
@@ -1315,6 +1333,8 @@ function supBlocks(g,force){ const m=new Map(); g.forEach(o=>{ const s=o.supplie
     return `<button type="button" class="sup-h ${shut?"shut":""}" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▸":"▾"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</button>${shut?"":`<div class="grid">${ls.map(card).join("")}</div>`}`; }).join(""); }
 // 案件を開いたとき、仕入先は畳んだ状態で並ぶ。見出しを押すと開く（開いたものを覚えておく）。絞り込み中は全部開く。
 const openSup=new Set();
+function baseHtml(L){ if(!L.spec) return ""; let units=0; const rest=[]; String(L.spec).split("　").filter(Boolean).forEach(t=>{ const m=t.match(/^×(\d+)$/); if(m) units=+m[1]; else rest.push(t); }); if(!units&&L.specId) units=1;
+  return `<i class="brk"></i><span class="base"><b>${esc(rest[0]||"")}</b>${rest.length>1?`<small>${esc(rest.slice(1).join("　"))}</small>`:""}</span>${units?`<span class="units"><b>${units}</b>台</span>`:""}<i class="brk"></i>`; }
 // 開いた案件の先頭に置く操作（以前は「案件」画面にあったもの）
 function gAct(key){ if(!canWrite) return ""; const p=projects.find(x=>x.id===key); return `<div class="gact"><button type="button" class="b b-sm b-gold" data-gact="addto">＋ この案件に発注を足す</button>${p&&!p.specId?`<button type="button" class="b b-sm b-ghost" data-gact="editpj">案件を編集</button>`:""}</div>`; }
 // 納品日の表示：日付を大きく、残り日数つき。過ぎていれば赤、未入力なら「納品日 未定」。
@@ -2054,7 +2074,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/07 18:45</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 11:32</div><div class="spacer"></div>';
   }
   function savedHtml() {
     var ids = Object.keys(data.specs).sort(function (x, y) { return data.specs[y].updatedAt - data.specs[x].updatedAt; });
@@ -2303,8 +2323,8 @@ return api;
   }
   function specPagesInto(stage, z) {
     var m = curModel(), c = byId(CONFIGS, ui.config), v = values(), sp = showPrice(), u = units();
-    var head = '<div class="top"><div class="ttl"><b>' + esc(m.name) + '</b><i>' + esc(c.name) + '</i><span class="brand">TSK シミュレーター仕様書</span></div><div class="meta">社内用　' + today() + ' 時点</div></div>' +
-      '<div class="for"><div class="th">向け先</div><div class="td' + (specName() ? '' : ' blank') + '">' + esc(specName()) + '</div>' + (jobNo() ? '<div class="th">工事番号</div><div class="td job">' + esc(jobNo()) + '</div>' : '') + '</div>' +
+    var head = '<div class="top"><div class="jobno' + (jobNo() ? '' : ' none') + '"><small>工事番号</small><b>' + (jobNo() ? esc(jobNo()) : '未定') + '</b></div><div class="rt"><div class="ttl"><b>' + esc(m.name) + '</b><i>' + esc(c.name) + '</i></div><div class="meta"><span class="brand">TSK シミュレーター仕様書</span>　社内用　' + today() + ' 時点</div></div></div>' +
+      '<div class="for"><div class="th">向け先</div><div class="td' + (specName() ? '' : ' blank') + '">' + esc(specName()) + '</div>' + '</div>' +
       '<div class="for key"><div class="th">納品日</div><div class="td">' + (deliveryDay() ? dayLong(deliveryDay()) : '未定') + '</div><div class="th">台数</div><div class="td n">' + u + '台</div></div>';
     var cont = '<div class="cont"><span>TSK シミュレーター仕様書　' + esc(m.name) + '　' + esc(c.name) + '</span><span>' + esc(specName()) + '</span></div>';
     var blocks = [];
@@ -2647,7 +2667,7 @@ return api;
       var sheets = Array.prototype.slice.call(stage.children), pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }), i = 0;
       function next() {
         if (i >= sheets.length) return pdf.output('blob');
-        return window.html2canvas(sheets[i], { scale: 3, backgroundColor: '#FFFFFF', useCORS: true, logging: false, windowWidth: 794 }).then(function (canvas) {
+        return window.html2canvas(sheets[i], { scale: 3, backgroundColor: '#FFFFFF', useCORS: true, logging: false, windowWidth: 794, windowHeight: 1123, scrollX: 0, scrollY: 0, onclone: function (doc, el) { try { doc.documentElement.setAttribute('data-theme', 'light'); el.style.transform = 'none'; el.style.margin = '0'; doc.body.innerHTML = ''; doc.body.style.cssText = 'margin:0;padding:0;width:794px;background:#FFFFFF'; doc.body.appendChild(el); } catch (e) {} } }).then(function (canvas) {
           if (i > 0) pdf.addPage();
           pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297, undefined, 'FAST');   // PNG keeps small type sharp
           i++;
