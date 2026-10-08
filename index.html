@@ -1160,10 +1160,10 @@ details.done[open]>summary::before{content:"▾"}
 .tpop::before{content:"";position:absolute;top:-8px;left:var(--nx,25%);width:18px;height:18px;margin-left:-9px;background:var(--gold);transform:rotate(45deg);border-radius:3px}
 .grp .grid.tiles .tpop .card{position:relative;margin:0;border:3px solid var(--gold);border-bottom-width:6px}
 
-/* ---- 作業中：上の部分（絞り込み・切り替え・色の説明・案内）を隠し、ほかの案件を薄くする ---- */
+/* ---- 作業中：上の部分（絞り込み・色の説明・案内）と、ほかの案件を隠す ---- */
 :host(.work) #filters,:host(.work) #list>.legend,:host(.work) #view-list>.swhint,:host(.work) #lineBtn{display:none}
-:host(.work) #list .grp:not(.open),:host(.work) #list .dlvsec-h{opacity:.42}
-:host(.work) .content{padding-bottom:calc(100vh - 200px)}   /* 開いた案件を、いつでも画面の上まで寄せられるだけの余白 */
+:host(.work) #list .grp:not(.open),:host(.work) #list .dlvsec-h,:host(.work) #list>.empty{display:none}   /* 開いた案件だけを見せる */
+:host(.work) #list .dlvsec{border:0;margin:0;padding:0}
 
 /* ---- 納品済み：落ち着いた色でたたんで残す ---- */
 .grp .grp-h .dlv.done{background:rgba(255,255,255,.14);color:#DCE4F0;border:1.5px solid rgba(255,255,255,.34)}
@@ -1483,8 +1483,10 @@ function bandEl(k){ return [...root.querySelectorAll("#list .grp")].find(x=>x.da
 function bandY(k){ const el=bandEl(k); return el?el.getBoundingClientRect().top:null; }
 function holdBand(k,y){ const el=bandEl(k); if(!el||y==null) return; const d=el.getBoundingClientRect().top-y; if(d) (html.classList.contains("framed")?$(".content"):window).scrollBy(0,d); }
 function toTop(k){ const el=bandEl(k); if(el) el.scrollIntoView({block:"start",behavior:calm?"auto":"smooth"}); }
+// 開くとほかの案件が消えて、帯がいちばん上へ移る。元の位置からすべるように動かして、飛んだように見せない。
+function flipBand(k,y){ const el=bandEl(k); if(!el||y==null||calm||!el.animate) return; const d=y-el.getBoundingClientRect().top; if(Math.abs(d)>2) el.animate([{transform:`translateY(${d}px)`},{transform:"none"}],{duration:260,easing:"cubic-bezier(.2,.8,.2,1)"}); }
 $("#okBtn").addEventListener("click",async()=>{ const open=[...root.querySelectorAll("#list .grp.open")]; snd.ok(); const k0=filter==="all"&&open[0]?open[0].dataset.key:null;
-  if(filter==="all") await foldOut(open.flatMap(g=>grpParts(g))); const y0=k0?bandY(k0):null; selId=null; if(filter==="all"){ openGrp.clear(); grpF.clear(); } renderList(); if(k0) holdBand(k0,y0); });
+  if(filter==="all") await foldOut(open.flatMap(g=>grpParts(g))); const y0=k0?bandY(k0):null; selId=null; if(filter==="all"){ openGrp.clear(); grpF.clear(); } renderList(); if(k0){ holdBand(k0,y0); flipBand(k0,y0); } });
 // 案件の中を仕入先ごとにまとめる。並びは、その仕入先でいちばん早い納期の順（g は納期順に並んでいる）。
 // 入荷・検収が済んだ発注は「済み」に畳む。開いた状態は、画面を描き直しても覚えておく。
 const openDone=new Set(), openGrp=new Set();
@@ -1538,11 +1540,11 @@ $("#list").addEventListener("click",async e=>{
   const de=e.target.closest("[data-dedit]"); if(de){ const dkey=de.closest(".grp").dataset.key; if(dlvAt(dkey)) openDelivered(dkey); else editDelivery(dkey); return; }
   const dg=e.target.closest("[data-dlvgo]"); if(dg){ openDelivered(dg.closest(".grp").dataset.key); return; }
   const ds=e.target.closest("[data-dlvsec]"); if(ds){ if(showDlv){ await foldOut([...ds.parentElement.querySelectorAll(".grp")]); showDlv=false; renderList(); } else { showDlv=true; renderList(); foldIn([...root.querySelectorAll(".dlvsec .grp")]); } return; }
-  const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv){ if(!openGrp.has(fk)) await foldOut(grpParts(gf.closest(".grp"))); const y0=bandY(fk); grpF.delete(fk); renderList(); holdBand(fk,y0); } else { const y0=bandY(fk), was=inWork(); grpF.set(fk,fv); renderList(); holdBand(fk,y0); foldIn(grpParts(bandEl(fk))); if(!was) toTop(fk); } return; }
+  const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv){ if(!openGrp.has(fk)) await foldOut(grpParts(gf.closest(".grp"))); const y0=bandY(fk); grpF.delete(fk); renderList(); holdBand(fk,y0); flipBand(fk,y0); } else { const y0=bandY(fk), was=inWork(); grpF.set(fk,fv); renderList(); if(!was){ scrollBox().scrollTo(0,0); flipBand(fk,y0); } foldIn(grpParts(bandEl(fk))); } return; }
   const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(ga.dataset.gact==="dlv") openDelivered(gk); else if(gp) openEditPj(gp); return; }
   const sa=e.target.closest("[data-supall]"); if(sa){ openSupAll(sa.dataset.supall); return; }
   const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)){ const gr=sh.closest(".sup-row").nextElementSibling; await foldOut(gr&&gr.classList.contains("grid")?[...gr.children]:[]); openSup.delete(k); renderList(); } else { openSup.add(k); renderList(); const nh=[...root.querySelectorAll(".sup-h")].find(x=>x.dataset.sup===k); const g2=nh&&nh.closest(".sup-row").nextElementSibling; foldIn(g2&&g2.classList.contains("grid")?[...g2.children]:[]); } return; }
-  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); const y0=bandY(k); openGrp.delete(k); grpF.delete(k); renderList(); holdBand(k,y0); } else { const y0=bandY(k); openGrp.add(k); renderList(); holdBand(k,y0); foldIn(grpParts(bandEl(k))); toTop(k); } return; }
+  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); const y0=bandY(k); openGrp.delete(k); grpF.delete(k); renderList(); holdBand(k,y0); flipBand(k,y0); } else { const y0=bandY(k); openGrp.add(k); renderList(); scrollBox().scrollTo(0,0); flipBand(k,y0); foldIn(grpParts(bandEl(k))); } return; }
   const pc=e.target.closest(".planclr"); if(pc){ const op=orders.find(x=>x.id===pc.dataset.id); if(op&&op.planDate){ const ps=STATUSES.indexOf(op.status); try{ await saveOrder(op.id,{...strip(op),planDate:"",status:ps===PLAN?STATUSES[0]:op.status,updatedAt:new Date().toISOString()}); toast("発注予定日を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const dc=e.target.closest(".dueclr"); if(dc){ const od=orders.find(x=>x.id===dc.dataset.id); if(od&&od.due){ try{ await saveOrder(od.id,{...strip(od),due:"",updatedAt:new Date().toISOString()}); toast("納期を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const cm=e.target.closest("[data-cm]"); if(cm){ cardMode=cm.dataset.cm==="tile"?"tile":"full"; selId=null; try{ localStorage.setItem("tsk_cards",cardMode); }catch{} renderList(); return; }
@@ -1674,7 +1676,7 @@ $("#cal").addEventListener("click",e=>{
   const lab=e.target.closest("td.lab"); if(lab) showGroup(lab.dataset.key);
 });
 
-function showGroup(key){ if(dlvAt(key)) showDlv=true; openGrp.add(key); setFilter("all"); showView("list"); const el=[...root.querySelectorAll(".grp")].find(s=>s.dataset.key===key); el?.scrollIntoView({block:"start"}); }
+function showGroup(key){ if(dlvAt(key)) showDlv=true; openGrp.clear(); grpF.clear(); openGrp.add(key); setFilter("all"); showView("list"); const el=[...root.querySelectorAll(".grp")].find(s=>s.dataset.key===key); el?.scrollIntoView({block:"start"}); }
 
 /* ---------- sheet infra ---------- */
 const scrim=$("#scrim"), sheet=$("#sheet");
@@ -2376,7 +2378,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 19:12</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 19:29</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -3131,7 +3133,7 @@ return api;
 
   render();
   connect();
-  try { if (board && localStorage.getItem('tsk-mode') === 'board') setMode('board'); } catch (e) {}
+  if (board) setMode('board');   // アプリを開いたら、まず発注・納期ボード（仕様書へは左上の「仕様書」から）
 })();
 </script>
 </body>
