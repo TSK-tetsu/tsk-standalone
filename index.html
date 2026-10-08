@@ -1010,6 +1010,20 @@ details.calmore[open]>summary::before{content:"▾ "}
 .grp .grp-h .who,.grp .card .item{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .dcell .dch{white-space:normal;word-break:keep-all;line-height:1.2;overflow:visible}
 .dcell .dch b{font-weight:900;letter-spacing:.02em}
+/* ---- 開け閉めの矢印を大きく／帯の工事番号・納品日は押して変更 ---- */
+.grp .grp-h .chev{flex:0 0 34px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.16);border:2px solid var(--gold);color:var(--gold);font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+.grp button.sup-h .chev{flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.16);border:2px solid var(--gold);color:var(--gold);font-size:12px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+.grp button.sup-h.shut .chev{background:var(--navy);border-color:var(--navy);color:#fff}
+.grp .grp-h .kbtn{border:0;font-family:inherit;cursor:pointer;min-height:30px}
+.grp .grp-h .kbtn.none{background:transparent;border:1.5px dashed var(--gold-soft);color:var(--gold-soft);font-weight:700;opacity:.85}
+.grp .grp-h .dlvbtn{display:inline-flex;cursor:pointer;border-radius:10px}
+/* ---- スワイプ：指についてくる ---- */
+.content{overflow-x:clip}
+.view{touch-action:pan-y}
+@keyframes slL{from{transform:translateX(70%);opacity:.3}to{transform:none;opacity:1}}
+@keyframes slR{from{transform:translateX(-70%);opacity:.3}to{transform:none;opacity:1}}
+.content[data-dir="l"] .view.active{animation:slL .22s cubic-bezier(.2,.8,.2,1)}
+.content[data-dir="r"] .view.active{animation:slR .22s cubic-bezier(.2,.8,.2,1)}
 .dueclr{height:34px;border:2px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:0 10px;font-size:13px;font-weight:700;margin-left:6px}
 /* ---- 10/7 UI：カードを詰める・納期をカードで入れる・済みを畳む・スケジュール表の案件名 ---- */
 .card{padding:10px 12px 10px;margin-bottom:8px;gap:2px 10px}
@@ -1354,7 +1368,7 @@ function renderList(){
   el.innerHTML=keys.map(key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]||{projectId:key}); const lateN=g.filter(isLate).length;
-    return `<section class="grp ${gOpen(key)?"open":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▾":"▸"}</span>${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span>${baseHtml(L)}${dlvHtml(L.delivery)}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
+    return `<section class="grp ${gOpen(key)?"open":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${baseHtml(L)}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="納品日を変更">${dlvHtml(L.delivery)}</span>${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
   }).join("");
   el.insertAdjacentHTML("afterbegin",`<div class="legend">${STATUSES.map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span></div>`);
 }
@@ -1370,7 +1384,7 @@ function gSum(g,key){ const cur=grpF.get(key)||""; const chip=(f,cls,style,label
 function grpBody(key,g){ const f=grpF.get(key); return f?supBlocks(g.filter(o=>gMatch(f,o)),true):supBlocks(g); }
 function supBlocks(g,force){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>{ const id=pjKey(l[0])+"|"+s, shut=!force&&filter==="all"&&!openSup.has(id), ls=[...l].sort((a,b)=>(a.status===STATUSES[DONE])-(b.status===STATUSES[DONE]));
     const mini=STATUSES.map((st,i)=>{ const n=l.filter(o=>o.status===st).length; return n?`<span class="st" style="background:${SCOL[i]}">${st}<b>${n}</b></span>`:""; }).join("");
-    return `<div class="sup-row"><button type="button" class="sup-h ${shut?"shut":""}" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▸":"▾"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</button>${canWrite?`<button type="button" class="sup-all" data-supall="${esc(id)}" aria-label="${esc(s)} の発注をまとめて変更">一括<br>変更</button>`:""}</div>${shut?"":`<div class="grid">${ls.map(card).join("")}</div>`}`; }).join(""); }
+    return `<div class="sup-row"><button type="button" class="sup-h ${shut?"shut":""}" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▶":"▼"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</button>${canWrite?`<button type="button" class="sup-all" data-supall="${esc(id)}" aria-label="${esc(s)} の発注をまとめて変更">一括<br>変更</button>`:""}</div>${shut?"":`<div class="grid">${ls.map(card).join("")}</div>`}`; }).join(""); }
 // 案件を開いたとき、仕入先は畳んだ状態で並ぶ。見出しを押すと開く（開いたものを覚えておく）。絞り込み中は全部開く。
 const openSup=new Set();
 function baseHtml(L){ if(!L.spec) return ""; let units=0; const rest=[]; String(L.spec).split("　").filter(Boolean).forEach(t=>{ const m=t.match(/^×(\d+)$/); if(m) units=+m[1]; else rest.push(t); }); if(!units&&L.specId) units=1;
@@ -1394,9 +1408,11 @@ $("#list").addEventListener("change",async e=>{ const pl=e.target.closest(".plan
   const t=e.target.closest(".duein"); if(!t) return; const o=orders.find(x=>x.id===t.dataset.id); if(!o||(o.due||"")===t.value) return;
   try{ await saveOrder(o.id,{...strip(o),due:t.value,updatedAt:new Date().toISOString()}); toast(t.value?`納期を ${fmtD(t.value)} にしました`:"納期を消しました"); }catch{ toast("更新できませんでした"); } });
 $("#list").addEventListener("click",async e=>{
-  if(Date.now()-heldAt<800){ e.preventDefault(); return; }
+  if(holding()){ e.preventDefault(); return; }
   const sp=e.target.closest("button[data-spec]"); if(sp){ bridge.openSpec(sp.dataset.spec); return; }
-  const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv) grpF.delete(fk); else { grpF.set(fk,fv); openGrp.add(fk); } renderList(); foldIn(grpParts([...root.querySelectorAll(".grp")].find(x=>x.dataset.key===fk))); return; }
+  const ke=e.target.closest("[data-kedit]"); if(ke){ editK(ke.closest(".grp").dataset.key); return; }
+  const de=e.target.closest("[data-dedit]"); if(de){ editDelivery(de.closest(".grp").dataset.key); return; }
+  const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv){ if(!openGrp.has(fk)) await foldOut(grpParts(gf.closest(".grp"))); grpF.delete(fk); renderList(); } else { grpF.set(fk,fv); renderList(); foldIn(grpParts([...root.querySelectorAll(".grp")].find(x=>x.dataset.key===fk))); } return; }
   const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(gp) openEditPj(gp); return; }
   const sa=e.target.closest("[data-supall]"); if(sa){ openSupAll(sa.dataset.supall); return; }
   const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)){ const gr=sh.closest(".sup-row").nextElementSibling; await foldOut(gr&&gr.classList.contains("grid")?[...gr.children]:[]); openSup.delete(k); renderList(); } else { openSup.add(k); renderList(); const nh=[...root.querySelectorAll(".sup-h")].find(x=>x.dataset.sup===k); const g2=nh&&nh.closest(".sup-row").nextElementSibling; foldIn(g2&&g2.classList.contains("grid")?[...g2.children]:[]); } return; }
@@ -1853,10 +1869,12 @@ function foldIn(els){ if(calm) return; els.forEach((el,i)=>{ if(!el||!el.animate
 function foldOut(els){ if(calm) return Promise.resolve(); return Promise.all(els.map(el=>{ if(!el||!el.animate) return null; const h=el.getBoundingClientRect().height; el.style.overflow="hidden"; return el.animate([{height:h+"px",opacity:1},{height:"0px",opacity:0,transform:"translateY(-6px)"}],{duration:170,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{}); })); }
 
 /* ---------- 名前の長押しで変更（案件の宛先・発注の品名） ---------- */
-let heldAt=0, holdT=null, hold0=null;
+let heldAt=0, holdT=null, hold0=null, holdOpen=false, relAt=0;
+// 長押しで画面を開いたあと、指を離すまで（と離した直後の一瞬）はタップを無視する。離す合図が来なくても6秒で解除。
+function holding(){ return (holdOpen&&Date.now()-heldAt<6000)||Date.now()-relAt<350; }
 function endHold(){ clearTimeout(holdT); holdT=null; hold0=null; }
 $("#list").addEventListener("pointerdown",e=>{ if(!canWrite) return; const who=e.target.closest(".grp-h .who"), item=e.target.closest(".card .item"); if(!who&&!item) return; endHold(); hold0={x:e.clientX,y:e.clientY};
-  holdT=setTimeout(()=>{ holdT=null; heldAt=Date.now(); if(who) renamePj(who.closest(".grp").dataset.key); else renameOrder(item.closest(".card").dataset.id); },550); });
+  holdT=setTimeout(()=>{ holdT=null; heldAt=Date.now(); holdOpen=true; if(who) renamePj(who.closest(".grp").dataset.key); else renameOrder(item.closest(".card").dataset.id); },550); });
 $("#list").addEventListener("pointermove",e=>{ if(hold0&&(Math.abs(e.clientX-hold0.x)>8||Math.abs(e.clientY-hold0.y)>8)) endHold(); });
 ["pointerup","pointercancel","pointerleave"].forEach(n=>$("#list").addEventListener(n,endHold));
 window.addEventListener("scroll",endHold,{passive:true});
@@ -1874,16 +1892,46 @@ function renameOrder(id){ const o=orders.find(x=>x.id===id); if(!o) return;
   renameSheet("品名を変える","品名",o.item||"",async v=>{ await saveOrder(o.id,{...strip(o),item:v,updatedAt:new Date().toISOString()}); }); }
 
 function k3(k){ const m=String(k||"").match(/(\d{3})$/); return m?m[1]:""; }   // 工事番号の末尾3桁（K260115 → 115）
-/* ---------- 横スワイプで画面を切り替える（一覧 ⇄ 予定 ⇄ 台帳 ⇄ 議事録） ---------- */
-const VIEW_ORDER=["list","cal","ledger","memo"]; let sw0=null;
+
+// 長押しで開いた画面が、指を離した瞬間のタップで閉じてしまわないよう、直後のタップは無視する
+root.addEventListener("click",e=>{ if(holding()){ e.stopPropagation(); e.preventDefault(); } },true);
+["pointerup","pointercancel","touchend","mouseup"].forEach(n=>window.addEventListener(n,()=>{ if(holdOpen){ holdOpen=false; relAt=Date.now(); } },true));
+
+/* ---------- 案件の帯から、納品日・工事番号を変更 ---------- */
+function editDelivery(key){ const p=projects.find(x=>x.id===key); if(!p||!canWrite) return;
+  openSheet(`<h2>納品日を変える</h2><div class="lead">${esc(p.client||"")}</div><div class="f"><label for="dvIn">納品日</label><input id="dvIn" type="date" value="${esc(p.delivery||"")}"></div><div class="btns"><button class="b b-ghost" data-cl="1">やめる</button><button class="b b-ghost" data-none="1">未定にする</button><button class="b b-gold" data-ok="1" style="flex:1">保存</button></div>`);
+  const save=async v=>{ sheet.onclick=null; try{ if(p.specId&&bridge.editSpec) bridge.editSpec(p.specId,{delivery:v}); await saveProject(p.id,{...strip(p),delivery:v,updatedAt:new Date().toISOString()}); toast(v?`納品日を ${fmtDW(v)} にしました`:"納品日を未定にしました"); }catch{ toast("保存できませんでした"); } closeSheet(); };
+  sheet.onclick=ev=>{ if(ev.target.closest("[data-ok]")) save($("#dvIn").value); else if(ev.target.closest("[data-none]")) save(""); else if(ev.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
+}
+function editK(key){ const p=projects.find(x=>x.id===key); if(!p||!canWrite) return;
+  openSheet(`<h2>工事番号</h2><div class="lead">${esc(p.client||"")}</div><div class="f"><label for="kIn">工事番号（例：K260115。見積番号は D）</label><input id="kIn" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" placeholder="K260115" value="${esc(p.k||"")}"><div class="kfb" id="kMsg" style="min-height:20px;margin-top:6px;font-weight:700"></div></div><div class="btns"><button class="b b-ghost" data-cl="1">やめる</button><button class="b b-ghost" data-none="1">空にする</button><button class="b b-gold" data-ok="1" style="flex:1">保存</button></div>`);
+  const inp=$("#kIn"); setTimeout(()=>inp.focus(),60);
+  const save=async v=>{ sheet.onclick=null; try{ if(p.specId&&bridge.editSpec) bridge.editSpec(p.specId,{job:v}); await saveProject(p.id,{...strip(p),k:v,updatedAt:new Date().toISOString()}); toast(v?`工事番号を ${v} にしました`:"工事番号を空にしました"); }catch{ toast("保存できませんでした"); } closeSheet(); };
+  const go=()=>{ const raw=inp.value.trim(); if(!raw){ save(""); return; } const ck=checkK(raw); if(!ck.ok){ $("#kMsg").textContent=ck.msg||"形式が違います（例：K260115）"; $("#kMsg").style.color="var(--red)"; inp.focus(); return; } save(ck.k); };
+  inp.onkeydown=ev=>{ if(ev.key==="Enter"&&!ev.isComposing&&ev.keyCode!==229){ ev.preventDefault(); go(); } };
+  sheet.onclick=ev=>{ if(ev.target.closest("[data-ok]")) go(); else if(ev.target.closest("[data-none]")) save(""); else if(ev.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
+}
+/* ---------- 横スワイプで画面を切り替える（一覧 ⇄ 予定 ⇄ 台帳 ⇄ 議事録）。画面が指についてくる ---------- */
+const VIEW_ORDER=["list","cal","ledger","memo"]; let sw=null;
 const contentEl=$(".content");
 function scrollsSideways(el){ for(let n=el;n&&n!==contentEl;n=n.parentElement){ if(n.matches&&n.matches("input,textarea,select")) return true; if(n.scrollWidth>n.clientWidth+6){ const ox=getComputedStyle(n).overflowX; if(ox==="auto"||ox==="scroll") return true; } } return false; }
-contentEl.addEventListener("touchstart",e=>{ sw0=(e.touches.length===1&&!scrollsSideways(e.target))?{x:e.touches[0].clientX,y:e.touches[0].clientY}:null; },{passive:true});
-contentEl.addEventListener("touchend",e=>{ if(!sw0) return; const t=e.changedTouches[0], dx=t.clientX-sw0.x, dy=t.clientY-sw0.y; sw0=null;
-  if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*2) return;
-  const cur=((root.querySelector(".view.active")||{}).id||"view-list").replace("view-",""), i=VIEW_ORDER.indexOf(cur), n=i+(dx<0?1:-1);
-  if(i<0||n<0||n>=VIEW_ORDER.length) return;
-  contentEl.dataset.dir=dx<0?"l":"r"; showView(VIEW_ORDER[n]); },{passive:true});
+function curView(){ return root.querySelector(".view.active"); }
+function neighbor(dir){ const v=curView(); if(!v) return null; const i=VIEW_ORDER.indexOf(v.id.replace("view-","")), n=i+dir; return i<0||n<0||n>=VIEW_ORDER.length?null:VIEW_ORDER[n]; }
+contentEl.addEventListener("touchstart",e=>{ sw=null; if(e.touches.length!==1||html.classList.contains("mode-d")||scrollsSideways(e.target)) return; const v=curView(); if(!v) return;
+  sw={x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now(),v,lock:0,dx:0}; },{passive:true});
+contentEl.addEventListener("touchmove",e=>{ if(!sw) return; const t=e.touches[0], dx=t.clientX-sw.x, dy=t.clientY-sw.y;
+  if(!sw.lock){ if(Math.abs(dx)<10&&Math.abs(dy)<10) return; if(Math.abs(dx)>Math.abs(dy)*1.3){ sw.lock=1; endHold&&endHold(); sw.v.style.transition="none"; sw.v.style.willChange="transform"; } else { sw=null; return; } }
+  if(e.cancelable) e.preventDefault();
+  const has=neighbor(dx<0?1:-1); sw.dx=has?dx:dx*0.22;                      // 端では引っぱっても少ししか動かない
+  sw.v.style.transform=`translateX(${sw.dx}px)`; sw.v.style.opacity=String(Math.max(.45,1-Math.abs(sw.dx)/(contentEl.clientWidth*1.4))); },{passive:false});
+function swEnd(){ if(!sw) return; const s=sw; sw=null; if(!s.lock) return; const v=s.v, w=contentEl.clientWidth||360, dir=s.dx<0?1:-1, to=neighbor(dir);
+  const far=Math.abs(s.dx)>Math.min(120,w*0.24), flick=Math.abs(s.dx)>36&&Date.now()-s.t<260;
+  const reset=()=>{ v.style.transform=""; v.style.opacity=""; v.style.transition=""; v.style.willChange=""; };
+  if(to&&(far||flick)&&v.animate){ heldAt=0; relAt=Date.now();          // 直後のタップは無視（めくった指が離れた瞬間の誤タップ防止）
+    v.animate([{transform:`translateX(${s.dx}px)`,opacity:v.style.opacity||1},{transform:`translateX(${-dir*w}px)`,opacity:.2}],{duration:130,easing:"ease-in"}).finished.catch(()=>{}).then(()=>{ reset(); contentEl.dataset.dir=dir>0?"l":"r"; showView(to); setTimeout(()=>{ delete contentEl.dataset.dir; },320); }); }
+  else if(v.animate){ v.animate([{transform:`translateX(${s.dx}px)`,opacity:v.style.opacity||1},{transform:"none",opacity:1}],{duration:190,easing:"cubic-bezier(.2,.8,.2,1)"}).finished.catch(()=>{}).then(reset); reset(); }
+  else reset(); }
+contentEl.addEventListener("touchend",swEnd,{passive:true}); contentEl.addEventListener("touchcancel",swEnd,{passive:true});
 root.querySelectorAll(".view").forEach(v=>{ if(VIEW_ORDER.indexOf(v.id.replace("view-",""))>=0) v.insertAdjacentHTML("afterbegin",'<div class="swhint">◀ 左右にスワイプで画面を切り替え ▶</div>'); });
 return api;
 };
@@ -2174,7 +2222,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 15:02</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 15:39</div><div class="spacer"></div>';
   }
   function savedHtml() {
     var ids = Object.keys(data.specs).sort(function (x, y) { return data.specs[y].updatedAt - data.specs[x].updatedAt; });
@@ -2686,6 +2734,14 @@ return api;
     var keep = ui.specId; ui.specId = id; saveSpec(); ui.specId = keep;
     return true;
   }
+  // ボードの帯で納品日・工事番号を変えたとき、元の仕様書も同じにする
+  function editSpecFromBoard(id, patch) {
+    var r = data.specs[id]; if (!r || store.readOnly) return false;
+    if ('delivery' in patch) r.delivery = cleanDay(patch.delivery);
+    if ('job' in patch) r.job = cleanJob(patch.job);
+    var keep = ui.specId; ui.specId = id; saveSpec(); ui.specId = keep;
+    return true;
+  }
   function boardButton() {
     if (!board) return '';
     var st = board.stats(), bits = [];
@@ -2900,7 +2956,7 @@ return api;
     if (window.TSKBoardInit && boardHost.attachShadow) {
       var boardRoot = boardHost.attachShadow({ mode: 'open' });
       boardRoot.appendChild(document.getElementById('boardTpl').content.cloneNode(true));
-      board = window.TSKBoardInit(boardHost, boardRoot, { home: function () { setMode('spec'); }, openSpec: openSpecFromBoard, renameSpec: renameSpecFromBoard });
+      board = window.TSKBoardInit(boardHost, boardRoot, { home: function () { setMode('spec'); }, openSpec: openSpecFromBoard, renameSpec: renameSpecFromBoard, editSpec: editSpecFromBoard });
       board.onChange(function () { if (mode === 'spec' && (ui.screen === 'models' || (ui.screen === 'spec' && record() && record().board)) && (!document.activeElement || document.activeElement === document.body)) render(); });
     }
   } catch (e) { board = null; }
