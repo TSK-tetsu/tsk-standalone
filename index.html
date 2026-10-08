@@ -998,6 +998,16 @@ details.calmore[open]>summary::before{content:"▾ "}
 .grp .card .dates{grid-column:1/-1;min-width:0}
 .grp .card .dates .plan,.grp .card .dates .due{min-width:0}
 .grp .card .duein{max-width:138px;min-width:0}
+/* ---- 発注先ごとの一括変更 ---- */
+.grp .sup-row{display:flex;align-items:stretch;gap:6px;margin:14px 8px 0}
+.grp .sup-row button.sup-h,.grp .sup-row button.sup-h.shut{flex:1 1 0;width:auto;min-width:0;margin:0}
+.grp .sup-row+.sup-row{margin-top:8px}
+.sup-all{flex:0 0 auto;border:2px solid var(--gold);border-bottom-width:4px;border-radius:10px;background:var(--card);color:var(--ink);font-family:inherit;font-size:12px;font-weight:900;line-height:1.25;padding:2px 10px;-webkit-tap-highlight-color:rgba(0,0,0,.1)}
+.gsumx{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 14px}
+.gsumx .pill{grid-column:auto;grid-row:auto}
+.allgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.allgrid .allb{min-height:48px;border:0;border-bottom:4px solid rgba(0,0,0,.25);border-radius:12px;font-weight:900;box-shadow:none}
+.grp .grp-h .who,.grp .card .item{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .dueclr{height:34px;border:2px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:0 10px;font-size:13px;font-weight:700;margin-left:6px}
 /* ---- 10/7 UI：カードを詰める・納期をカードで入れる・済みを畳む・スケジュール表の案件名 ---- */
 .card{padding:10px 12px 10px;margin-bottom:8px;gap:2px 10px}
@@ -1358,7 +1368,7 @@ function gSum(g,key){ const cur=grpF.get(key)||""; const chip=(f,cls,style,label
 function grpBody(key,g){ const f=grpF.get(key); return f?supBlocks(g.filter(o=>gMatch(f,o)),true):supBlocks(g); }
 function supBlocks(g,force){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>{ const id=pjKey(l[0])+"|"+s, shut=!force&&filter==="all"&&!openSup.has(id), ls=[...l].sort((a,b)=>(a.status===STATUSES[DONE])-(b.status===STATUSES[DONE]));
     const mini=STATUSES.map((st,i)=>{ const n=l.filter(o=>o.status===st).length; return n?`<span class="st" style="background:${SCOL[i]}">${st}<b>${n}</b></span>`:""; }).join("");
-    return `<button type="button" class="sup-h ${shut?"shut":""}" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▸":"▾"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</button>${shut?"":`<div class="grid">${ls.map(card).join("")}</div>`}`; }).join(""); }
+    return `<div class="sup-row"><button type="button" class="sup-h ${shut?"shut":""}" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▸":"▾"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</button>${canWrite?`<button type="button" class="sup-all" data-supall="${esc(id)}" aria-label="${esc(s)} の発注をまとめて変更">一括<br>変更</button>`:""}</div>${shut?"":`<div class="grid">${ls.map(card).join("")}</div>`}`; }).join(""); }
 // 案件を開いたとき、仕入先は畳んだ状態で並ぶ。見出しを押すと開く（開いたものを覚えておく）。絞り込み中は全部開く。
 const openSup=new Set();
 function baseHtml(L){ if(!L.spec) return ""; let units=0; const rest=[]; String(L.spec).split("　").filter(Boolean).forEach(t=>{ const m=t.match(/^×(\d+)$/); if(m) units=+m[1]; else rest.push(t); }); if(!units&&L.specId) units=1;
@@ -1382,11 +1392,13 @@ $("#list").addEventListener("change",async e=>{ const pl=e.target.closest(".plan
   const t=e.target.closest(".duein"); if(!t) return; const o=orders.find(x=>x.id===t.dataset.id); if(!o||(o.due||"")===t.value) return;
   try{ await saveOrder(o.id,{...strip(o),due:t.value,updatedAt:new Date().toISOString()}); toast(t.value?`納期を ${fmtD(t.value)} にしました`:"納期を消しました"); }catch{ toast("更新できませんでした"); } });
 $("#list").addEventListener("click",async e=>{
+  if(Date.now()-heldAt<800){ e.preventDefault(); return; }
   const sp=e.target.closest("button[data-spec]"); if(sp){ bridge.openSpec(sp.dataset.spec); return; }
-  const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv) grpF.delete(fk); else { grpF.set(fk,fv); openGrp.add(fk); } renderList(); return; }
+  const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv) grpF.delete(fk); else { grpF.set(fk,fv); openGrp.add(fk); } renderList(); foldIn(grpParts([...root.querySelectorAll(".grp")].find(x=>x.dataset.key===fk))); return; }
   const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(gp) openEditPj(gp); return; }
-  const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)) openSup.delete(k); else openSup.add(k); renderList(); return; }
-  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ openGrp.delete(k); grpF.delete(k); } else openGrp.add(k); renderList(); return; }
+  const sa=e.target.closest("[data-supall]"); if(sa){ openSupAll(sa.dataset.supall); return; }
+  const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)){ const gr=sh.closest(".sup-row").nextElementSibling; await foldOut(gr&&gr.classList.contains("grid")?[gr]:[]); openSup.delete(k); renderList(); } else { openSup.add(k); renderList(); const nh=[...root.querySelectorAll(".sup-h")].find(x=>x.dataset.sup===k); foldIn(nh?[nh.closest(".sup-row").nextElementSibling]:[]); } return; }
+  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); openGrp.delete(k); grpF.delete(k); renderList(); } else { openGrp.add(k); renderList(); foldIn(grpParts([...root.querySelectorAll(".grp")].find(x=>x.dataset.key===k))); } return; }
   const pc=e.target.closest(".planclr"); if(pc){ const op=orders.find(x=>x.id===pc.dataset.id); if(op&&op.planDate){ const ps=STATUSES.indexOf(op.status); try{ await saveOrder(op.id,{...strip(op),planDate:"",status:ps===PLAN?STATUSES[0]:op.status,updatedAt:new Date().toISOString()}); toast("発注予定日を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const dc=e.target.closest(".dueclr"); if(dc){ const od=orders.find(x=>x.id===dc.dataset.id); if(od&&od.due){ try{ await saveOrder(od.id,{...strip(od),due:"",updatedAt:new Date().toISOString()}); toast("納期を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const b=e.target.closest("button[data-act]"); if(!b) return;
@@ -1805,6 +1817,57 @@ $("#month").value=todayStr().slice(0,7); $("#m-date").value=todayStr(); onData()
     } else { $("#headCount").textContent="共有なし（この端末のみ）"; ordersReady=projectsReady=true; markReady(); }
   }catch{ $("#headCount").textContent="共有なし（この端末のみ）"; ordersReady=projectsReady=true; markReady(); }
 })();
+
+/* ---------- 発注先ごとの一括変更 ---------- */
+function openSupAll(id){
+  const list=orders.filter(o=>pjKey(o)+"|"+(o.supplier||"仕入先 未定")===id); if(!list.length) return;
+  const sup=id.slice(id.indexOf("|")+1), L=pjLabel(list[0]), cnt=STATUSES.map(s=>list.filter(o=>o.status===s).length);
+  openSheet(`<h2>${esc(sup)} の発注 ${list.length}件</h2><div class="lead">${esc([L.k,L.who].filter(Boolean).join("　"))}　この発注先の発注を、まとめて変えます</div>
+    <div class="gsumx">${STATUSES.map((s,i)=>cnt[i]?`<span class="pill s${i}">${s} ${cnt[i]}</span>`:"").join("")}</div>
+    <div class="f"><label for="allPlan">発注予定日（「発注予定日決定」にするときに入れます）</label><input type="date" id="allPlan"></div>
+    <div class="allgrid">${STATUSES.map((s,i)=>`<button type="button" class="b b-sm allb" data-to="${i}" style="background:${SCOL[i]};color:#fff">${s}にする</button>`).join("")}</div>
+    <div class="f" style="margin-top:16px"><label for="allDue">納期予定をまとめて入れる</label><div style="display:flex;gap:8px"><input type="date" id="allDue" style="flex:1;min-width:0"><button type="button" class="b b-sm b-ghost" data-due="1" style="flex:0 0 auto">全件に設定</button></div></div>
+    <div class="btns"><button class="b b-ghost" data-cl="1" style="flex:1">閉じる</button></div>`);
+  sheet.onclick=async ev=>{
+    if(ev.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); return; }
+    const t=ev.target.closest("[data-to]"), d=ev.target.closest("[data-due]"), now=new Date().toISOString(); let n=0;
+    if(t){ const i=+t.dataset.to, plan=$("#allPlan").value; if(i===PLAN&&!plan){ toast("発注予定日を入れてください"); $("#allPlan").focus(); return; }
+      sheet.onclick=null;
+      try{ for(const o of list){ const x={...strip(o),status:STATUSES[i],updatedAt:now}; if(i===0) x.planDate=""; if(i===PLAN) x.planDate=plan; if(i<ARR) delete x.stock; if(o.status===x.status&&(o.planDate||"")===(x.planDate||"")&&!!o.stock===!!x.stock) continue; await saveOrder(o.id,x); n++; } toast(`${n}件を「${STATUSES[i]}」にしました`); }catch{ toast("更新できませんでした"); }
+      closeSheet(); return; }
+    if(d){ const due=$("#allDue").value; sheet.onclick=null;
+      try{ for(const o of list){ if((o.due||"")===due) continue; await saveOrder(o.id,{...strip(o),due,updatedAt:now}); n++; } toast(due?`${n}件の納期を ${fmtD(due)} にしました`:`${n}件の納期を未定にしました`); }catch{ toast("更新できませんでした"); }
+      closeSheet(); }
+  };
+}
+
+/* ---------- たたむ・広げるの動き ---------- */
+const calm=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function grpParts(g){ return g?[...g.children].filter(x=>!x.classList.contains("grp-h")&&!x.classList.contains("gsum")):[]; }
+function foldIn(els){ if(calm) return; els.forEach((el,i)=>{ if(!el||!el.animate) return; const h=el.getBoundingClientRect().height; el.style.overflow="hidden";
+  const a=el.animate([{height:"0px",opacity:0,transform:"translateY(-8px)"},{height:h+"px",opacity:1,transform:"none"}],{duration:240,easing:"cubic-bezier(.2,.8,.2,1)",delay:Math.min(i,8)*28,fill:"backwards"}); a.onfinish=a.oncancel=()=>{ el.style.overflow=""; }; }); }
+function foldOut(els){ if(calm) return Promise.resolve(); return Promise.all(els.map(el=>{ if(!el||!el.animate) return null; const h=el.getBoundingClientRect().height; el.style.overflow="hidden"; return el.animate([{height:h+"px",opacity:1},{height:"0px",opacity:0,transform:"translateY(-6px)"}],{duration:170,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{}); })); }
+
+/* ---------- 名前の長押しで変更（案件の宛先・発注の品名） ---------- */
+let heldAt=0, holdT=null, hold0=null;
+function endHold(){ clearTimeout(holdT); holdT=null; hold0=null; }
+$("#list").addEventListener("pointerdown",e=>{ if(!canWrite) return; const who=e.target.closest(".grp-h .who"), item=e.target.closest(".card .item"); if(!who&&!item) return; endHold(); hold0={x:e.clientX,y:e.clientY};
+  holdT=setTimeout(()=>{ holdT=null; heldAt=Date.now(); if(who) renamePj(who.closest(".grp").dataset.key); else renameOrder(item.closest(".card").dataset.id); },550); });
+$("#list").addEventListener("pointermove",e=>{ if(hold0&&(Math.abs(e.clientX-hold0.x)>8||Math.abs(e.clientY-hold0.y)>8)) endHold(); });
+["pointerup","pointercancel","pointerleave"].forEach(n=>$("#list").addEventListener(n,endHold));
+window.addEventListener("scroll",endHold,{passive:true});
+$("#list").addEventListener("contextmenu",e=>{ if(e.target.closest(".grp-h .who,.card .item")) e.preventDefault(); });
+function renameSheet(title,label,value,save){
+  openSheet(`<h2>${title}</h2><div class="f"><label for="rnIn">${label}</label><input id="rnIn" type="text" maxlength="60" autocomplete="off" value="${esc(value)}"></div><div class="btns"><button class="b b-ghost" data-cl="1">やめる</button><button class="b b-gold" data-ok="1" style="flex:1">保存</button></div>`);
+  const inp=$("#rnIn"); setTimeout(()=>{ inp.focus(); inp.select&&inp.select(); },60);
+  const go=async()=>{ const v=inp.value.trim(); if(!v){ toast("名前を入れてください"); inp.focus(); return; } sheet.onclick=null; try{ await save(v); toast("名前を変えました"); }catch{ toast("保存できませんでした"); } closeSheet(); };
+  inp.onkeydown=ev=>{ if(ev.key==="Enter"&&!ev.isComposing&&ev.keyCode!==229){ ev.preventDefault(); go(); } };
+  sheet.onclick=ev=>{ if(ev.target.closest("[data-ok]")) go(); else if(ev.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
+}
+function renamePj(key){ const p=projects.find(x=>x.id===key); if(!p){ toast("この案件は名前を変えられません"); return; }
+  renameSheet("案件の名前を変える","だれ・どこ向け",p.client||"",async v=>{ if(p.specId&&bridge.renameSpec) bridge.renameSpec(p.specId,v); await saveProject(p.id,{...strip(p),client:v,updatedAt:new Date().toISOString()}); }); }
+function renameOrder(id){ const o=orders.find(x=>x.id===id); if(!o) return;
+  renameSheet("品名を変える","品名",o.item||"",async v=>{ await saveOrder(o.id,{...strip(o),item:v,updatedAt:new Date().toISOString()}); }); }
 /* ---------- 横スワイプで画面を切り替える（一覧 ⇄ 予定 ⇄ 台帳 ⇄ 議事録） ---------- */
 const VIEW_ORDER=["list","cal","ledger","memo"]; let sw0=null;
 const contentEl=$(".content");
@@ -2105,7 +2168,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 14:28</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 14:51</div><div class="spacer"></div>';
   }
   function savedHtml() {
     var ids = Object.keys(data.specs).sort(function (x, y) { return data.specs[y].updatedAt - data.specs[x].updatedAt; });
@@ -2610,6 +2673,13 @@ return api;
     setMode('spec');
     if (r) go({ screen: 'spec', model: r.model, config: r.config, specId: id, printMode: 'spec', fromBoard: true }); else go({ screen: 'models', model: null, config: null, specId: null });
   }
+  // ボードで案件の名前を長押しして変えたとき、元の仕様書の名前も同じにする
+  function renameSpecFromBoard(id, name) {
+    var r = data.specs[id]; if (!r || store.readOnly) return false;
+    r.name = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+    var keep = ui.specId; ui.specId = id; saveSpec(); ui.specId = keep;
+    return true;
+  }
   function boardButton() {
     if (!board) return '';
     var st = board.stats(), bits = [];
@@ -2824,7 +2894,7 @@ return api;
     if (window.TSKBoardInit && boardHost.attachShadow) {
       var boardRoot = boardHost.attachShadow({ mode: 'open' });
       boardRoot.appendChild(document.getElementById('boardTpl').content.cloneNode(true));
-      board = window.TSKBoardInit(boardHost, boardRoot, { home: function () { setMode('spec'); }, openSpec: openSpecFromBoard });
+      board = window.TSKBoardInit(boardHost, boardRoot, { home: function () { setMode('spec'); }, openSpec: openSpecFromBoard, renameSpec: renameSpecFromBoard });
       board.onChange(function () { if (mode === 'spec' && (ui.screen === 'models' || (ui.screen === 'spec' && record() && record().board)) && (!document.activeElement || document.activeElement === document.body)) render(); });
     }
   } catch (e) { board = null; }
