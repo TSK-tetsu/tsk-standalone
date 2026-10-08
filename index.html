@@ -1140,7 +1140,7 @@ details.done[open]>summary::before{content:"▾"}
 .cardsw span{margin-right:2px}
 .cardsw button{border:2px solid var(--line);border-bottom-width:3px;background:var(--card);color:var(--muted);border-radius:999px;padding:4px 12px;min-height:34px;font:inherit;font-size:13px;font-weight:900}
 .cardsw button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
-.grp .grid.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;grid-auto-flow:dense}
+.grp .grid.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;position:relative}
 :host(.mode-d) .grp .grid.tiles{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 .grp .grid.tiles .card{margin:0}
 .grp .card.tile{display:flex;flex-direction:column;padding:0;min-height:112px;cursor:pointer;text-align:center;-webkit-tap-highlight-color:rgba(11,31,58,.14)}
@@ -1155,7 +1155,15 @@ details.done[open]>summary::before{content:"▾"}
 .grp .card.tile.late .td{color:var(--red)}
 .grp .card.tile.fin{min-height:84px;opacity:.72}
 .grp .card.tile.fin .item{font-size:13px;font-weight:700;color:var(--muted)}
-.grp .grid.tiles .card.sel{grid-column:1/-1;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
+.grp .card.tile.on{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold);transform:scale(1.035);z-index:3}
+.tpop{position:absolute;left:0;z-index:5;scroll-margin:96px 0 112px;filter:drop-shadow(0 12px 16px rgba(5,14,30,.34))}
+.tpop::before{content:"";position:absolute;top:-8px;left:var(--nx,25%);width:18px;height:18px;margin-left:-9px;background:var(--gold);transform:rotate(45deg);border-radius:3px}
+.grp .grid.tiles .tpop .card{position:relative;margin:0;border:3px solid var(--gold);border-bottom-width:6px}
+
+/* ---- 作業中：上の部分（絞り込み・切り替え・色の説明・案内）を隠し、ほかの案件を薄くする ---- */
+:host(.work) #filters,:host(.work) #list>.legend,:host(.work) #view-list>.swhint,:host(.work) #lineBtn{display:none}
+:host(.work) #list .grp:not(.open),:host(.work) #list .dlvsec-h{opacity:.42}
+:host(.work) .content{padding-bottom:calc(100vh - 200px)}   /* 開いた案件を、いつでも画面の上まで寄せられるだけの余白 */
 
 /* ---- 納品済み：落ち着いた色でたたんで残す ---- */
 .grp .grp-h .dlv.done{background:rgba(255,255,255,.14);color:#DCE4F0;border:1.5px solid rgba(255,255,255,.34)}
@@ -1365,7 +1373,7 @@ function applyMode(){
 }
 root.querySelectorAll(".modeswitch button").forEach(b=>b.addEventListener("click",()=>{ forced=b.dataset.mode; applyMode(); }));
 $("#frameExit").addEventListener("click",()=>{ forced="d"; applyMode(); });
-window.addEventListener("resize",()=>{ applyMode(); syncFocus(); }); applyMode();
+window.addEventListener("resize",()=>{ applyMode(); syncFocus(); placePop(); }); applyMode();
 
 /* ---------- helpers ---------- */
 function normK(s){ if(!s) return ""; s=s.normalize("NFKC").toUpperCase().replace(/[\s\-_]/g,""); if(/^\d{6}$/.test(s)) s="K"+s; return s; }
@@ -1413,13 +1421,17 @@ function pjDate(key){ const p=projects.find(x=>x.id===key); if(p&&p.delivery) re
 function pjCompare(ka,oa,kb,ob){ if(ka==="none") return kb==="none"?0:1; if(kb==="none") return -1; const la=pjLabel(oa), lb=pjLabel(ob); return (pjDate(ka)||"9999").localeCompare(pjDate(kb)||"9999")||(la.k||"～").localeCompare(lb.k||"～")||la.who.localeCompare(lb.who); }
 
 /* ---------- views ---------- */
+const viewY={};   // 画面ごとの、見ていた位置
+function scrollBox(){ return html.classList.contains("framed")?$(".content"):window; }
+function scrollPos(){ return html.classList.contains("framed")?$(".content").scrollTop:window.scrollY; }
 function showView(v){
+  const was=root.querySelector(".view.active"); if(was) viewY[was.id]=scrollPos();
   root.querySelectorAll(".view").forEach(e=>e.classList.toggle("active",e.id==="view-"+v));
   root.querySelectorAll("[data-view]").forEach(b=>{ if(b.dataset.view===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   if(v==="ledger") renderLedger();
   if(v==="cal") renderCal();
-  ($(".framed .content")||window).scrollTo?.({top:0});
   syncFocus();
+  scrollBox().scrollTo(0,viewY["view-"+v]||0);
 }
 root.querySelectorAll("[data-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
 $("#fab").addEventListener("click",()=>openAdd()); $("#sideAdd").addEventListener("click",()=>openAdd());
@@ -1460,13 +1472,19 @@ function renderList(){
     +(dk.length?`<div class="dlvsec ${showDlv?"open":""}"><button type="button" class="dlvsec-h" data-dlvsec="1" aria-expanded="${showDlv}"><span class="chev">${showDlv?"▼":"▶"}</span><b>納品済み</b><span class="n">${dk.length}件</span><small>${showDlv?"押すとたたみます":"押すと開いて見返せます"}</small></button>${showDlv?dk.map(sec).join(""):""}</div>`:"");
   el.insertAdjacentHTML("afterbegin",`<div class="legend">${STATUSES.map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span></div>`);
   el.insertAdjacentHTML("afterbegin",`<div class="cardsw" role="group" aria-label="カードの形"><span>カードの形</span><button type="button" data-cm="full" aria-pressed="${cardMode==="full"}">いまの形</button><button type="button" data-cm="tile" aria-pressed="${cardMode==="tile"}">小さい札（試し）</button></div>`);
-  syncFocus();
+  syncFocus(); placePop();
 }
 // 作業中（案件を開いている間）は、下のタブを隠して「OK」だけにする。OKで、開いた案件をたたんで元に戻る。スマホ表示の一覧だけ。
 function inFocus(){ return !html.classList.contains("mode-d")&&$("#view-list").classList.contains("active")&&((filter==="all"&&(openGrp.size>0||grpF.size>0))||!!selId); }
-function syncFocus(){ html.classList.toggle("focus",inFocus()); }
-$("#okBtn").addEventListener("click",async()=>{ const open=[...root.querySelectorAll("#list .grp.open")]; snd.ok();
-  if(filter==="all") await foldOut(open.flatMap(g=>grpParts(g))); selId=null; if(filter==="all"){ openGrp.clear(); grpF.clear(); } renderList(); });
+function inWork(){ return inFocus()&&filter==="all"&&(openGrp.size>0||grpF.size>0); }   // 案件を開いて作業している間
+function syncFocus(){ html.classList.toggle("focus",inFocus()); html.classList.toggle("work",inWork()); }
+// 開け閉めで上の部分が出入りしても、押した帯が指の下から動かないようにする。開いたときは、その帯を画面の上へ寄せる。
+function bandEl(k){ return [...root.querySelectorAll("#list .grp")].find(x=>x.dataset.key===k)||null; }
+function bandY(k){ const el=bandEl(k); return el?el.getBoundingClientRect().top:null; }
+function holdBand(k,y){ const el=bandEl(k); if(!el||y==null) return; const d=el.getBoundingClientRect().top-y; if(d) (html.classList.contains("framed")?$(".content"):window).scrollBy(0,d); }
+function toTop(k){ const el=bandEl(k); if(el) el.scrollIntoView({block:"start",behavior:calm?"auto":"smooth"}); }
+$("#okBtn").addEventListener("click",async()=>{ const open=[...root.querySelectorAll("#list .grp.open")]; snd.ok(); const k0=filter==="all"&&open[0]?open[0].dataset.key:null;
+  if(filter==="all") await foldOut(open.flatMap(g=>grpParts(g))); const y0=k0?bandY(k0):null; selId=null; if(filter==="all"){ openGrp.clear(); grpF.clear(); } renderList(); if(k0) holdBand(k0,y0); });
 // 案件の中を仕入先ごとにまとめる。並びは、その仕入先でいちばん早い納期の順（g は納期順に並んでいる）。
 // 入荷・検収が済んだ発注は「済み」に畳む。開いた状態は、画面を描き直しても覚えておく。
 const openDone=new Set(), openGrp=new Set();
@@ -1479,7 +1497,7 @@ function gSum(g,key){ const cur=grpF.get(key)||""; const chip=(f,cls,style,label
 function grpBody(key,g){ const f=grpF.get(key); return f?supBlocks(g.filter(o=>gMatch(f,o)),true):supBlocks(g); }
 function supBlocks(g,force){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>{ const id=pjKey(l[0])+"|"+s, shut=!force&&filter==="all"&&!openSup.has(id), ls=[...l].sort((a,b)=>(a.status===STATUSES[DONE])-(b.status===STATUSES[DONE]));
     const mini=STATUSES.map((st,i)=>{ const n=l.filter(o=>o.status===st).length; return n?`<span class="st" style="background:${SCOL[i]}">${st}<b>${n}</b></span>`:""; }).join("");
-    return `<div class="sup-row"><button type="button" class="sup-h ${shut?"shut":""}" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▶":"▼"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</button>${canWrite?`<button type="button" class="sup-all" data-supall="${esc(id)}" aria-label="${esc(s)} の発注をまとめて変更">一括<br>変更</button>`:""}</div>${shut?"":`<div class="grid ${cardMode==="tile"?"tiles":""}">${ls.map(card).join("")}</div>`}`; }).join(""); }
+    return `<div class="sup-row"><button type="button" class="sup-h ${shut?"shut":""}" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▶":"▼"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</button>${canWrite?`<button type="button" class="sup-all" data-supall="${esc(id)}" aria-label="${esc(s)} の発注をまとめて変更">一括<br>変更</button>`:""}</div>${shut?"":`<div class="grid ${cardMode==="tile"?"tiles":""}">${ls.map(card).join("")}${popFor(ls)}</div>`}`; }).join(""); }
 // 案件を開いたとき、仕入先は畳んだ状態で並ぶ。見出しを押すと開く（開いたものを覚えておく）。絞り込み中は全部開く。
 const openSup=new Set();
 function baseHtml(L){ if(!L.spec) return ""; let units=0; const rest=[]; String(L.spec).split("　").filter(Boolean).forEach(t=>{ const m=t.match(/^×(\d+)$/); if(m) units=+m[1]; else rest.push(t); }); if(!units&&L.specId) units=1;
@@ -1490,10 +1508,15 @@ function gAct(key){ if(!canWrite) return ""; const p=projects.find(x=>x.id===key
 function dlvHtml(d,done){ if(done) return `<span class="dlv done">納品済み<b>${fmtDW(done)}</b></span>`; if(!d) return `<span class="dlv none">納品日 未定</span>`; const n=Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000); return `<span class="dlv ${n<0?"over":""}">納品<b>${fmtDW(d)}</b><small>${n>0?`あと${n}日`:n===0?"本日":`${-n}日超過`}</small></span>`; }
 // カードの形：full＝いまの形／tile＝小さい札（2列。押した札だけ広がって、いまのカードと同じ操作が出る）。端末ごとに覚える。
 let cardMode="full", selId=null; try{ if(localStorage.getItem("tsk_cards")==="tile") cardMode="tile"; }catch{}
-function card(o){ return cardMode==="tile"&&selId!==o.id?tile(o):cardFull(o); }
+function card(o){ return cardMode==="tile"?tile(o):cardFull(o); }
+// 小さい札を押すと、札はその場のまま、真下に操作の箱（いまのカードと同じ中身）を重ねて出す。まわりの札は動かない。
+function popFor(ls){ if(cardMode!=="tile"||!selId) return ""; const o=ls.find(x=>x.id===selId); return o?`<div class="tpop" data-for="${o.id}">${cardFull(o)}</div>`:""; }
+function placePop(){ root.querySelectorAll("#list .tpop").forEach(p=>{ const g=p.parentElement, t=[...g.querySelectorAll(".card.tile")].find(x=>x.dataset.id===p.dataset.for); if(!t){ p.remove(); return; }
+  const cs=getComputedStyle(g), pl=parseFloat(cs.paddingLeft)||0, cw=g.clientWidth-pl-(parseFloat(cs.paddingRight)||0), w=Math.min(cw,520), mid=t.offsetLeft+t.offsetWidth/2, left=Math.max(pl,Math.min(mid-w/2,pl+cw-w));
+  p.style.top=(t.offsetTop+t.offsetHeight+11)+"px"; p.style.left=left+"px"; p.style.width=w+"px"; p.style.setProperty("--nx",(mid-left)+"px"); }); }
 function tile(o){ const si=Math.max(0,STATUSES.indexOf(o.status)), late=isLate(o);
   const when=si>=ARR?(o.stock?"在庫充当":si===DONE?"検収済み":"入荷済み"):(si<ORD&&o.planDate?`発注予定 ${fmtD(o.planDate)}`:o.due?`納期 ${fmtD(o.due)}`:"納期 未定");
-  return `<article class="card tile s${si} ${late?"late":""} ${si===DONE?"fin":""}" data-id="${o.id}" role="button" tabindex="0" aria-label="${esc(o.item)} ${esc(o.status)}。押すと広がります"><div class="ts"><b class="tq">×${o.qty||1}</b><span>${late?"遅延":esc(o.status)}</span></div><div class="item">${esc(o.item)}</div><div class="td ${si<ARR&&!o.due&&!(si<ORD&&o.planDate)?"none":""}">${when}</div></article>`; }
+  return `<article class="card tile s${si} ${late?"late":""} ${si===DONE?"fin":""} ${selId===o.id?"on":""}" data-id="${o.id}" role="button" tabindex="0" aria-label="${esc(o.item)} ${esc(o.status)}。押すと広がります"><div class="ts"><b class="tq">×${o.qty||1}</b><span>${late?"遅延":esc(o.status)}</span></div><div class="item">${esc(o.item)}</div><div class="td ${si<ARR&&!o.due&&!(si<ORD&&o.planDate)?"none":""}">${when}</div></article>`; }
 function cardFull(o){
   const si=STATUSES.indexOf(o.status); const late=isLate(o); const next=si<DONE?STATUSES[si<ORD?ORD:si+1]:null;
   if(si===DONE) return `<article class="card s5 mini ${cardMode==="tile"?"sel":""}" data-id="${o.id}"><div class="item">${esc(o.item)} ×${o.qty||1}</div><span class="pill s5">${esc(o.status)}</span><div class="act">${canWrite?`<button class="b b-sm b-ghost back" data-act="prev" aria-label="${esc(STATUSES[ARR])}に戻す">戻す</button>`:""}<button class="b b-sm b-ghost" data-act="open">詳細</button></div></article>`;
@@ -1515,16 +1538,15 @@ $("#list").addEventListener("click",async e=>{
   const de=e.target.closest("[data-dedit]"); if(de){ const dkey=de.closest(".grp").dataset.key; if(dlvAt(dkey)) openDelivered(dkey); else editDelivery(dkey); return; }
   const dg=e.target.closest("[data-dlvgo]"); if(dg){ openDelivered(dg.closest(".grp").dataset.key); return; }
   const ds=e.target.closest("[data-dlvsec]"); if(ds){ if(showDlv){ await foldOut([...ds.parentElement.querySelectorAll(".grp")]); showDlv=false; renderList(); } else { showDlv=true; renderList(); foldIn([...root.querySelectorAll(".dlvsec .grp")]); } return; }
-  const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv){ if(!openGrp.has(fk)) await foldOut(grpParts(gf.closest(".grp"))); grpF.delete(fk); renderList(); } else { grpF.set(fk,fv); renderList(); foldIn(grpParts([...root.querySelectorAll(".grp")].find(x=>x.dataset.key===fk))); } return; }
+  const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv){ if(!openGrp.has(fk)) await foldOut(grpParts(gf.closest(".grp"))); const y0=bandY(fk); grpF.delete(fk); renderList(); holdBand(fk,y0); } else { const y0=bandY(fk), was=inWork(); grpF.set(fk,fv); renderList(); holdBand(fk,y0); foldIn(grpParts(bandEl(fk))); if(!was) toTop(fk); } return; }
   const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(ga.dataset.gact==="dlv") openDelivered(gk); else if(gp) openEditPj(gp); return; }
   const sa=e.target.closest("[data-supall]"); if(sa){ openSupAll(sa.dataset.supall); return; }
   const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)){ const gr=sh.closest(".sup-row").nextElementSibling; await foldOut(gr&&gr.classList.contains("grid")?[...gr.children]:[]); openSup.delete(k); renderList(); } else { openSup.add(k); renderList(); const nh=[...root.querySelectorAll(".sup-h")].find(x=>x.dataset.sup===k); const g2=nh&&nh.closest(".sup-row").nextElementSibling; foldIn(g2&&g2.classList.contains("grid")?[...g2.children]:[]); } return; }
-  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); openGrp.delete(k); grpF.delete(k); renderList(); } else { openGrp.add(k); renderList(); foldIn(grpParts([...root.querySelectorAll(".grp")].find(x=>x.dataset.key===k))); } return; }
+  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); const y0=bandY(k); openGrp.delete(k); grpF.delete(k); renderList(); holdBand(k,y0); } else { const y0=bandY(k); openGrp.add(k); renderList(); holdBand(k,y0); foldIn(grpParts(bandEl(k))); toTop(k); } return; }
   const pc=e.target.closest(".planclr"); if(pc){ const op=orders.find(x=>x.id===pc.dataset.id); if(op&&op.planDate){ const ps=STATUSES.indexOf(op.status); try{ await saveOrder(op.id,{...strip(op),planDate:"",status:ps===PLAN?STATUSES[0]:op.status,updatedAt:new Date().toISOString()}); toast("発注予定日を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const dc=e.target.closest(".dueclr"); if(dc){ const od=orders.find(x=>x.id===dc.dataset.id); if(od&&od.due){ try{ await saveOrder(od.id,{...strip(od),due:"",updatedAt:new Date().toISOString()}); toast("納期を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const cm=e.target.closest("[data-cm]"); if(cm){ cardMode=cm.dataset.cm==="tile"?"tile":"full"; selId=null; try{ localStorage.setItem("tsk_cards",cardMode); }catch{} renderList(); return; }
-  const tl=e.target.closest(".card.tile"); if(tl){ selId=tl.dataset.id; renderList(); const nc=[...root.querySelectorAll("#list .card.sel")].find(x=>x.dataset.id===selId); if(nc){ if(nc.animate&&!calm) nc.animate([{transform:"scale(.94)",opacity:.6},{transform:"none",opacity:1}],{duration:170,easing:"cubic-bezier(.2,.8,.2,1)"}); nc.scrollIntoView({block:"nearest"}); } return; }
-  const sc=e.target.closest(".card.sel"); if(sc&&!e.target.closest("button,input")){ selId=null; renderList(); return; }
+  const tl=e.target.closest(".card.tile"); if(tl){ if(selId===tl.dataset.id){ selId=null; renderList(); return; } selId=tl.dataset.id; renderList(); const pp=root.querySelector("#list .tpop"); if(pp){ if(pp.animate&&!calm) pp.animate([{transform:"translateY(-10px) scale(.94)",opacity:0},{transform:"none",opacity:1}],{duration:170,easing:"cubic-bezier(.2,.8,.2,1)"}); pp.scrollIntoView({block:"nearest",behavior:calm?"auto":"smooth"}); } return; }
   const b=e.target.closest("button[data-act]"); if(!b) return;
   const id=b.closest(".card").dataset.id; const o=orders.find(x=>x.id===id); if(!o) return;
   if(b.dataset.act==="open"){ openDetail(o); return; }
@@ -1973,7 +1995,7 @@ function openSupAll(id){
 /* ---------- たたむ・広げるの動き ---------- */
 const calm=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 function grpParts(g){ return g?[...g.children].filter(x=>!x.classList.contains("grp-h")&&!x.classList.contains("gsum")):[]; }
-function foldIn(els){ if(calm) return; els.forEach((el,i)=>{ if(!el||!el.animate) return; const h=el.getBoundingClientRect().height; el.style.overflow="hidden";
+function foldIn(els){ setTimeout(placePop,640); if(calm) return; els.forEach((el,i)=>{ if(!el||!el.animate) return; const h=el.getBoundingClientRect().height; el.style.overflow="hidden";
   const a=el.animate([{height:"0px",opacity:0,transform:"translateY(-8px)"},{height:h+"px",opacity:1,transform:"none"}],{duration:240,easing:"cubic-bezier(.2,.8,.2,1)",delay:Math.min(i,10)*34,fill:"backwards"}); a.onfinish=a.oncancel=()=>{ el.style.overflow=""; }; }); }
 function foldOut(els){ if(calm) return Promise.resolve(); return Promise.all(els.map(el=>{ if(!el||!el.animate) return null; const h=el.getBoundingClientRect().height; el.style.overflow="hidden"; return el.animate([{height:h+"px",opacity:1},{height:"0px",opacity:0,transform:"translateY(-6px)"}],{duration:170,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{}); })); }
 
@@ -2041,7 +2063,7 @@ function neighbor(dir){ const v=curView(); if(!v) return null; const i=VIEW_ORDE
 // 隣の画面を、いま見えている位置の横に並べる（指を動かすと一緒についてくる）。使い終わったら元に戻す。
 function peekShow(to){ const nv=$("#view-"+to); if(!nv) return null; if(to==="cal") renderCal(); if(to==="ledger") renderLedger();
   const cr=contentEl.getBoundingClientRect(), cs=getComputedStyle(contentEl), framed=html.classList.contains("framed");
-  const top=framed?contentEl.scrollTop+parseFloat(cs.paddingTop):Math.max(parseFloat(cs.paddingTop),$(".top").getBoundingClientRect().bottom-cr.top+parseFloat(cs.paddingTop));
+  const top=parseFloat(cs.paddingTop)+scrollPos()-(viewY["view-"+to]||0);
   nv.style.cssText=`display:block;position:absolute;top:${top}px;left:${cs.paddingLeft};right:${cs.paddingRight};will-change:transform;pointer-events:none`; return nv; }
 function peekHide(nv){ if(nv) nv.style.cssText=""; }
 contentEl.addEventListener("touchstart",e=>{ if(sw&&sw.nv) peekHide(sw.nv); sw=null; if(e.touches.length!==1||html.classList.contains("mode-d")||scrollsSideways(e.target)) return; const v=curView(); if(!v) return;
@@ -2354,7 +2376,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 16:36</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 19:12</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
