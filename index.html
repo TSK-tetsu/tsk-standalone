@@ -102,6 +102,12 @@
   .sheet .top .rt .ttl b { font-size: 24px; }
   .sheet .top .rt .ttl i { font-size: 14px; }
   .sheet .top .rt .meta { white-space: nowrap; }
+  .stt { display: inline-block; align-self: flex-start; font-style: normal; font-size: 12px; font-weight: 700; line-height: 1.5; border-radius: 6px; padding: 0 8px; }
+  .stt.o { background: var(--band); color: var(--band-gold); }
+  .stt.q { border: 1.5px solid var(--edge); color: var(--sub); background: var(--card); }
+  .linkBox .stt { font-size: 15px; padding: 2px 10px; vertical-align: 1px; }
+  .linkBox.on { border-color: var(--band); border-width: 2px; }
+  .dateBox .clr.on { background: var(--band); border-color: var(--band); color: var(--band-ink); }
   .stack { margin: 20px 16px 0; display: flex; flex-direction: column; gap: 10px; }
   .big { width: 100%; min-height: 80px; padding: 0 16px 0 22px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); box-shadow: 0 1px 0 rgba(11,31,58,.05); text-align: left; display: flex; align-items: center; gap: 12px; font-family: 'Zen Old Mincho', 'Hiragino Mincho ProN', serif; font-size: 24px; font-weight: 700; }
   .big.tall { min-height: 92px; font-size: 28px; }
@@ -970,6 +976,7 @@ details.calmore[open]>summary::before{content:"▾ "}
 .grp .grp-h .base small{font-size:15px;font-weight:700;color:var(--gold-soft);white-space:nowrap}
 .grp .grp-h .units{flex:0 0 auto;align-self:center;background:#fff;color:var(--navy);border-radius:12px;padding:3px 14px 3px 12px;font-size:16px;font-weight:900;border-bottom:4px solid var(--gold);white-space:nowrap}
 .grp .grp-h .units b{font-size:30px;line-height:1.1;margin-right:2px}
+.dueclr.on{background:var(--navy);border-color:var(--navy);color:#fff}
 .dueclr{height:34px;border:2px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:0 10px;font-size:13px;font-weight:700;margin-left:6px}
 /* ---- 10/7 UI：カードを詰める・納期をカードで入れる・済みを畳む・スケジュール表の案件名 ---- */
 .card{padding:10px 12px 10px;margin-bottom:8px;gap:2px 10px}
@@ -1346,7 +1353,7 @@ function card(o){
     <div class="item">${esc(o.item)}${o.qty>1?`<span class="qty">×${o.qty}</span>`:""}</div><span class="pill s${si}">${esc(o.status)}</span>
     ${o.part?`<div class="from">${esc(o.part)}${o.note?"　※ "+esc(o.note):""}</div>`:""}${o.gone?`<div class="gone">仕様書から外れました</div>`:""}
     <div class="sup">${esc(o.supplier)}</div>
-    <div class="dates">${o.orderDate?`<span><b>発注</b>${fmtD(o.orderDate)}</span>`:""}<span class="due ${late?"late":""} ${o.due?"":"nodue"}"><b>納期</b>${canWrite?`<input type="date" class="duein" data-id="${o.id}" value="${esc(o.due||"")}" aria-label="${esc(o.item)} の納期予定">${o.due?`<button type="button" class="dueclr" data-id="${o.id}" aria-label="納期を未定に戻す">未定</button>`:""}`:fmtD(o.due)}${late?"　遅延":""}</span></div>
+    <div class="dates">${o.orderDate?`<span><b>発注</b>${fmtD(o.orderDate)}</span>`:""}<span class="due ${late?"late":""} ${o.due?"":"nodue"}"><b>納期</b>${canWrite?`<input type="date" class="duein" data-id="${o.id}" value="${esc(o.due||"")}" aria-label="${esc(o.item)} の納期予定"><button type="button" class="dueclr ${o.due?"":"on"}" data-id="${o.id}" aria-pressed="${!o.due}" aria-label="納期を未定にする">未定</button>`:fmtD(o.due)}${late?"　遅延":""}</span></div>
     <div class="act">${next&&canWrite?`<button class="b b-sm ${si>=2?"b-green":"b-navy"}" data-act="next">${esc(next)}にする</button>`:""}${si>0&&canWrite?`<button class="b b-sm b-ghost back" data-act="prev" aria-label="${esc(STATUSES[si-1])}に戻す" title="${esc(STATUSES[si-1])}に戻す">戻す</button>`:""}<button class="b b-sm b-ghost" data-act="open">詳細</button></div></article>`;
 }
 $("#list").addEventListener("toggle",e=>{ const d=e.target; if(d.matches&&d.matches("details.done")){ if(d.open) openDone.add(d.dataset.key); else openDone.delete(d.dataset.key); } },true);
@@ -2074,14 +2081,14 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 11:32</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 11:42</div><div class="spacer"></div>';
   }
   function savedHtml() {
     var ids = Object.keys(data.specs).sort(function (x, y) { return data.specs[y].updatedAt - data.specs[x].updatedAt; });
     if (!ids.length) return '';
     return '<div class="sec">保存した仕様書</div><div class="list">' + ids.map(function (id) {
       var r = data.specs[id], m = { name: modelLabel(r) }, c = byId(CONFIGS, r.config);
-      return '<div class="sw' + (ui.swipeId === id ? ' open' : '') + '" data-sw="' + esc(id) + '">' + (store.readOnly ? '' : '<button type="button" class="swdel" data-act="delSaved" data-id="' + esc(id) + '">' + (ui.confirmDelId === id ? '本当に削除' : '削除') + '</button>') + '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + '　' + esc(c.name) + (r.delivery ? '　納品 ' + dayShort(r.delivery) : '') + '</span></span>' + CHEV + '</button></div>'; }).join('') + '</div>';
+      return '<div class="sw' + (ui.swipeId === id ? ' open' : '') + '" data-sw="' + esc(id) + '">' + (store.readOnly ? '' : '<button type="button" class="swdel" data-act="delSaved" data-id="' + esc(id) + '">' + (ui.confirmDelId === id ? '本当に削除' : '削除') + '</button>') + '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><em class="stt ' + (r.board ? 'o' : 'q') + '">' + (r.board ? '受注決定' : '見積もり段階') + '</em><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + '　' + esc(c.name) + (r.delivery ? '　納品 ' + dayShort(r.delivery) : '') + '</span></span>' + CHEV + '</button></div>'; }).join('') + '</div>';
   }
   function screenConfigs() {
     var m = curModel();
@@ -2105,7 +2112,7 @@ return api;
       '<div class="topgrid"><div class="nameBox"><label for="specName">名前（だれ・どこ向け）</label><textarea id="specName" class="grow" rows="1" maxlength="60" autocomplete="off" placeholder="例：○○店 向け"' + (store.readOnly ? ' readonly' : '') + '>' + esc(nameInBox()) + '</textarea></div>' +
       '<div class="dateBox"><label for="specJob">工事番号</label><input id="specJob" type="text" maxlength="30" autocomplete="off" inputmode="text" autocapitalize="characters" placeholder="例：K260115" value="' + esc(jobNo()) + '"' + (store.readOnly ? ' readonly' : '') + '></div><div class="jobMsg" id="jobMsg">' + esc(jobNote(jobNo())) + '</div>' +
       '<div class="unitsBox"><span class="lb">台数</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsDown" aria-label="台数を減らす"' + (u <= 1 ? ' disabled' : '') + '>−</button>') + '<span class="n">' + u + '台</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsUp" aria-label="台数を増やす"' + (u >= 99 ? ' disabled' : '') + '>＋</button>') + '</div>' +
-      '<div class="dateBox"><label for="specDate">納品日</label><input id="specDate" type="date" value="' + esc(deliveryDay()) + '"' + (store.readOnly ? ' disabled' : '') + '>' + (deliveryDay() && !store.readOnly ? '<button type="button" class="clr" data-act="clearDay">未定</button>' : '') + '</div></div>' +
+      '<div class="dateBox"><label for="specDate">納品日</label><input id="specDate" type="date" value="' + esc(deliveryDay()) + '"' + (store.readOnly ? ' disabled' : '') + '>' + (store.readOnly ? '' : '<button type="button" class="clr' + (deliveryDay() ? '' : ' on') + '" data-act="clearDay" aria-pressed="' + !deliveryDay() + '">未定</button>') + '</div></div>' +
       (store.readOnly ? '' : '<div class="stack" style="margin-top:10px">' + switchHtml() + '</div>') +
       '<div class="groups">' + rows + '</div><div class="note">' + FIELDS.length + '項目中 ' + filled + '項目 入力済み</div>' +
       (!memoText().trim() && !ui.memoOpen ? (store.readOnly ? '' : '<div class="stack" style="margin-top:12px"><button type="button" class="btn soft" data-act="openMemo">＋ 全体の備考を書く</button></div>') :
@@ -2590,10 +2597,10 @@ return api;
     if (!board || (store.readOnly && !(r && r.board))) return '';
     if (r && r.board) {
       var st = board.stats(ui.specId);
-      return '<div class="linkBox"><b>発注・納期ボードに載っています</b><div class="st">' + (st.n ? '発注 ' + st.n + '件　未発注 ' + st.todo + '・入荷済 ' + st.in + (st.late ? '　<i>遅延 ' + st.late + '</i>' : '') : '発注する品はまだありません') + '</div><p>品・発注先・納品日・工事番号を直すと、ボードも一緒に変わります。</p><button type="button" class="btn line" data-act="openBoard">発注・納期を見る</button>' +
-        (store.readOnly ? '' : '<button type="button" class="undo" data-act="unlinkBoard">' + (ui.confirmUnlink ? 'もう一度押すとボードから外します（発注済みの品は残ります）' : 'ボードから外す') + '</button>') + '</div>';
+      return '<div class="linkBox on"><b><em class="stt o">受注決定</em>　発注・納期ボードに載っています</b><div class="st">' + (st.n ? '発注 ' + st.n + '件　未発注 ' + st.todo + '・入荷済 ' + st.in + (st.late ? '　<i>遅延 ' + st.late + '</i>' : '') : '発注する品はまだありません') + '</div><p>品・発注先・納品日・工事番号を直すと、ボードも一緒に変わります。</p><button type="button" class="btn line" data-act="openBoard">発注・納期を見る</button>' +
+        (store.readOnly ? '' : '<button type="button" class="undo" data-act="unlinkBoard">' + (ui.confirmUnlink ? 'もう一度押すと見積もり段階に戻します（ボードから外れます。発注済みの品は残ります）' : '見積もり段階に戻す') + '</button>') + '</div>';
     }
-    return '<div class="linkBox"><b>発注・納期ボード</b><p>受注したら押してください。この仕様書の品が、発注先・納品日・工事番号と一緒にボードへ並びます。在庫品・支給品・未定の品は並びません。</p><button type="button" class="btn line" data-act="linkBoard">発注・納期ボードに載せる</button></div>';
+    return '<div class="linkBox"><b><em class="stt q">見積もり段階</em></b><p>受注が決まったら押してください。受注決定にすると、この仕様書の品が発注・納期ボードに並びます（在庫品・支給品・未定の品は並びません）。見積番号（D…）は工事番号（K…）に変わります。</p><button type="button" class="btn fill" data-act="linkBoard">受注決定にする</button></div>';
   }
   function showJobMsg(text, err) { var el = document.getElementById('jobMsg'); if (el) { el.textContent = text || ''; el.className = 'jobMsg' + (err ? ' err' : ''); } }
   function jobNote(v) {
@@ -2701,7 +2708,7 @@ return api;
     else if (act === 'delSaved') { if (!store.readOnly && data.specs[id]) { if (ui.confirmDelId !== id) { ui.confirmDelId = id; render(); } else { ui.specId = id; ui.swipeId = null; ui.confirmDelId = null; removeSpec(); } } }
     else if (act === 'openSaved' && (swipedAt && Date.now() - swipedAt < 400)) { /* the tap that ends a swipe is not an open */ }
     else if (act === 'toBoard') { setMode('board'); board.showHome(); }
-    else if (act === 'linkBoard') { if (!store.readOnly && board) { var lr = ensureRecord(); lr.board = true; saveSpec(); render(); } }
+    else if (act === 'linkBoard') { if (!store.readOnly && board) { var lr = ensureRecord(); lr.board = true; if (/^D\d{6}$/.test(lr.job || '')) lr.job = 'K' + lr.job.slice(1); saveSpec(); render(); } }
     else if (act === 'openBoard') { if (board) { var bx = record() && record().board && !store.readOnly ? boardExport(ui.specId) : null, bid = ui.specId; (bx ? board.sync(bx) : Promise.resolve()).then(function () { setMode('board'); setTimeout(function () { board.showProject(bid); }, 60); }); } }
     else if (act === 'unlinkBoard') { if (!store.readOnly && board && record()) { if (!ui.confirmUnlink) go({ confirmUnlink: true }); else { record().board = false; board.unlink(ui.specId); saveSpec(); go({ confirmUnlink: false }); } } }
     else if (act === 'changeModel') { if (!store.readOnly) { commitName(); go({ screen: 'modelPick' }); } }
