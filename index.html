@@ -391,7 +391,7 @@
       w.innerHTML = '<div style="background:#fff;color:#132033;border-radius:18px;padding:22px 20px;max-width:360px;width:100%"><div style="font-size:19px;font-weight:700;margin-bottom:6px">合言葉（PIN）</div><div style="font-size:14px;color:#60708A;line-height:1.6;margin-bottom:12px">' + (wrong ? '合言葉が違います。もう一度入れてください。' : '社内で共有している合言葉を入れてください。この端末が覚えるので、入力は最初の1回だけです。') + '</div><input type="password" autocomplete="off" style="width:100%;box-sizing:border-box;height:52px;border:2px solid #9AA7BA;border-radius:10px;padding:0 12px;font-size:20px"><button type="button" style="margin-top:14px;width:100%;height:52px;border:0;border-radius:12px;background:#0B1F3A;color:#fff;font-size:17px;font-weight:700">決定</button></div>';
       document.body.appendChild(w);
       var inp = w.querySelector('input'), go = function () { var v = inp.value.trim(); if (!v) { inp.focus(); return; } try { localStorage.setItem(K_PIN, v); } catch (e) {} w.remove(); pinWait = null; res(); };
-      w.querySelector('button').addEventListener('click', go); inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); }); setTimeout(function () { inp.focus(); }, 50);
+      w.querySelector('button').addEventListener('click', go); inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) go(); }); setTimeout(function () { inp.focus(); }, 50);
     });
     return pinWait;
   }
@@ -406,7 +406,7 @@
     w.innerHTML = '<div style="background:#fff;color:#132033;border-radius:18px;padding:22px 20px;max-width:360px;width:100%"><div style="font-size:19px;font-weight:700;margin-bottom:6px">お名前</div><div style="font-size:14px;color:#60708A;line-height:1.6;margin-bottom:12px">変更したとき、ほかの人の画面に「◯◯さんが変更」と出すための名前です。入力はこの端末で1回だけです。</div><input type="text" maxlength="12" autocomplete="off" placeholder="例：社長、川内" style="width:100%;box-sizing:border-box;height:52px;border:2px solid #9AA7BA;border-radius:10px;padding:0 12px;font-size:18px"><button type="button" style="margin-top:14px;width:100%;height:52px;border:0;border-radius:12px;background:#0B1F3A;color:#fff;font-size:17px;font-weight:700">決定</button></div>';
     document.body.appendChild(w);
     var inp = w.querySelector('input'), go = function () { try { localStorage.setItem(K_NAME, inp.value.trim().slice(0, 12)); } catch (e) {} w.remove(); };
-    w.querySelector('button').addEventListener('click', go); inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+    w.querySelector('button').addEventListener('click', go); inp.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) go(); });
   }
   // ---- ほかの人の変更が届いたときのお知らせ ----
   var noteBox = null, noteTimer = null, noteList = [];
@@ -2070,7 +2070,7 @@ return api;
         var next = {};
         snap.docs.forEach(function (d) { var r = cleanRecord(d.id, d.data()); if (r) next[d.id] = r; });
         data.specs = next;
-        var typing = document.activeElement && (document.activeElement.id === 'specName' || document.activeElement.id === 'specMemo' || document.activeElement.id === 'specDate' || document.activeElement.id === 'specJob');
+        var typing = isTyping();
         if (!typing && (ui.screen === 'models' || ui.screen === 'spec' || ui.screen === 'print')) render();
       }, function () {});
       db.doc('catalog/custom').onSnapshot(function (snap) {
@@ -2080,12 +2080,12 @@ return api;
         var nextPrices = {};
         FIELDS.forEach(function (f) { nextPrices[f.k] = cleanPriceMap(body && body.prices ? body.prices[f.k] : null); });
         data.custom = next; data.hidden = nextHidden; data.prices = nextPrices;
-        if (ui.screen === 'picker' && !ui.adding) { keepPrice(); render(); }
+        if (ui.screen === 'picker' && !ui.adding && !isTyping()) { keepPrice(); render(); }
         else if (ui.screen === 'master' && !typingInMaster()) render();
       }, function () {});
       db.doc('catalog/models').onSnapshot(function (snap) {
         data.models = cleanModels(snap.exists && snap.data() ? snap.data().list : null);
-        var typing = document.activeElement && (document.activeElement.id === 'specName' || document.activeElement.id === 'specMemo' || document.activeElement.id === 'specDate' || document.activeElement.id === 'specJob');
+        var typing = isTyping();
         if ((!typing && (ui.screen === 'models' || ui.screen === 'spec' || ui.screen === 'print')) || (ui.screen === 'master' && !typingInMaster())) render();
       }, function () {});
   }
@@ -2105,7 +2105,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 13:32</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 14:28</div><div class="spacer"></div>';
   }
   function savedHtml() {
     var ids = Object.keys(data.specs).sort(function (x, y) { return data.specs[y].updatedAt - data.specs[x].updatedAt; });
@@ -2646,6 +2646,7 @@ return api;
     if (ui.swipeId !== next) { ui.swipeId = next; ui.confirmDelId = null; render(); }
   }, { passive: true });
   app.addEventListener('touchend', function () { if (swipe && swipe.done) swipedAt = Date.now(); swipe = null; }, { passive: true });
+  function isTyping() { var a = document.activeElement; return !!(a && app.contains(a) && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range)$/.test(a.type)))); }
   function commitJob() {
     var el = document.getElementById('specJob'); if (!el || store.readOnly) return;
     var ck = checkJob(el.value);
@@ -2797,7 +2798,7 @@ return api;
     else if (act === 'print') { try { window.print(); } catch (e) { say('この画面からは印刷を開けませんでした。'); } }
     else if (act === 'savePdf') savePdf();
   });
-  app.addEventListener('keydown', function (ev) { if (ev.key !== 'Enter' || !ev.target) return; if (ev.target.id === 'newItem') { ev.preventDefault(); register(); } else if (ev.target.id === 'optName' || ev.target.id === 'optPrice') { ev.preventDefault(); saveOption(); } else if (ev.target.id === 'price' || ev.target.id === 'lineNote') { ev.preventDefault(); commitItem(); } else if (ev.target.id === 'modelName') { ev.preventDefault(); saveModel(); } else if (ev.target.id === 'vendorName') { ev.preventDefault(); addVendor(); } else if (ev.target.getAttribute && ev.target.getAttribute('data-mp') != null) { ev.preventDefault(); ev.target.blur(); } });
+  app.addEventListener('keydown', function (ev) { if (ev.key !== 'Enter' || !ev.target || ev.isComposing || ev.keyCode === 229) return; if (ev.target.id === 'newItem') { ev.preventDefault(); register(); } else if (ev.target.id === 'optName' || ev.target.id === 'optPrice') { ev.preventDefault(); saveOption(); } else if (ev.target.id === 'price' || ev.target.id === 'lineNote') { ev.preventDefault(); commitItem(); } else if (ev.target.id === 'modelName') { ev.preventDefault(); saveModel(); } else if (ev.target.id === 'vendorName') { ev.preventDefault(); addVendor(); } else if (ev.target.getAttribute && ev.target.getAttribute('data-mp') != null) { ev.preventDefault(); ev.target.blur(); } });
   var holdTimer = null, holdFired = false, holdStart = null;
   function clearHold() { if (holdTimer) { clearTimeout(holdTimer); holdTimer = null; } var el = app.querySelector('.opt.pressing'); if (el) el.classList.remove('pressing'); }
   app.addEventListener('pointerdown', function (ev) {
@@ -2813,7 +2814,7 @@ return api;
   window.addEventListener('scroll', clearHold, { passive: true });
   app.addEventListener('contextmenu', function (ev) { if (ev.target.closest && ev.target.closest('.opt[data-hold]')) ev.preventDefault(); });
   app.addEventListener('change', function (ev) { if (!ev.target) return; if (ev.target.id === 'specName') commitName(); else if (ev.target.id === 'specMemo') commitMemo(); else if (ev.target.id === 'specDate') commitDay(); else if (ev.target.id === 'specJob') commitJob(); else if (ev.target.getAttribute && ev.target.getAttribute('data-q')) commitQuote(); else if (ev.target.getAttribute && ev.target.getAttribute('data-mp') != null) commitMasterPrice(ev.target); });
-  app.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && ev.target && ev.target.id === 'specName') { ev.preventDefault(); ev.target.blur(); } });
+  app.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && !ev.isComposing && ev.keyCode !== 229 && ev.target && ev.target.id === 'specName') { ev.preventDefault(); ev.target.blur(); } });
   app.addEventListener('input', function (ev) { if (ev.target && ev.target.classList && ev.target.classList.contains('grow')) grow(ev.target); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { growAll(); if (ui.screen === 'print') render(); });
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', function () { if (ui.screen === 'print') render(); });   // page breaks are measured, so measure again once the type is in
