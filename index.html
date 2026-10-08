@@ -977,6 +977,27 @@ details.calmore[open]>summary::before{content:"▾ "}
 .grp .grp-h .units{flex:0 0 auto;align-self:center;background:#fff;color:var(--navy);border-radius:12px;padding:3px 14px 3px 12px;font-size:16px;font-weight:900;border-bottom:4px solid var(--gold);white-space:nowrap}
 .grp .grp-h .units b{font-size:30px;line-height:1.1;margin-right:2px}
 .dueclr.on{background:var(--navy);border-color:var(--navy);color:#fff}
+/* ---- 状態を6つに（発注予定日決定を追加）・在庫充当・発注予定日の欄 ---- */
+.card.s5::before{background:var(--st5)}.card.s5{background:color-mix(in srgb,var(--st5) 10%,var(--card))}.pill.s5{background:var(--st5)}.cal .mk.s5{background:var(--st5)}
+.grp .card.mini::before{background:var(--st5)}.grp .card.mini{background:color-mix(in srgb,var(--st5) 5%,var(--card))}
+.card .dates{flex-wrap:wrap;row-gap:6px}
+.card .dates .plan{flex:0 0 100%;display:flex;align-items:center;gap:6px}
+.card .dates .plan b{white-space:nowrap}
+.card .stk{display:inline-block;margin-left:8px;border:1.5px solid var(--gold-dk);color:var(--gold-dk);border-radius:6px;padding:0 6px;font-size:12px;font-weight:900;vertical-align:2px}
+.card .act .stockb{flex:0 0 auto}
+.pill{white-space:nowrap}
+.card .pill.s1{font-size:11px;padding:4px 8px}
+.dueclr{white-space:nowrap;flex:0 0 auto}
+.grp .card{min-width:0;max-width:100%}
+.grp .grid{min-width:0}
+.card .act{flex-wrap:wrap}
+.card .act .b{min-width:0}
+.card .act .b:first-child{flex:1 1 130px}
+.card .act .b-ghost{padding-left:10px;padding-right:10px}
+.card .item{min-width:0;overflow-wrap:anywhere}
+.grp .card .dates{grid-column:1/-1;min-width:0}
+.grp .card .dates .plan,.grp .card .dates .due{min-width:0}
+.grp .card .duein{max-width:138px;min-width:0}
 .dueclr{height:34px;border:2px solid var(--line);border-radius:9px;background:var(--card);color:var(--muted);padding:0 10px;font-size:13px;font-weight:700;margin-left:6px}
 /* ---- 10/7 UI：カードを詰める・納期をカードで入れる・済みを畳む・スケジュール表の案件名 ---- */
 .card{padding:10px 12px 10px;margin-bottom:8px;gap:2px 10px}
@@ -1028,7 +1049,7 @@ details.done[open]>summary::before{content:"▾"}
 :host(.mode-d) .cal th,:host(.mode-d) .cal td{min-width:38px;width:38px}
 :host(.mode-d) .cal .lab{min-width:220px;width:220px;max-width:220px}
 /* ---- 一覧：案件ごとの帯と間隔・状態ごとの色・仕入先ごとのまとまり ---- */
-:host{--st0:#7C8798;--st1:#C97A12;--st2:#2F6FD0;--st3:#2E9E68;--st4:#1C3A6B}
+:host{--st0:#7C8798;--st1:#7A4FD0;--st2:#C97A12;--st3:#2F6FD0;--st4:#2E9E68;--st5:#1C3A6B}
 .grp{margin:0 0 38px}
 .grp:last-child{margin-bottom:8px}
 .grp-h{background:var(--navy);border-bottom:3px solid var(--gold);border-radius:12px;padding:10px 12px;margin:0 0 4px}
@@ -1149,8 +1170,8 @@ details.done[open]>summary::before{content:"▾"}
 </div></template>
 <script>
 window.TSKBoardInit=function(host,root,bridge){
-const STATUSES=["未発注","発注済","納期確認済","入荷","検収"];
-const SCOL=["#7C8798","#C97A12","#2F6FD0","#2E9E68","#1C3A6B"];
+const STATUSES=["未発注","発注予定日決定","発注済","納期確認済","入荷","検収"], PLAN=1, ORD=2, ARR=4, DONE=5;
+const SCOL=["#7C8798","#7A4FD0","#C97A12","#2F6FD0","#2E9E68","#1C3A6B"];
 const $=s=>root.querySelector(s);
 const todayStr=()=>new Date().toLocaleDateString("sv-SE");
 let orders=[], allOrders=[], projects=[], tasks=[], meetings=[];
@@ -1263,12 +1284,12 @@ function kFeedback(inp,exceptId){ let f=inp.parentElement.querySelector(".kfb");
   if(r.level==="warn"){ f.hidden=false; f.className="kfb warn"; f.innerHTML=`${esc(r.msg)} <button type="button" class="lnk" data-kk="${r.kk}">Kに直す</button>`; return r; }
   f.hidden=false; f.className="kfb ok"; f.textContent="工事番号の形式OK"; return r; }
 function fmtD(d){ if(!d) return "—"; const [,m,dd]=d.split("-"); return `${+m}/${+dd}`; }
-function dueSoon(o){ if(!o.due||STATUSES.indexOf(o.status)>=3) return false; const t=new Date(todayStr()+"T00:00:00"), d=new Date(o.due+"T00:00:00"); const diff=Math.round((d-t)/86400000); return diff<=3; } // 遅延含む3日以内
+function dueSoon(o){ if(!o.due||STATUSES.indexOf(o.status)>=ARR) return false; const t=new Date(todayStr()+"T00:00:00"), d=new Date(o.due+"T00:00:00"); const diff=Math.round((d-t)/86400000); return diff<=3; } // 遅延含む3日以内
 function lineText(){ const rows=orders.filter(dueSoon).sort((a,b)=>(a.due>b.due?1:-1)); if(!rows.length) return "";
   const today=todayStr(); const L=rows.map(o=>{ const P=pjLabel(o); const t=new Date(today+"T00:00:00"), d=new Date(o.due+"T00:00:00"); const diff=Math.round((d-t)/86400000);
     const tag= diff<0?`【遅延${-diff}日】`: diff===0?"【本日】": `【あと${diff}日】`; return `${tag}${fmtD(o.due)} ${P.k||"番号未定"} ${P.who}\n　${o.item}（${o.supplier}）${o.status}`; });
   return `■発注 要確認 ${+today.slice(5,7)}/${+today.slice(8,10)}\n`+L.join("\n"); }
-function isLate(o){ return o.due && o.due<todayStr() && STATUSES.indexOf(o.status)<3; }
+function isLate(o){ return o.due && o.due<todayStr() && STATUSES.indexOf(o.status)<ARR; }
 function inThisWeek(d){ if(!d) return false; const now=new Date(); const day=(now.getDay()+6)%7; const mon=new Date(now); mon.setDate(now.getDate()-day); mon.setHours(0,0,0,0); const sun=new Date(mon); sun.setDate(mon.getDate()+6); const t=new Date(d+"T00:00:00"); return t>=mon&&t<=sun; }
 function toast(m){ if(/できません|必須|してください|ありません/.test(m)) snd.err(); const t=$("#toast"); t.textContent=m; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),1800); }
 function esc(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -1279,7 +1300,7 @@ function pjLabel(o){ const p=pjOf(o); if(p) return {k:p.k||"",who:p.client||"（
 function fmtDW(d){ if(!d) return ""; const t=new Date(d+"T00:00:00"); return isNaN(t)?"":`${t.getMonth()+1}/${t.getDate()}（${"日月火水木金土"[t.getDay()]}）`; }
 
 // 並び順：納期の近い案件が上。納期＝案件の納品日、無ければ未入荷の発注でいちばん早い納期予定。日付のない案件は下。
-function pjDate(key){ const p=projects.find(x=>x.id===key); if(p&&p.delivery) return p.delivery; return orders.filter(o=>pjKey(o)===key&&STATUSES.indexOf(o.status)<3&&o.due).map(o=>o.due).sort()[0]||""; }
+function pjDate(key){ const p=projects.find(x=>x.id===key); if(p&&p.delivery) return p.delivery; return orders.filter(o=>pjKey(o)===key&&STATUSES.indexOf(o.status)<ARR&&o.due).map(o=>o.due).sort()[0]||""; }
 function pjCompare(ka,oa,kb,ob){ if(ka==="none") return kb==="none"?0:1; if(kb==="none") return -1; const la=pjLabel(oa), lb=pjLabel(ob); return (pjDate(ka)||"9999").localeCompare(pjDate(kb)||"9999")||(la.k||"～").localeCompare(lb.k||"～")||la.who.localeCompare(lb.who); }
 
 /* ---------- views ---------- */
@@ -1297,14 +1318,14 @@ $("#fab").addEventListener("click",()=>openAdd()); $("#sideAdd").addEventListene
 function setFilter(f){ filter=f; root.querySelectorAll("#filters .chip,#stats .stat").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f===f)); renderList(); }
 $("#filters").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(c) setFilter(c.dataset.f); });
 $("#stats").addEventListener("click",e=>{ const c=e.target.closest(".stat"); if(c) setFilter(c.dataset.f); });
-function filtered(){ return orders.filter(o=>{ if(filter==="soon") return dueSoon(o); if(filter==="late") return isLate(o); if(filter==="week") return inThisWeek(o.due); if(filter==="open") return STATUSES.indexOf(o.status)<3; if(filter==="done") return STATUSES.indexOf(o.status)>=3; return true; }); }
+function filtered(){ return orders.filter(o=>{ if(filter==="soon") return dueSoon(o); if(filter==="late") return isLate(o); if(filter==="week") return inThisWeek(o.due); if(filter==="open") return STATUSES.indexOf(o.status)<ARR; if(filter==="done") return STATUSES.indexOf(o.status)>=ARR; return true; }); }
 
 /* ---------- list ---------- */
 function renderList(){
   const el=$("#list"); const rows=filtered();
   const late=orders.filter(isLate).length;
   $("#headCount").innerHTML = orders.length? `${orders.length}件${late?`<br><b style="color:#FF8A80">遅延 ${late}</b>`:""}` : "まだ発注がありません";
-  $("#st-all").textContent=orders.length; $("#st-late").textContent=late; $("#st-week").textContent=orders.filter(o=>inThisWeek(o.due)).length; $("#st-open").textContent=orders.filter(o=>STATUSES.indexOf(o.status)<3).length;
+  $("#st-all").textContent=orders.length; $("#st-late").textContent=late; $("#st-week").textContent=orders.filter(o=>inThisWeek(o.due)).length; $("#st-open").textContent=orders.filter(o=>STATUSES.indexOf(o.status)<ARR).length;
   const soon=orders.filter(dueSoon).length; $("#st-soon").textContent=soon;
   ["#badgeNav","#badgeSide"].forEach(s=>{ const b=$(s); b.textContent=soon; b.hidden=!soon; });
   (b=>{ b.textContent=late; b.hidden=!late; })($("#chipLate")); (b=>{ b.textContent=soon; b.hidden=!soon; })($("#chipSoon"));
@@ -1330,12 +1351,12 @@ function renderList(){
 const openDone=new Set(), openGrp=new Set();
 // 一覧は案件ごとに畳んでおく。帯を押すと開く。絞り込み中（要確認・遅延など）は、該当するものが見えるよう全部開く。
 const grpF=new Map();   // 案件ごとの絞り込み： "s0"〜"s4"（状態）, "late"（遅延）, "nodue"（納期未定）
-function gMatch(f,o){ return f==="late"?isLate(o):f==="nodue"?(!o.due&&STATUSES.indexOf(o.status)<3):o.status===STATUSES[+f.slice(1)]; }
+function gMatch(f,o){ return f==="late"?isLate(o):f==="nodue"?(!o.due&&STATUSES.indexOf(o.status)<ARR):o.status===STATUSES[+f.slice(1)]; }
 function gLabel(f){ return f==="late"?"遅延":f==="nodue"?"納期未定":STATUSES[+f.slice(1)]; }
 function gOpen(key){ return filter!=="all"||openGrp.has(key)||grpF.has(key); }
-function gSum(g,key){ const cur=grpF.get(key)||""; const chip=(f,cls,style,label,n)=>`<button type="button" class="st ${cls} ${cur===f?"on":cur?"dim":""}" data-gf="${f}" aria-pressed="${cur===f}" ${style?`style="background:${style}"`:""}>${label}<b>${n}</b></button>`; if(!g.length) return `<div class="gsum"><span class="st none">発注はまだありません</span></div>`; const late=g.filter(isLate).length, nodue=g.filter(o=>!o.due&&STATUSES.indexOf(o.status)<3).length; return `<div class="gsum"><div class="bar">${STATUSES.map((s,i)=>{ const n=g.filter(o=>o.status===s).length; return n?`<i style="width:${n/g.length*100}%;background:${SCOL[i]}"></i>`:""; }).join("")}</div>${STATUSES.map((s,i)=>{ const n=g.filter(o=>o.status===s).length; return n?chip("s"+i,"",SCOL[i],s,n):""; }).join("")}${late?chip("late","late","","遅延",late):""}${nodue?chip("nodue","none","","納期未定",nodue):""}${cur?`<span class="gfnote">「${gLabel(cur)}」だけ表示中。もう一度押すと全部に戻ります</span>`:""}</div>`; }
+function gSum(g,key){ const cur=grpF.get(key)||""; const chip=(f,cls,style,label,n)=>`<button type="button" class="st ${cls} ${cur===f?"on":cur?"dim":""}" data-gf="${f}" aria-pressed="${cur===f}" ${style?`style="background:${style}"`:""}>${label}<b>${n}</b></button>`; if(!g.length) return `<div class="gsum"><span class="st none">発注はまだありません</span></div>`; const late=g.filter(isLate).length, nodue=g.filter(o=>!o.due&&STATUSES.indexOf(o.status)<ARR).length; return `<div class="gsum"><div class="bar">${STATUSES.map((s,i)=>{ const n=g.filter(o=>o.status===s).length; return n?`<i style="width:${n/g.length*100}%;background:${SCOL[i]}"></i>`:""; }).join("")}</div>${STATUSES.map((s,i)=>{ const n=g.filter(o=>o.status===s).length; return n?chip("s"+i,"",SCOL[i],s,n):""; }).join("")}${late?chip("late","late","","遅延",late):""}${nodue?chip("nodue","none","","納期未定",nodue):""}${cur?`<span class="gfnote">「${gLabel(cur)}」だけ表示中。もう一度押すと全部に戻ります</span>`:""}</div>`; }
 function grpBody(key,g){ const f=grpF.get(key); return f?supBlocks(g.filter(o=>gMatch(f,o)),true):supBlocks(g); }
-function supBlocks(g,force){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>{ const id=pjKey(l[0])+"|"+s, shut=!force&&filter==="all"&&!openSup.has(id), ls=[...l].sort((a,b)=>(a.status===STATUSES[4])-(b.status===STATUSES[4]));
+function supBlocks(g,force){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>{ const id=pjKey(l[0])+"|"+s, shut=!force&&filter==="all"&&!openSup.has(id), ls=[...l].sort((a,b)=>(a.status===STATUSES[DONE])-(b.status===STATUSES[DONE]));
     const mini=STATUSES.map((st,i)=>{ const n=l.filter(o=>o.status===st).length; return n?`<span class="st" style="background:${SCOL[i]}">${st}<b>${n}</b></span>`:""; }).join("");
     return `<button type="button" class="sup-h ${shut?"shut":""}" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▸":"▾"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</button>${shut?"":`<div class="grid">${ls.map(card).join("")}</div>`}`; }).join(""); }
 // 案件を開いたとき、仕入先は畳んだ状態で並ぶ。見出しを押すと開く（開いたものを覚えておく）。絞り込み中は全部開く。
@@ -1347,17 +1368,18 @@ function gAct(key){ if(!canWrite) return ""; const p=projects.find(x=>x.id===key
 // 納品日の表示：日付を大きく、残り日数つき。過ぎていれば赤、未入力なら「納品日 未定」。
 function dlvHtml(d){ if(!d) return `<span class="dlv none">納品日 未定</span>`; const n=Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000); return `<span class="dlv ${n<0?"over":""}">納品<b>${fmtDW(d)}</b><small>${n>0?`あと${n}日`:n===0?"本日":`${-n}日超過`}</small></span>`; }
 function card(o){
-  const si=STATUSES.indexOf(o.status); const late=isLate(o); const next=si<4?STATUSES[si+1]:null;
-  if(si===4) return `<article class="card s4 mini" data-id="${o.id}"><div class="item">${esc(o.item)}${o.qty>1?` ×${o.qty}`:""}</div><span class="pill s4">${esc(o.status)}</span><div class="act">${canWrite?`<button class="b b-sm b-ghost back" data-act="prev" aria-label="${esc(STATUSES[3])}に戻す">戻す</button>`:""}<button class="b b-sm b-ghost" data-act="open">詳細</button></div></article>`;
+  const si=STATUSES.indexOf(o.status); const late=isLate(o); const next=si<DONE?STATUSES[si<ORD?ORD:si+1]:null;
+  if(si===DONE) return `<article class="card s5 mini" data-id="${o.id}"><div class="item">${esc(o.item)} ×${o.qty||1}</div><span class="pill s5">${esc(o.status)}</span><div class="act">${canWrite?`<button class="b b-sm b-ghost back" data-act="prev" aria-label="${esc(STATUSES[ARR])}に戻す">戻す</button>`:""}<button class="b b-sm b-ghost" data-act="open">詳細</button></div></article>`;
   return `<article class="card s${si} ${late?"late":""}" data-id="${o.id}">
-    <div class="item">${esc(o.item)}${o.qty>1?`<span class="qty">×${o.qty}</span>`:""}</div><span class="pill s${si}">${esc(o.status)}</span>
+    <div class="item">${esc(o.item)}<span class="qty">×${o.qty||1}</span>${o.stock?`<span class="stk">在庫充当</span>`:""}</div><span class="pill s${si}">${esc(o.status)}</span>
     ${o.part?`<div class="from">${esc(o.part)}${o.note?"　※ "+esc(o.note):""}</div>`:""}${o.gone?`<div class="gone">仕様書から外れました</div>`:""}
     <div class="sup">${esc(o.supplier)}</div>
-    <div class="dates">${o.orderDate?`<span><b>発注</b>${fmtD(o.orderDate)}</span>`:""}<span class="due ${late?"late":""} ${o.due?"":"nodue"}"><b>納期</b>${canWrite?`<input type="date" class="duein" data-id="${o.id}" value="${esc(o.due||"")}" aria-label="${esc(o.item)} の納期予定"><button type="button" class="dueclr ${o.due?"":"on"}" data-id="${o.id}" aria-pressed="${!o.due}" aria-label="納期を未定にする">未定</button>`:fmtD(o.due)}${late?"　遅延":""}</span></div>
-    <div class="act">${next&&canWrite?`<button class="b b-sm ${si>=2?"b-green":"b-navy"}" data-act="next">${esc(next)}にする</button>`:""}${si>0&&canWrite?`<button class="b b-sm b-ghost back" data-act="prev" aria-label="${esc(STATUSES[si-1])}に戻す" title="${esc(STATUSES[si-1])}に戻す">戻す</button>`:""}<button class="b b-sm b-ghost" data-act="open">詳細</button></div></article>`;
+    <div class="dates">${si<ORD&&canWrite?`<span class="plan"><b>発注予定</b><input type="date" class="duein planin" data-id="${o.id}" value="${esc(o.planDate||"")}" aria-label="${esc(o.item)} の発注予定日"><button type="button" class="dueclr planclr ${o.planDate?"":"on"}" data-id="${o.id}" aria-pressed="${!o.planDate}">未定</button></span>`:""}${o.orderDate?`<span><b>発注</b>${fmtD(o.orderDate)}</span>`:""}<span class="due ${late?"late":""} ${o.due?"":"nodue"}"><b>納期</b>${canWrite?`<input type="date" class="duein" data-id="${o.id}" value="${esc(o.due||"")}" aria-label="${esc(o.item)} の納期予定"><button type="button" class="dueclr ${o.due?"":"on"}" data-id="${o.id}" aria-pressed="${!o.due}" aria-label="納期を未定にする">未定</button>`:fmtD(o.due)}${late?"　遅延":""}</span></div>
+    <div class="act">${next&&canWrite?`<button class="b b-sm ${si>=ARR-1?"b-green":"b-navy"}" data-act="next">${esc(next)}にする</button>`:""}${si<ORD&&canWrite?`<button class="b b-sm b-ghost stockb" data-act="stock">在庫充当</button>`:""}${si>=ORD&&canWrite?`<button class="b b-sm b-ghost back" data-act="prev">戻す</button>`:""}<button class="b b-sm b-ghost" data-act="open">詳細</button></div></article>`;
 }
 $("#list").addEventListener("toggle",e=>{ const d=e.target; if(d.matches&&d.matches("details.done")){ if(d.open) openDone.add(d.dataset.key); else openDone.delete(d.dataset.key); } },true);
-$("#list").addEventListener("change",async e=>{ const t=e.target.closest(".duein"); if(!t) return; const o=orders.find(x=>x.id===t.dataset.id); if(!o||(o.due||"")===t.value) return;
+$("#list").addEventListener("change",async e=>{ const pl=e.target.closest(".planin"); if(pl){ const op=orders.find(x=>x.id===pl.dataset.id); if(op&&(op.planDate||"")!==pl.value){ const ps=STATUSES.indexOf(op.status); try{ await saveOrder(op.id,{...strip(op),planDate:pl.value,status:ps<ORD?STATUSES[pl.value?PLAN:0]:op.status,updatedAt:new Date().toISOString()}); toast(pl.value?`発注予定日を ${fmtD(pl.value)} にしました`:"発注予定日を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
+  const t=e.target.closest(".duein"); if(!t) return; const o=orders.find(x=>x.id===t.dataset.id); if(!o||(o.due||"")===t.value) return;
   try{ await saveOrder(o.id,{...strip(o),due:t.value,updatedAt:new Date().toISOString()}); toast(t.value?`納期を ${fmtD(t.value)} にしました`:"納期を消しました"); }catch{ toast("更新できませんでした"); } });
 $("#list").addEventListener("click",async e=>{
   const sp=e.target.closest("button[data-spec]"); if(sp){ bridge.openSpec(sp.dataset.spec); return; }
@@ -1365,13 +1387,15 @@ $("#list").addEventListener("click",async e=>{
   const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(gp) openEditPj(gp); return; }
   const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)) openSup.delete(k); else openSup.add(k); renderList(); return; }
   const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ openGrp.delete(k); grpF.delete(k); } else openGrp.add(k); renderList(); return; }
+  const pc=e.target.closest(".planclr"); if(pc){ const op=orders.find(x=>x.id===pc.dataset.id); if(op&&op.planDate){ const ps=STATUSES.indexOf(op.status); try{ await saveOrder(op.id,{...strip(op),planDate:"",status:ps===PLAN?STATUSES[0]:op.status,updatedAt:new Date().toISOString()}); toast("発注予定日を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const dc=e.target.closest(".dueclr"); if(dc){ const od=orders.find(x=>x.id===dc.dataset.id); if(od&&od.due){ try{ await saveOrder(od.id,{...strip(od),due:"",updatedAt:new Date().toISOString()}); toast("納期を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const b=e.target.closest("button[data-act]"); if(!b) return;
   const id=b.closest(".card").dataset.id; const o=orders.find(x=>x.id===id); if(!o) return;
   if(b.dataset.act==="open"){ openDetail(o); return; }
-  const back=b.dataset.act==="prev"; const si=STATUSES.indexOf(o.status); const ns=STATUSES[si+(back?-1:1)]; if(!ns) return;
+  if(b.dataset.act==="stock"){ b.disabled=true; try{ await saveOrder(id,{...strip(o),stock:true,status:STATUSES[ARR],updatedAt:new Date().toISOString()}); toast("在庫充当にしました（入荷の扱いになります）"); }catch{ toast("更新できませんでした"); b.disabled=false; } return; }
+  const back=b.dataset.act==="prev"; const si=STATUSES.indexOf(o.status); const ns=back?(o.stock?STATUSES[o.planDate?PLAN:0]:STATUSES[(si===ORD&&!o.planDate)?0:si-1]):STATUSES[si<ORD?ORD:si+1]; if(!ns) return; const base=strip(o); if(back&&o.stock) delete base.stock;
   b.disabled=true;
-  try{ await saveOrder(id,{...strip(o),status:ns,updatedAt:new Date().toISOString()}); if(back){ toast(`${ns}に戻しました`); } else { if(STATUSES.indexOf(ns)>=3) snd.done(); else snd.up(); toast(`${ns}にしました`); } }catch{ toast("更新できませんでした"); b.disabled=false; }
+  try{ await saveOrder(id,{...base,status:ns,updatedAt:new Date().toISOString()}); if(back){ toast(`${ns}に戻しました`); } else { if(STATUSES.indexOf(ns)>=ARR) snd.done(); else snd.up(); toast(`${ns}にしました`); } }catch{ toast("更新できませんでした"); b.disabled=false; }
 });
 
 /* ---------- projects view ---------- */
@@ -1384,9 +1408,9 @@ function renderPj(){
   el.innerHTML=[...keys.entries()].sort((a,b)=>pjCompare(a[0],a[1].g[0]||{projectId:a[0]},b[0],b[1].g[0]||{projectId:b[0]})).map(([key,{p,g}])=>{
     const L=p?{k:p.k||"",who:p.client||"（宛先未入力）",spec:p.spec||"",delivery:p.delivery||""}:(g[0]?pjLabel(g[0]):{k:"",who:"案件未設定",spec:""});
     const n=g.length; const cnt=STATUSES.map(s=>g.filter(o=>o.status===s).length); const lateN=g.filter(isLate).length;
-    const nextDue=g.filter(o=>STATUSES.indexOf(o.status)<3&&o.due).map(o=>o.due).sort()[0];
+    const nextDue=g.filter(o=>STATUSES.indexOf(o.status)<ARR&&o.due).map(o=>o.due).sort()[0];
     return `<div class="pj" data-key="${esc(key)}"><div class="row">${L.k?`<span class="k">${esc(L.k)}</span>`:""}<span class="who">${esc(L.who)}</span></div>${L.spec?`<div class="spec">${esc(L.spec)}</div>`:""}
-      <div class="meta">${dlvHtml(L.delivery)}<span>${n}件</span><span>入荷済 ${cnt[3]+cnt[4]}/${n}</span>${nextDue?`<span>次の納期 ${fmtD(nextDue)}</span>`:""}${lateN?`<span class="late">遅延 ${lateN}</span>`:""}</div>
+      <div class="meta">${dlvHtml(L.delivery)}<span>${n}件</span><span>入荷済 ${cnt[ARR]+cnt[DONE]}/${n}</span>${nextDue?`<span>次の納期 ${fmtD(nextDue)}</span>`:""}${lateN?`<span class="late">遅延 ${lateN}</span>`:""}</div>
       <div class="bar">${n?cnt.map((c,i)=>c?`<i style="width:${c/n*100}%;background:${SCOL[i]}"></i>`:"").join(""):""}</div>
       <div class="act"><button class="b b-sm b-navy" data-act="orders">発注一覧</button>${p&&p.specId?`<button class="b b-sm b-ghost" data-act="spec">仕様書を開く</button>`:p&&canWrite?`<button class="b b-sm b-ghost" data-act="editpj">案件を編集</button>`:""}${canWrite?`<button class="b b-sm b-gold" data-act="addto">＋発注</button>`:""}</div></div>`;
   }).join("");
@@ -1408,14 +1432,14 @@ function addDays(d,n){ const t=new Date(d+"T00:00:00"); t.setDate(t.getDate()+n)
 function calAgenda(rows,today){
   const ev=[], pj=[]; let nodue=0;
   rows.forEach(([key,{p,g}])=>{ const L=p?{who:p.client||"（宛先未入力）",delivery:p.delivery||""}:pjLabel(g[0]||{projectId:key});
-    const open=g.filter(o=>STATUSES.indexOf(o.status)<3); nodue+=open.filter(o=>!o.due).length;
+    const open=g.filter(o=>STATUSES.indexOf(o.status)<ARR); nodue+=open.filter(o=>!o.due).length;
     pj.push({key,who:L.who,delivery:L.delivery||"",open:open.length,late:g.filter(isLate).length});
     if(L.delivery) ev.push({d:L.delivery,t:0,key,who:L.who});
     open.forEach(o=>{ if(o.due) ev.push({d:o.due,t:1,key,who:L.who,o}); }); });
   const day=d=>Math.round((new Date(d+"T00:00:00")-new Date(today+"T00:00:00"))/86400000);
   const rel=d=>{ const n=day(d); return n===0?"今日":n===1?"明日":n>0?`あと${n}日`:`${-n}日前`; };
   const item=e=>e.t===0?`<button type="button" class="ag dl" data-ckey="${esc(e.key)}"><span class="tag">納品</span><b>${esc(e.who)}</b></button>`
-    :`<button type="button" class="ag" data-oid="${e.o.id}"><i style="background:${SCOL[Math.max(0,STATUSES.indexOf(e.o.status))]}"></i><span class="tx"><b>${esc(e.o.item)}${e.o.qty>1?` ×${e.o.qty}`:""}</b><small>${esc(e.o.supplier||"仕入先 未定")}　${esc(e.who)}</small></span><span class="pill s${Math.max(0,STATUSES.indexOf(e.o.status))}">${esc(e.o.status)}</span></button>`;
+    :`<button type="button" class="ag" data-oid="${e.o.id}"><i style="background:${SCOL[Math.max(0,STATUSES.indexOf(e.o.status))]}"></i><span class="tx"><b>${esc(e.o.item)} ×${e.o.qty||1}</b><small>${esc(e.o.supplier||"仕入先 未定")}　${esc(e.who)}</small></span><span class="pill s${Math.max(0,STATUSES.indexOf(e.o.status))}">${esc(e.o.status)}</span></button>`;
   const head=`<div class="cdlist">${pj.map(x=>`<button type="button" class="cd" data-ckey="${esc(x.key)}">${dlvHtml(x.delivery)}<b>${esc(x.who)}</b><small>${x.late?`<em>遅延 ${x.late}</em>　`:""}未入荷 ${x.open}</small></button>`).join("")}</div>`;
   const late=ev.filter(e=>e.d<today).sort((a,b)=>a.d.localeCompare(b.d)), next=ev.filter(e=>e.d>=today).sort((a,b)=>a.d.localeCompare(b.d)||a.t-b.t);
   const mon=new Date(today+"T00:00:00"); mon.setDate(mon.getDate()-((mon.getDay()+6)%7)); const wk=d=>Math.floor((new Date(d+"T00:00:00")-mon)/604800000);
@@ -1429,10 +1453,10 @@ function calAgenda(rows,today){
 // 月のカレンダー：1日＝1マス。金の札＝お客様への納品、色の札＝その日に入る予定の発注（色はいちばん進んでいない状態、過ぎていれば赤）。
 let calDays=new Map();
 function calMonths(rows,today){
-  calDays=new Map(); const at=d=>{ if(!calDays.has(d)) calDays.set(d,{dl:[],due:[]}); return calDays.get(d); }; let lastDate=today, nodue=0;
+  calDays=new Map(); const at=d=>{ if(!calDays.has(d)) calDays.set(d,{dl:[],due:[],plan:[]}); return calDays.get(d); }; let lastDate=today, nodue=0;
   rows.forEach(([key,{p,g}])=>{ const L=p?{who:p.client||"（宛先未入力）",delivery:p.delivery||""}:pjLabel(g[0]||{projectId:key});
     if(L.delivery){ at(L.delivery).dl.push({key,who:L.who}); if(L.delivery>lastDate) lastDate=L.delivery; }
-    g.forEach(o=>{ if(STATUSES.indexOf(o.status)>=3) return; if(!o.due){ nodue++; return; } at(o.due).due.push({o,key,who:L.who}); if(o.due>lastDate) lastDate=o.due; }); });
+    g.forEach(o=>{ if(STATUSES.indexOf(o.status)>=ARR) return; if(o.status===STATUSES[PLAN]&&o.planDate){ at(o.planDate).plan.push({o,key,who:L.who}); if(o.planDate>lastDate) lastDate=o.planDate; } if(!o.due){ nodue++; return; } at(o.due).due.push({o,key,who:L.who}); if(o.due>lastDate) lastDate=o.due; }); });
   const first=new Date(today.slice(0,7)+"-01T00:00:00"), months=[]; let m=new Date(first), capM=new Date(first); capM.setMonth(capM.getMonth()+3);
   const endM=new Date(lastDate.slice(0,7)+"-01T00:00:00"), minEnd=new Date(first); minEnd.setMonth(minEnd.getMonth()+1);
   const stop=endM>capM?capM:(endM<minEnd?minEnd:endM);
@@ -1440,12 +1464,12 @@ function calMonths(rows,today){
   const iso=d=>d.toLocaleDateString("sv-SE");
   const cell=d=>{ const s=iso(d), e=calDays.get(s), w=d.getDay(); let chips="";
     if(e){ chips+=e.dl.slice(0,2).map(x=>`<span class="dch dl">納<i class="sp">品</i><i class="pc"> ${esc(x.who.replace(/^[（(][^）)]*[）)]/,"").slice(0,5))}</i></span>`).join("");
-      if(e.due.length){ const late=s<today, si=Math.min(...e.due.map(x=>Math.max(0,STATUSES.indexOf(x.o.status)))); chips+=`<span class="dch ${late?"late":""}" style="${late?"":`background:${SCOL[si]}`}"><i class="pc">${late?"遅延":"入荷"} </i>${e.due.length}件</span>`; } }
+      if(e.due.length){ const late=s<today, si=Math.min(...e.due.map(x=>Math.max(0,STATUSES.indexOf(x.o.status)))); chips+=`<span class="dch ${late?"late":""}" style="${late?"":`background:${SCOL[si]}`}"><i class="pc">${late?"遅延":"入荷"} ${e.due.length}件</i><i class="sp">${late?"遅延":"入荷"}${e.due.length}</i></span>`; } if(e.plan.length) chips+=`<span class="dch" style="background:${SCOL[PLAN]}"><i class="pc">発注予定 ${e.plan.length}件</i><i class="sp">発注${e.plan.length}</i></span>`; }
     return `<button type="button" class="dcell ${w===0||w===6?"we":""} ${s===today?"today":""} ${s<today?"past":""} ${e?"has":""}" data-day="${s}" ${e?"":"tabindex=-1"} aria-label="${fmtDW(s)}${e?` 予定あり`:""}"><span class="dn">${d.getDate()}</span>${chips}</button>`; };
   const html=months.map(m0=>{ const y=m0.getFullYear(), mo=m0.getMonth(); const start=new Date(m0); start.setDate(1-((start.getDay()+6)%7)); let weeks="";
     for(let w=0;w<6;w++){ let row="", any=false; for(let i=0;i<7;i++){ const d=new Date(start); d.setDate(start.getDate()+w*7+i); if(d.getMonth()===mo){ any=true; row+=cell(d); } else row+=`<span class="dcell out"></span>`; } if(any) weeks+=`<div class="wk">${row}</div>`; }
     return `<section class="mcal"><h3>${y}年${mo+1}月</h3><div class="wk hd">${"月火水木金土日".split("").map(c=>`<span>${c}</span>`).join("")}</div>${weeks}</section>`; }).join("");
-  return `<div class="legend"><span><i style="background:var(--gold)"></i>納＝納品日</span>${STATUSES.slice(0,3).map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span><span>日付を押すと中身が出ます</span></div>${html}${nodue?`<p class="hint" style="margin:0 2px 8px">納期が未定の発注が ${nodue}件あります。一覧で納期を入れると、カレンダーに出ます。</p>`:""}`;
+  return `<div class="legend"><span><i style="background:var(--gold)"></i>納＝納品日</span>${STATUSES.slice(0,ARR).map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span><span>日付を押すと中身が出ます</span></div>${html}${nodue?`<p class="hint" style="margin:0 2px 8px">納期が未定の発注が ${nodue}件あります。一覧で納期を入れると、カレンダーに出ます。</p>`:""}`;
 }
 function renderCal(){
   const el=$("#cal"), today=todayStr();
@@ -1454,7 +1478,7 @@ function renderCal(){
   const rows=[...keys.entries()].sort((a,b)=>pjCompare(a[0],a[1].g[0]||{projectId:a[0]},b[0],b[1].g[0]||{projectId:b[0]}));
   if(!rows.length){ el.innerHTML=`<div class="empty"><b>まだ予定がありません</b>仕様書に納品日を入れるか、発注に納期予定を入れると、ここに並びます。</div>`; return; }
   let last=addDays(today,35);
-  rows.forEach(([k,v])=>{ if(v.p&&v.p.delivery&&v.p.delivery>last) last=v.p.delivery; v.g.forEach(o=>{ if(o.due&&o.due>last&&STATUSES.indexOf(o.status)<3) last=o.due; }); });
+  rows.forEach(([k,v])=>{ if(v.p&&v.p.delivery&&v.p.delivery>last) last=v.p.delivery; v.g.forEach(o=>{ if(o.due&&o.due>last&&STATUSES.indexOf(o.status)<ARR) last=o.due; }); });
   const start=addDays(today,-3), cap=addDays(today,90); if(last>cap) last=cap; last=addDays(last,2);
   const days=[]; for(let d=start; d<=last; d=addDays(d,1)) days.push(d);
   const wd="日月火水木金土", dow=d=>new Date(d+"T00:00:00").getDay();
@@ -1462,7 +1486,7 @@ function renderCal(){
   const head=`<thead><tr><th class="lab" rowspan="2">案件</th>${months.map(x=>`<th class="mo" colspan="${x.n}">${+x.m.slice(0,4)}年${+x.m.slice(5)}月</th>`).join("")}</tr><tr>${days.map(d=>`<th class="${dow(d)%6===0?"we":""} ${d===today?"today":""}"><b>${+d.slice(8)}</b>${d===today?"今日":wd[dow(d)]}</th>`).join("")}</tr></thead>`;
   const body=rows.map(([key,{p,g}])=>{
     const L=p?{k:p.k||"",who:p.client||"（宛先未入力）",delivery:p.delivery||""}:pjLabel(g[0]);
-    const lateBefore=g.filter(o=>isLate(o)&&o.due<start).length, noDue=g.filter(o=>!o.due&&STATUSES.indexOf(o.status)<3).length;
+    const lateBefore=g.filter(o=>isLate(o)&&o.due<start).length, noDue=g.filter(o=>!o.due&&STATUSES.indexOf(o.status)<ARR).length;
     const cells=days.map(d=>{
       const due=g.filter(o=>o.due===d); let inner="";
       if(L.delivery===d) inner+=`<span class="dl" title="納品日">納</span>`;
@@ -1476,14 +1500,14 @@ function renderCal(){
 }
 $("#cal").addEventListener("click",e=>{
   const dc=e.target.closest(".dcell[data-day]"); if(dc){ const ev=calDays.get(dc.dataset.day); if(!ev) return;
-    openSheet(`<h2>${fmtDW(dc.dataset.day)}</h2><div class="lead">${ev.dl.length?`納品 ${ev.dl.length}件　`:""}${ev.due.length?`入荷予定 ${ev.due.length}件`:""}</div><div class="callist">${ev.dl.map(x=>`<button type="button" class="ag dl" data-ckey="${esc(x.key)}"><span class="tag">納品</span><b>${esc(x.who)}</b></button>`).join("")}${ev.due.map(x=>{ const si=Math.max(0,STATUSES.indexOf(x.o.status)); return `<button type="button" class="ag" data-oid="${x.o.id}"><i style="background:${SCOL[si]}"></i><span class="tx"><b>${esc(x.o.item)}${x.o.qty>1?` ×${x.o.qty}`:""}</b><small>${esc(x.o.supplier||"仕入先 未定")}　${esc(x.who)}</small></span><span class="pill s${si}">${esc(x.o.status)}</span></button>`; }).join("")}</div><div class="btns"><button class="b b-ghost" data-cl="1" style="flex:1">閉じる</button></div>`);
+    openSheet(`<h2>${fmtDW(dc.dataset.day)}</h2><div class="lead">${ev.dl.length?`納品 ${ev.dl.length}件　`:""}${ev.plan.length?`発注予定 ${ev.plan.length}件　`:""}${ev.due.length?`入荷予定 ${ev.due.length}件`:""}</div><div class="callist">${ev.dl.map(x=>`<button type="button" class="ag dl" data-ckey="${esc(x.key)}"><span class="tag">納品</span><b>${esc(x.who)}</b></button>`).join("")}${ev.plan.concat(ev.due).map(x=>{ const si=Math.max(0,STATUSES.indexOf(x.o.status)); return `<button type="button" class="ag" data-oid="${x.o.id}"><i style="background:${SCOL[si]}"></i><span class="tx"><b>${esc(x.o.item)} ×${x.o.qty||1}</b><small>${esc(x.o.supplier||"仕入先 未定")}　${esc(x.who)}</small></span><span class="pill s${si}">${esc(x.o.status)}</span></button>`; }).join("")}</div><div class="btns"><button class="b b-ghost" data-cl="1" style="flex:1">閉じる</button></div>`);
     sheet.onclick=ev2=>{ const a=ev2.target.closest("[data-oid]"), c=ev2.target.closest("[data-ckey]"); if(a){ const o=orders.find(x=>x.id===a.dataset.oid); sheet.onclick=null; if(o) openDetail(o); return; } if(c){ sheet.onclick=null; closeSheet(); showGroup(c.dataset.ckey); return; } if(ev2.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
     return; }
   const ao=e.target.closest("[data-oid]"); if(ao){ const o=orders.find(x=>x.id===ao.dataset.oid); if(o) openDetail(o); return; }
   const ck=e.target.closest("[data-ckey]"); if(ck){ showGroup(ck.dataset.ckey); return; }
   const mk=e.target.closest(".mk");
   if(mk){ const list=orders.filter(o=>pjKey(o)===mk.dataset.key&&o.due===mk.dataset.d); if(!list.length) return; const L=pjLabel(list[0]);
-    openSheet(`<h2>${fmtDW(mk.dataset.d)} に入る予定</h2><div class="lead">${esc([L.k,L.who].filter(Boolean).join("　"))}</div><div class="callist">${list.map(o=>{ const si=Math.max(0,STATUSES.indexOf(o.status)); return `<button type="button" class="ci" data-id="${o.id}"><b>${esc(o.item)}${o.qty>1?` ×${o.qty}`:""}<small>${esc(o.supplier||"仕入先 未定")}${isLate(o)?"　遅延":""}</small></b><span class="pill s${si}">${esc(o.status)}</span></button>`; }).join("")}</div><div class="btns"><button class="b b-ghost" data-cl="1" style="flex:1">閉じる</button></div>`);
+    openSheet(`<h2>${fmtDW(mk.dataset.d)} に入る予定</h2><div class="lead">${esc([L.k,L.who].filter(Boolean).join("　"))}</div><div class="callist">${list.map(o=>{ const si=Math.max(0,STATUSES.indexOf(o.status)); return `<button type="button" class="ci" data-id="${o.id}"><b>${esc(o.item)} ×${o.qty||1}<small>${esc(o.supplier||"仕入先 未定")}${isLate(o)?"　遅延":""}</small></b><span class="pill s${si}">${esc(o.status)}</span></button>`; }).join("")}</div><div class="btns"><button class="b b-ghost" data-cl="1" style="flex:1">閉じる</button></div>`);
     sheet.onclick=ev=>{ const ci=ev.target.closest(".ci"); if(ci){ const o=orders.find(x=>x.id===ci.dataset.id); sheet.onclick=null; if(o) openDetail(o); return; } if(ev.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
     return; }
   const lab=e.target.closest("td.lab"); if(lab) showGroup(lab.dataset.key);
@@ -1571,10 +1595,10 @@ sheet.addEventListener("click",async e=>{
 
 /* ---------- detail / edit / delete ---------- */
 function openDetail(o){
-  const L=pjLabel(o); const si=STATUSES.indexOf(o.status); const next=si<4?STATUSES[si+1]:null;
+  const L=pjLabel(o); const si=STATUSES.indexOf(o.status); const next=si<DONE?STATUSES[si<ORD?ORD:si+1]:null;
   openSheet(`<div class="detail"><h2>${esc(o.item)}</h2><div class="lead">${esc([L.k,L.who,L.spec].filter(Boolean).join("　"))}</div>
-    ${o.gone?`<div class="gone">仕様書から外れました（発注は残しています）</div>`:""}<dl>${o.part?`<dt>項目</dt><dd>${esc(o.part)}</dd>`:""}${o.qty>1?`<dt>数量</dt><dd>${o.qty}</dd>`:""}<dt>仕入先</dt><dd>${esc(o.supplier)||"—"}</dd>${o.note?`<dt>備考</dt><dd>${esc(o.note)}</dd>`:""}<dt>発注日</dt><dd>${o.orderDate||"—"}</dd><dt>納期予定</dt><dd class="${isLate(o)?"late":""}" style="${isLate(o)?"color:var(--red)":""}">${o.due||"—"}${isLate(o)?"　遅延":""}</dd><dt>状態</dt><dd>${esc(o.status)}</dd></dl>
-    ${canWrite?`<div class="btns">${next?`<button class="b ${si>=2?"b-green":"b-navy"}" data-d="next">${esc(next)}にする</button>`:""}${si>0?`<button class="b b-ghost" data-d="prev">${esc(STATUSES[si-1])}に戻す</button>`:""}<button class="b b-ghost" data-d="edit">編集</button></div><div class="btns"><button class="b b-red" data-d="del">削除</button><button class="b b-ghost" data-d="close" style="flex:1">閉じる</button></div>`:`<div class="btns"><button class="b b-ghost" data-d="close" style="flex:1">閉じる</button></div>`}</div>`);
+    ${o.gone?`<div class="gone">仕様書から外れました（発注は残しています）</div>`:""}<dl>${o.part?`<dt>項目</dt><dd>${esc(o.part)}</dd>`:""}<dt>数量</dt><dd>${o.qty||1}${o.stock?"　（在庫充当）":""}</dd><dt>仕入先</dt><dd>${esc(o.supplier)||"—"}</dd>${o.note?`<dt>備考</dt><dd>${esc(o.note)}</dd>`:""}<dt>発注日</dt><dd>${o.orderDate||"—"}</dd><dt>納期予定</dt><dd class="${isLate(o)?"late":""}" style="${isLate(o)?"color:var(--red)":""}">${o.due||"—"}${isLate(o)?"　遅延":""}</dd><dt>状態</dt><dd>${esc(o.status)}</dd></dl>
+    ${canWrite?`<div class="btns">${next?`<button class="b ${si>=ARR-1?"b-green":"b-navy"}" data-d="next">${esc(next)}にする</button>`:""}${si>0?`<button class="b b-ghost" data-d="prev">${esc(STATUSES[si-1])}に戻す</button>`:""}<button class="b b-ghost" data-d="edit">編集</button></div><div class="btns"><button class="b b-red" data-d="del">削除</button><button class="b b-ghost" data-d="close" style="flex:1">閉じる</button></div>`:`<div class="btns"><button class="b b-ghost" data-d="close" style="flex:1">閉じる</button></div>`}</div>`);
   sheet.onclick=async e=>{
     const b=e.target.closest("button[data-d]"); if(!b) return;
     const a=b.dataset.d;
@@ -1611,7 +1635,7 @@ function renderLedger(){
   const head=`<thead><tr><th>宛先</th><th>仕様</th><th>工事番号</th><th>品名</th><th>仕入先</th><th>発注日</th><th>納期予定</th><th>状態</th><th>遅延</th></tr></thead>`;
   if(!rows.length){ t.innerHTML=head+`<tbody><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:28px">この月の発注はありません</td></tr></tbody>`; return; }
   const body=rows.map(o=>{ const L=pjLabel(o); return `<tr class="${isLate(o)?"late":""}"><td>${esc(L.who)}</td><td>${esc(L.spec)}</td><td class="k">${esc(L.k||"未設定")}</td><td>${esc(o.item)}</td><td>${esc(o.supplier)}</td><td>${o.orderDate||""}</td><td>${o.due||""}</td><td>${esc(o.status)}</td><td>${isLate(o)?"遅延":""}</td></tr>`; }).join("");
-  t.innerHTML=head+`<tbody>${body}</tbody><tfoot><tr><td colspan="9">合計 ${rows.length}件　入荷・検収済 ${rows.filter(o=>STATUSES.indexOf(o.status)>=3).length}　遅延 ${rows.filter(isLate).length}</td></tr></tfoot>`;
+  t.innerHTML=head+`<tbody>${body}</tbody><tfoot><tr><td colspan="9">合計 ${rows.length}件　入荷・検収済 ${rows.filter(o=>STATUSES.indexOf(o.status)>=ARR).length}　遅延 ${rows.filter(isLate).length}</td></tr></tfoot>`;
 }
 $("#month").addEventListener("change",renderLedger); $("#lmode").addEventListener("change",renderLedger);
 $("#csv").addEventListener("click",async()=>{
@@ -1761,7 +1785,7 @@ function unlinkSpec(id){ chain=chain.then(async()=>{ await whenReady(); if(!canW
   const p=projects.find(v=>v.id===pid); if(!p) return;
   if(allOrders.some(o=>o.projectId===pid&&!(o.specKey&&(o.status===STATUSES[0]||o.hidden)))){ const n={...strip(p)}; delete n.specId; await saveProject(pid,n); } else await deleteProject(pid);
 }).catch(err=>console.error(err)); return chain; }
-function statsOf(specId){ const g=specId?orders.filter(o=>o.projectId==="sp_"+specId):orders; return {n:g.length,open:g.filter(o=>STATUSES.indexOf(o.status)<3).length,todo:g.filter(o=>o.status===STATUSES[0]).length,in:g.filter(o=>STATUSES.indexOf(o.status)>=3).length,late:g.filter(isLate).length,soon:g.filter(dueSoon).length}; }
+function statsOf(specId){ const g=specId?orders.filter(o=>o.projectId==="sp_"+specId):orders; return {n:g.length,open:g.filter(o=>STATUSES.indexOf(o.status)<ARR).length,todo:g.filter(o=>o.status===STATUSES[0]).length,in:g.filter(o=>STATUSES.indexOf(o.status)>=ARR).length,late:g.filter(isLate).length,soon:g.filter(dueSoon).length}; }
 const api={ sync:syncSpec, unlink:unlinkSpec, stats:statsOf, showProject:id=>showGroup("sp_"+id), showHome:()=>showView("list"), onChange:f=>listeners.push(f), close:closeSheet, checkK };
 
 /* ---------- init ---------- */
@@ -2081,7 +2105,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 11:42</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 13:32</div><div class="spacer"></div>';
   }
   function savedHtml() {
     var ids = Object.keys(data.specs).sort(function (x, y) { return data.specs[y].updatedAt - data.specs[x].updatedAt; });
