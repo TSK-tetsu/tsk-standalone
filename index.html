@@ -1159,9 +1159,10 @@ details.done[open]>summary::before{content:"▾"}
 .tpop{position:absolute;left:0;z-index:5;scroll-margin:96px 0 112px;filter:drop-shadow(0 12px 16px rgba(5,14,30,.34))}
 .tpop::before{content:"";position:absolute;top:-8px;left:var(--nx,25%);width:18px;height:18px;margin-left:-9px;background:var(--gold);transform:rotate(45deg);border-radius:3px}
 .grp .grid.tiles .tpop .card{position:relative;margin:0;border:3px solid var(--gold);border-bottom-width:6px}
+.tpop::after{content:"";position:absolute;top:100%;left:0;width:1px;height:112px;pointer-events:none}   /* いちばん下の札でも、箱がOKのバーに隠れないだけ下へ送れるように */
 
 /* ---- 作業中：上の部分（絞り込み・色の説明・案内）と、ほかの案件を隠す ---- */
-:host(.work) #filters,:host(.work) #list>.legend,:host(.work) #view-list>.swhint,:host(.work) #lineBtn{display:none}
+:host(.work) #filters,:host(.work) #list>.cardsw,:host(.work) #list>.legend,:host(.work) #view-list>.swhint,:host(.work) #lineBtn{display:none}
 :host(.work) #list .grp:not(.open),:host(.work) #list .dlvsec-h,:host(.work) #list>.empty{display:none}   /* 開いた案件だけを見せる */
 :host(.work) #list .dlvsec{border:0;margin:0;padding:0}
 
@@ -1471,7 +1472,7 @@ function renderList(){
   el.innerHTML=ak.map(sec).join("")+(!ak.length&&dk.length&&filter==="all"?`<div class="empty" style="margin-bottom:18px"><b>進行中の案件はありません</b>納品済みの案件は、下にまとめてあります。</div>`:"")
     +(dk.length?`<div class="dlvsec ${showDlv?"open":""}"><button type="button" class="dlvsec-h" data-dlvsec="1" aria-expanded="${showDlv}"><span class="chev">${showDlv?"▼":"▶"}</span><b>納品済み</b><span class="n">${dk.length}件</span><small>${showDlv?"押すとたたみます":"押すと開いて見返せます"}</small></button>${showDlv?dk.map(sec).join(""):""}</div>`:"");
   el.insertAdjacentHTML("afterbegin",`<div class="legend">${STATUSES.map((s,i)=>`<span><i style="background:${SCOL[i]}"></i>${s}</span>`).join("")}<span><i style="background:var(--red)"></i>遅延</span></div>`);
-  el.insertAdjacentHTML("afterbegin",`<div class="cardsw" role="group" aria-label="カードの形"><span>カードの形</span><button type="button" data-cm="full" aria-pressed="${cardMode==="full"}">いまの形</button><button type="button" data-cm="tile" aria-pressed="${cardMode==="tile"}">小さい札（試し）</button></div>`);
+  el.insertAdjacentHTML("afterbegin",`<div class="cardsw" role="group" aria-label="カードの形"><span>カードの形</span><button type="button" data-cm="tile" aria-pressed="${cardMode==="tile"}">小さい札</button><button type="button" data-cm="full" aria-pressed="${cardMode==="full"}">大きいカード</button></div>`);
   syncFocus(); placePop();
 }
 // 作業中（案件を開いている間）は、下のタブを隠して「OK」だけにする。OKで、開いた案件をたたんで元に戻る。スマホ表示の一覧だけ。
@@ -1508,8 +1509,8 @@ function baseHtml(L){ if(!L.spec) return ""; let units=0; const rest=[]; String(
 function gAct(key){ if(!canWrite) return ""; const p=projects.find(x=>x.id===key); return `<div class="gact"><button type="button" class="b b-sm b-gold" data-gact="addto">＋ この案件に発注を足す</button>${p&&!p.specId?`<button type="button" class="b b-sm b-ghost" data-gact="editpj">案件を編集</button>`:""}${p?`<button type="button" class="b b-sm b-ghost dlvb" data-gact="dlv">${p.deliveredAt?"納品済みを取り消す・日付を直す":"✓ 納品済みにする"}</button>`:""}</div>`; }
 // 納品日の表示：日付を大きく、残り日数つき。過ぎていれば赤、未入力なら「納品日 未定」。
 function dlvHtml(d,done){ if(done) return `<span class="dlv done">納品済み<b>${fmtDW(done)}</b></span>`; if(!d) return `<span class="dlv none">納品日 未定</span>`; const n=Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000); return `<span class="dlv ${n<0?"over":""}">納品<b>${fmtDW(d)}</b><small>${n>0?`あと${n}日`:n===0?"本日":`${-n}日超過`}</small></span>`; }
-// カードの形：full＝いまの形／tile＝小さい札（2列。押した札だけ広がって、いまのカードと同じ操作が出る）。端末ごとに覚える。
-let cardMode="full", selId=null; try{ if(localStorage.getItem("tsk_cards")==="tile") cardMode="tile"; }catch{}
+// カードの形：tile＝小さい札（初期）／full＝大きいカード（以前の形）（2列。押した札だけ広がって、いまのカードと同じ操作が出る）。端末ごとに覚える。
+let cardMode="tile", selId=null; try{ if(localStorage.getItem("tsk_cards2")==="full") cardMode="full"; }catch{}   // 初期は小さい札。大きいカードを選んだ端末だけ、それを覚える
 function card(o){ return cardMode==="tile"?tile(o):cardFull(o); }
 // 小さい札を押すと、札はその場のまま、真下に操作の箱（いまのカードと同じ中身）を重ねて出す。まわりの札は動かない。
 function popFor(ls){ if(cardMode!=="tile"||!selId) return ""; const o=ls.find(x=>x.id===selId); return o?`<div class="tpop" data-for="${o.id}">${cardFull(o)}</div>`:""; }
@@ -1547,7 +1548,7 @@ $("#list").addEventListener("click",async e=>{
   const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); const y0=bandY(k); openGrp.delete(k); grpF.delete(k); renderList(); holdBand(k,y0); flipBand(k,y0); } else { const y0=bandY(k); openGrp.add(k); renderList(); scrollBox().scrollTo(0,0); flipBand(k,y0); foldIn(grpParts(bandEl(k))); } return; }
   const pc=e.target.closest(".planclr"); if(pc){ const op=orders.find(x=>x.id===pc.dataset.id); if(op&&op.planDate){ const ps=STATUSES.indexOf(op.status); try{ await saveOrder(op.id,{...strip(op),planDate:"",status:ps===PLAN?STATUSES[0]:op.status,updatedAt:new Date().toISOString()}); toast("発注予定日を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const dc=e.target.closest(".dueclr"); if(dc){ const od=orders.find(x=>x.id===dc.dataset.id); if(od&&od.due){ try{ await saveOrder(od.id,{...strip(od),due:"",updatedAt:new Date().toISOString()}); toast("納期を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
-  const cm=e.target.closest("[data-cm]"); if(cm){ cardMode=cm.dataset.cm==="tile"?"tile":"full"; selId=null; try{ localStorage.setItem("tsk_cards",cardMode); }catch{} renderList(); return; }
+  const cm=e.target.closest("[data-cm]"); if(cm){ cardMode=cm.dataset.cm==="tile"?"tile":"full"; selId=null; try{ localStorage.setItem("tsk_cards2",cardMode); }catch{} renderList(); return; }
   const tl=e.target.closest(".card.tile"); if(tl){ if(selId===tl.dataset.id){ selId=null; renderList(); return; } selId=tl.dataset.id; renderList(); const pp=root.querySelector("#list .tpop"); if(pp){ if(pp.animate&&!calm) pp.animate([{transform:"translateY(-10px) scale(.94)",opacity:0},{transform:"none",opacity:1}],{duration:170,easing:"cubic-bezier(.2,.8,.2,1)"}); pp.scrollIntoView({block:"nearest",behavior:calm?"auto":"smooth"}); } return; }
   const b=e.target.closest("button[data-act]"); if(!b) return;
   const id=b.closest(".card").dataset.id; const o=orders.find(x=>x.id===id); if(!o) return;
@@ -2378,7 +2379,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 19:29</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 19:45</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
