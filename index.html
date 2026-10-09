@@ -550,7 +550,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '10/09 15:41', hiddenAt = 0, lastCheck = 0;
+  var VER = '10/09 16:02', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -790,6 +790,41 @@ tfoot td{font-weight:700;background:var(--well)}
 .detail dl{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:0 0 14px;font-size:16px}
 .detail dt{color:var(--muted);font-weight:500}.detail dd{margin:0;font-weight:700}
 
+/* 表をその場で見る */
+.xprev{position:fixed;inset:0;z-index:30;background:#F2F3F5;color:#000;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+:host(.framed) .xprev{position:absolute}
+.xp-top{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--navy);color:#fff;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.xp-top .b-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+.xp-tabs{flex:1;display:flex;gap:6px;min-width:0;overflow-x:auto;scrollbar-width:none}
+.xp-tabs .xp-title{font-size:15px;white-space:nowrap;color:var(--gold-soft)}
+.xp-tab{flex:0 0 auto;border:1.5px solid rgba(255,255,255,.5);background:transparent;color:#fff;border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;font-weight:700;white-space:nowrap;min-height:34px}
+.xp-tab[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+.xp-zoom{display:flex;gap:4px;flex:0 0 auto}
+.xp-zoom button{width:38px;height:36px;border-radius:9px;border:1.5px solid rgba(255,255,255,.5);background:transparent;color:#fff;font-size:20px;font-weight:900;line-height:1}
+.xp-body{flex:1;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding:12px 12px 20px;overscroll-behavior:contain}
+.xp-zoomer{display:inline-block;background:#fff;padding:12px 14px 16px;box-shadow:0 4px 18px rgba(0,0,0,.12);border-radius:6px}
+.xp-hint{flex:0 0 auto;padding:6px 12px calc(8px + env(safe-area-inset-bottom,0px));font-size:12px;color:#60708A;text-align:center;background:#F2F3F5}
+.xt{border-collapse:collapse;table-layout:fixed;font:12px/1.35 "游ゴシック","Yu Gothic","Hiragino Sans",system-ui,sans-serif;color:#132033;background:#fff}
+.xt td{padding:2px 5px;vertical-align:middle;overflow-wrap:anywhere;white-space:normal;height:18px}
+.xt td.s1,.xt td.s3,.xt td.s4,.xt td.s6,.xt td.s7,.xt td.s8,.xt td.s9,.xt td.s14{border:1px solid #555}
+.xt td.s1{background:#EDF0F4;font-weight:700;text-align:center}
+.xt td.s2{font-size:17px;font-weight:700;color:#0B1F3A;white-space:nowrap}
+.xt td.s4,.xt td.s9,.xt td.s14{text-align:center}
+.xt td.s5{font-size:10.5px;color:#60708A;white-space:nowrap}
+.xt td.s6,.xt td.s7{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.xt td.s7{font-weight:700;background:#EDF0F4}
+.xt td.s8{background:#F8CBAD;font-weight:700;font-size:14px;text-align:center}
+.xt td.s9{color:#C00000;font-weight:700}
+.xt td.s10{text-align:right;white-space:nowrap}
+.xt td.s11{font-size:22px;text-align:center;font-weight:700;white-space:nowrap}
+.xt td.s12{font-weight:700;white-space:nowrap}
+.xt td.s13{font-weight:700;font-size:14px;white-space:nowrap}
+.xt td.s14{font-size:10px}
+.xt td.s0{white-space:nowrap}
+.xt thead{position:sticky;top:0;z-index:1}
+.xt thead td{background:#EDF0F4}
+.xt thead td.s8{background:#F8CBAD}.xt thead td.s0,.xt thead td.s5,.xt thead td.s10{background:#fff}
+:host(.xp) .nav,:host(.xp) .okbar{display:none}
 .toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 20px;border-radius:999px;font-size:15px;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30;border:1.5px solid var(--gold);white-space:nowrap}
 .toast.show{opacity:1}
 
@@ -1363,6 +1398,7 @@ details.done[open]>summary::before{content:"▾"}
           <label for="month" style="font-weight:700">対象月</label>
           <input type="month" id="month">
           <select id="lmode"><option value="order">発注日で集計</option><option value="due">納期で集計</option><option value="all">全件</option></select>
+          <button class="b b-navy b-sm" id="xview">表で見る</button>
           <button class="b b-gold b-sm" id="xlsx">Excelで保存</button>
           <button class="b b-ghost b-sm" id="csv">CSVで保存</button>
         </div>
@@ -1383,6 +1419,11 @@ details.done[open]>summary::before{content:"▾"}
   <div class="okbar" id="okBar"><button type="button" class="b b-gold" id="okBtn">OK</button></div>
 
   <div class="scrim" id="scrim"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+  <div class="xprev" id="xprev" hidden role="dialog" aria-modal="true" aria-label="表の表示">
+    <div class="xp-top"><button type="button" class="b b-sm b-ghost" id="xpClose">閉じる</button><div class="xp-tabs" id="xpTabs"></div><div class="xp-zoom"><button type="button" id="xpOut" aria-label="小さく">−</button><button type="button" id="xpIn" aria-label="大きく">＋</button></div><button type="button" class="b b-sm b-gold" id="xpSave">Excelで保存</button></div>
+    <div class="xp-body" id="xpBody"></div>
+    <div class="xp-hint" id="xpHint">横にスクロールできます。横向きにすると見やすくなります</div>
+  </div>
   <div class="toast" id="toast"></div>
 </div>
 </div></template>
@@ -1636,7 +1677,7 @@ const openSup=new Set();
 function baseHtml(L){ if(!L.spec) return ""; let units=0; const rest=[]; String(L.spec).split("　").filter(Boolean).forEach(t=>{ const m=t.match(/^×(\d+)$/); if(m) units=+m[1]; else rest.push(t); }); if(!units&&L.specId) units=1;
   return `<i class="brk"></i><span class="base"><b>${esc(rest[0]||"")}</b>${rest.length>1?`<small>${esc(rest.slice(1).join("　"))}</small>`:""}</span>${units?`<span class="units"><b>${units}</b>台</span>`:""}<i class="brk"></i>`; }
 // 開いた案件の先頭に置く操作（以前は「案件」画面にあったもの）
-function gAct(key){ const xb=`<button type="button" class="b b-sm b-ghost xlsb" data-gact="xlsx">購入品をExcelに</button>`; if(!canWrite) return `<div class="gact">${xb}</div>`; const p=projects.find(x=>x.id===key); return `<div class="gact"><button type="button" class="b b-sm b-gold" data-gact="addto">＋ この案件に発注を足す</button>${p&&!p.specId?`<button type="button" class="b b-sm b-ghost" data-gact="editpj">案件を編集</button>`:""}${p?`<button type="button" class="b b-sm b-ghost dlvb" data-gact="dlv">${p.deliveredAt?"納品済みを取り消す・日付を直す":"✓ 納品済みにする"}</button>`:""}${xb}</div>`; }
+function gAct(key){ const xb=`<button type="button" class="b b-sm b-ghost xlsb" data-gact="xlsx">購入品の表（Excel）</button>`; if(!canWrite) return `<div class="gact">${xb}</div>`; const p=projects.find(x=>x.id===key); return `<div class="gact"><button type="button" class="b b-sm b-gold" data-gact="addto">＋ この案件に発注を足す</button>${p&&!p.specId?`<button type="button" class="b b-sm b-ghost" data-gact="editpj">案件を編集</button>`:""}${p?`<button type="button" class="b b-sm b-ghost dlvb" data-gact="dlv">${p.deliveredAt?"納品済みを取り消す・日付を直す":"✓ 納品済みにする"}</button>`:""}${xb}</div>`; }
 // 納品日の表示：日付を大きく、残り日数つき。過ぎていれば赤、未入力なら「納品日 未定」。
 function dlvHtml(d,done){ if(done) return `<span class="dlv done">納品済み<b>${fmtDW(done)}</b></span>`; if(!d) return `<span class="dlv none">納品日 未定</span>`; const n=Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000); return `<span class="dlv ${n<0?"over":""}">納品<b>${fmtDW(d)}</b><small>${n>0?`あと${n}日`:n===0?"本日":`${-n}日超過`}</small></span>`; }
 // カードの形：tile＝小さい札（初期）／full＝大きいカード（以前の形）（2列。押した札だけ広がって、いまのカードと同じ操作が出る）。端末ごとに覚える。
@@ -2065,20 +2106,52 @@ function poSheet(sup,list,L){
   return {name:`注文書 ${sup}`,cols:[5,12,30,20,6,7,11,12,11,24],rows,merges:["A2:J2","A18:A19","B18:D18","E18:E19","F18:F19","G18:G19","H18:H19","I18:I19","J18:J19"],heights:{2:30,18:20,19:20},fit:true};
 }
 // 1案件ぶん：1枚目に発注書SUMMARY、2枚目からは仕入先ごとの注文書
-function exportProject(key){
-  const g=orders.filter(o=>pjKey(o)===key); if(!g.length){ toast("この案件に発注する品はありません"); return; }
+function projectBook(key){
+  const g=orders.filter(o=>pjKey(o)===key); if(!g.length){ toast("この案件に発注する品はありません"); return null; }
   const L=pjLabel(g[0]), dv=dlvAt(key), sorted=g.slice().sort((a,b)=>xSumKey(a).localeCompare(xSumKey(b)));
   const scope=[`工事番号 ${L.k||"未定"}`,`宛先 ${L.who||""}`,L.spec?`機種・構成 ${String(L.spec).replace(/　/g," ")}`:"",`納品日 ${dv?xDay(dv)+" 納品済み":(xDay(L.delivery)||"未定")}`,`${g.length}件`].filter(Boolean).join("　｜　");
   const bySup=new Map(); g.filter(o=>!o.stock&&o.supplier).forEach(o=>{ if(!bySup.has(o.supplier)) bySup.set(o.supplier,[]); bySup.get(o.supplier).push(o); });
   const sheets=[sumSheet("SUMMARY",sorted,"発注書SUMMARY",scope)].concat([...bySup.entries()].sort((a,b)=>a[0].localeCompare(b[0],"ja")).map(([s,l])=>poSheet(s,l,L)));
-  saveXlsx(`TSK_発注書SUMMARY_${[xName(L.k),xName(L.who)].filter(Boolean).join("_")||"案件"}.xlsx`,sheets);
+  return {name:`TSK_発注書SUMMARY_${[xName(L.k),xName(L.who)].filter(Boolean).join("_")||"案件"}.xlsx`,sheets,title:[L.k,L.who].filter(Boolean).join(" ")||"案件"};
 }
+function exportProject(key){ const bk=projectBook(key); if(bk) openXPreview(bk); }
 // 台帳：いま表に出ている発注を、発注書SUMMARYの形で1枚に
-function exportLedger(){ const rows=ledgerRows(); if(!rows.length){ toast("出力する発注がありません"); return; }
+function ledgerBook(){ const rows=ledgerRows(); if(!rows.length){ toast("出力する発注がありません"); return null; }
   const m=$("#month").value||"all", mode=$("#lmode").value, sorted=rows.slice().sort((a,b)=>xSumKey(a).localeCompare(xSumKey(b)));
   const all=mode==="all"||!$("#month").value, scope=all?`全件（${rows.length}件）`:`${m.replace("-","年")}月　${mode==="order"?"発注日":"納期"}で集計（${rows.length}件）`;
-  saveXlsx(`TSK_発注書SUMMARY_${all?"全件":m}.xlsx`,[sumSheet("SUMMARY",sorted,"発注書SUMMARY",scope)]); }
+  return {name:`TSK_発注書SUMMARY_${all?"全件":m}.xlsx`,sheets:[sumSheet("SUMMARY",sorted,"発注書SUMMARY",scope)],title:"発注台帳"}; }
+function exportLedger(){ const bk=ledgerBook(); if(bk) saveXlsx(bk.name,bk.sheets); }
 $("#xlsx").addEventListener("click",exportLedger);
+$("#xview").addEventListener("click",()=>{ const bk=ledgerBook(); if(bk) openXPreview(bk); });
+
+/* ---------- 表をその場で見る（Excelと同じ中身を HTML の表に） ---------- */
+// スマホや iPad では .xlsx を開くのに手間がかかるので、同じ内容を画面に出す。見た目の番号（s）は xlsxBlob と同じ意味。
+function xRef(a){ const m=/^([A-Z]+)(\d+)$/.exec(a); let c=0; for(const ch of m[1]) c=c*26+(ch.charCodeAt(0)-64); return {r:+m[2]-1,c:c-1}; }
+function xPrevTable(sh){
+  const cover=new Set(), span={};
+  (sh.merges||[]).forEach(m=>{ const [a,b]=m.split(":"), A=xRef(a), B=xRef(b); span[A.r+","+A.c]={rs:B.r-A.r+1,cs:B.c-A.c+1}; for(let r=A.r;r<=B.r;r++) for(let c=A.c;c<=B.c;c++) if(r!==A.r||c!==A.c) cover.add(r+","+c); });
+  const n=sh.cols.length, fz=sh.freeze||0, hts=sh.heights||{};
+  const tr=(row,ri)=>{ let h=`<tr${hts[ri+1]?` style="height:${Math.round(hts[ri+1]*1.33)}px"`:""}>`;
+    for(let ci=0;ci<n;ci++){ if(cover.has(ri+","+ci)) continue; const c=row[ci], o=c==null||c===""?{}:(typeof c==="object"?c:{v:c}), sp=span[ri+","+ci];
+      let v=o.v; if(typeof v==="number"&&isFinite(v)) v=(o.s===6||o.s===7)?v.toLocaleString("ja-JP"):String(v); else if(v==null) v="";
+      h+=`<td class="s${o.s||0}"${sp?` rowspan="${sp.rs}" colspan="${sp.cs}"`:""}>${esc(String(v)).replace(/\n/g,"<br>")}</td>`; }
+    return h+"</tr>"; };
+  const rows=sh.rows.map((r,i)=>tr(r,i));
+  return `<table class="xt"><colgroup>${sh.cols.map(w=>`<col style="width:${Math.round(w*7.2+6)}px">`).join("")}</colgroup>${fz?`<thead>${rows.slice(0,fz).join("")}</thead><tbody>${rows.slice(fz).join("")}</tbody>`:`<tbody>${rows.join("")}</tbody>`}</table>`;
+}
+let xpBook=null, xpSheet=0, xpZoom=1, xpZoomSaved=false;
+try{ const z=parseFloat(localStorage.getItem("tsk_xpzoom")); if(z>=0.5&&z<=1.8){ xpZoom=z; xpZoomSaved=true; } }catch{}
+function openXPreview(bk){ xpBook=bk; xpSheet=0; if(!xpZoomSaved) xpZoom=root.host.getBoundingClientRect().width<700?0.8:1; renderXPreview(); $("#xprev").hidden=false; html.classList.add("xp"); snd.open(); }
+function closeXPreview(){ $("#xprev").hidden=true; html.classList.remove("xp"); xpBook=null; $("#xpBody").innerHTML=""; }
+function renderXPreview(){ if(!xpBook) return; const sh=xpBook.sheets[xpSheet];
+  $("#xpTabs").innerHTML=xpBook.sheets.length>1?xpBook.sheets.map((x,i)=>`<button type="button" class="xp-tab" data-xs="${i}" aria-pressed="${i===xpSheet}">${esc(x.name)}</button>`).join(""):`<b class="xp-title">${esc(xpBook.title||"")}</b>`;
+  $("#xpBody").innerHTML=`<div class="xp-zoomer" style="zoom:${xpZoom}">${xPrevTable(sh)}</div>`; $("#xpBody").scrollTo(0,0); }
+$("#xpClose").addEventListener("click",closeXPreview);
+$("#xpSave").addEventListener("click",()=>{ if(xpBook) saveXlsx(xpBook.name,xpBook.sheets); });
+$("#xpTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-xs]"); if(!b) return; xpSheet=+b.dataset.xs; snd.tap(); renderXPreview(); });
+const xpSetZoom=z=>{ xpZoom=Math.min(1.8,Math.max(0.5,Math.round(z*10)/10)); xpZoomSaved=true; try{ localStorage.setItem("tsk_xpzoom",String(xpZoom)); }catch{} const el=$("#xpBody .xp-zoomer"); if(el) el.style.zoom=xpZoom; };
+$("#xpIn").addEventListener("click",()=>xpSetZoom(xpZoom+0.1)); $("#xpOut").addEventListener("click",()=>xpSetZoom(xpZoom-0.1));
+root.addEventListener("keydown",e=>{ if(e.key==="Escape"&&xpBook) closeXPreview(); });
 
 /* ---------- tasks ---------- */
 function renderTasks(){
@@ -2722,7 +2795,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/09 15:41</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/09 16:02</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
