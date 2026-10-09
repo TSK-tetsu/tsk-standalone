@@ -309,7 +309,6 @@
   .sheet .memo span { flex: 0 0 84px; padding: 4px 12px; background: #F1EEE6; font-size: 13px; font-weight: 500; display: flex; align-items: center; }
   .sheet .memo div { border: none; padding: 5px 12px; font-size: 14px; line-height: 1.45; }
   .sheet .foot { display: block; margin-top: auto; padding-top: 6px; text-align: right; font-size: 10px; color: #3A4658; }
-  .q .qcont { display: flex; justify-content: space-between; gap: 24px; padding-bottom: 8px; font-size: 13px; }
 
   /* master: every option with its amount, on one screen */
   .mhead { margin: 18px 20px 0; font-size: 15px; font-weight: 700; color: var(--sub); }
@@ -323,35 +322,50 @@
   .mrow .yen { flex-shrink: 0; font-size: 14px; color: var(--sub); }
   .mrow small { flex-shrink: 0; font-size: 13px; font-weight: 700; color: var(--sub); }
 
-  /* quotation sheet — follows TSK's own 御見積書 (D260101A, 2026-07) */
-  .sheet.q { padding: 56px 64px 48px; font-size: 14px; line-height: 1.55; color: #000000; }
-  .q .qhead { display: flex; justify-content: flex-end; gap: 24px; font-size: 14px; }
-  .q .qtitle { margin-top: 4px; font-family: 'Zen Old Mincho', 'Hiragino Mincho ProN', serif; font-size: 28px; font-weight: 700; letter-spacing: .45em; }
-  .q .qtitle span { border-bottom: 2px solid #000000; padding-bottom: 2px; }
-  .q .qparties { margin-top: 16px; display: flex; justify-content: space-between; gap: 28px; }
-  .q .qto { flex: 1 1 0; min-width: 0; }
-  .q .qto .nm { display: inline-block; min-width: 260px; padding-bottom: 3px; border-bottom: 2px solid #000000; font-size: 20px; font-weight: 700; overflow-wrap: anywhere; }
-  .q .qto .nm.blank { min-height: 36px; }
-  .q .qto .pic { margin-top: 6px; }
-  .q .qfrom { flex: 0 0 300px; font-size: 13px; line-height: 1.6; }
-  .q .qfrom b { display: block; font-size: 18px; letter-spacing: .1em; }
-  .q .qref { margin-top: 12px; }
-  .q .qgreet { margin-top: 4px; font-size: 15px; }
-  .q .qterms { margin: 6px 0 0; display: grid; grid-template-columns: auto 1fr; column-gap: 4px; row-gap: 1px; font-size: 13px; }
+  /* quotation sheet — TSK's own 御見積書 (D250157, 2026-04): A4 landscape, logo, two address blocks, the model block (1)(2)… with 計.
+     Sizes are in em so the whole sheet can shrink a little (--qz) to stay on one page. */
+  .pages.land { width: 1123px; }
+  .sheet.q { width: 1123px; height: 794px; padding: 26px 56px 24px; font-size: calc(13px * var(--qz, 1)); line-height: 1.5; color: #000000; }
+  .q .qtop { position: relative; height: 4.3em; }
+  .q .qlogo { position: absolute; left: 0; right: 0; top: 0; text-align: center; }
+  .q .qlogo img { height: 3.7em; width: auto; }
+  .q .qmeta { position: absolute; right: 0; top: .3em; display: flex; flex-direction: column; align-items: flex-start; gap: .45em; font-size: 1em; }
+  .q .qtitle { margin-top: -.45em; text-align: center; font-family: 'Zen Old Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif; font-size: 1.85em; font-weight: 500; letter-spacing: .5em; text-indent: .5em; line-height: 1.2; }
+  .q .qparties { margin-top: .46em; display: flex; justify-content: space-between; gap: 3em; }
+  .q .qto { flex: 1 1 0; min-width: 0; line-height: 1.55; }
+  .q .qto .nm { display: inline-block; min-width: 20em; font-size: 1.46em; font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; }
+  .q .qto .nm.blank { min-height: 1.6em; border-bottom: 1px solid #000000; }
+  .q .qto .pic { margin-top: .15em; }
+  .q .qto .addr { margin-top: .46em; }
+  .q .qref { min-height: 1.5em; }
+  .q .qfrom { flex: 0 0 25.4em; line-height: 1.55; padding-top: .3em; }
+  .q .qfrom .qmark { display: flex; align-items: center; gap: .77em; margin-bottom: .15em; }
+  .q .qfrom .qmark img { height: 1.7em; width: auto; }
+  .q .qfrom .qmark b { font-size: 1.3em; letter-spacing: .08em; }
+  .q .qfrom .gap { display: block; height: .77em; }
+  .q .qgreet { margin-top: .15em; font-size: 1.08em; }
+  .q .qterms { margin: .15em 0 0; display: grid; grid-template-columns: auto 1fr; column-gap: .3em; row-gap: 0; font-size: .96em; }
   .q .qterms dt { white-space: nowrap; } .q .qterms dd { margin: 0; overflow-wrap: anywhere; }
-  .q .qsubject { margin-top: 18px; font-size: 17px; font-weight: 700; }
+  .q .qline { margin-top: .46em; display: flex; justify-content: space-between; align-items: flex-end; gap: 1.2em; }
+  .q .qsubject { font-size: 1.23em; font-weight: 700; min-height: 1.3em; }
   .q .qsubject span { border-bottom: 2px solid #000000; padding-bottom: 1px; }
-  .q .qunit { margin-top: 14px; font-size: 12px; }
-  .q table { width: 100%; border-collapse: collapse; margin-top: 2px; border: 2px solid #000000; }
-  .q th, .q td { border: 1px solid #000000; padding: 7px 8px; font-size: 14px; vertical-align: middle; }
-  .q th { font-weight: 500; text-align: center; border-bottom: 2px solid #000000; }
+  .q .qunit { font-size: .88em; white-space: nowrap; }
+  .q table { width: 100%; border-collapse: collapse; margin-top: .3em; border: 1.5px solid #000000; }
+  .q th, .q td { border: 1px solid #000000; padding: .23em .6em; font-size: 1em; line-height: 1.3; vertical-align: middle; }
+  .q th { font-weight: 500; text-align: center; border-bottom: 1.5px solid #000000; background: #F3F3F3; }
   .q td.c { text-align: center; } .q td.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .q td.sumk { text-align: center; border-left: 2px solid #000000; }
-  .q tr.sumtop td { border-top: 2px solid #000000; }
+  .q td.sub { padding-left: 2em; }
+  .q tr.qgrp td { font-weight: 700; }
+  .q tr.kei td { font-weight: 700; } .q td.sub.kei { text-align: right; padding-right: 3em; }
+  .q td.sumk { text-align: center; border-left: 1.5px solid #000000; }
+  .q tr.sumtop td { border-top: 1.5px solid #000000; }
   .q tr.grand td.sumk, .q tr.grand td.r { font-weight: 700; }
-  .q td.qn { vertical-align: top; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
-  .q td.qk { vertical-align: top; text-align: center; font-size: 12px; white-space: nowrap; padding: 8px 2px; }
+  .q td.qn { vertical-align: top; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .96em; }
+  .q td.qk { vertical-align: top; text-align: center; font-size: .92em; white-space: nowrap; padding: .46em .15em; }
+  .q .qcont { display: flex; justify-content: space-between; gap: 1.8em; padding-bottom: .6em; font-size: 1em; }
   @page { size: A4 portrait; margin: 0; }
+  @page land { size: A4 landscape; margin: 0; }
+  .pages.land .sheet { page: land; }
   @media print {
     #boardHost { display: none !important; }
     body { background: #FFFFFF; }
@@ -360,6 +374,7 @@
     .sheetWrap { margin: 0; border: none; height: auto !important; background: #FFFFFF; }
     .pages { transform: none !important; display: block; }
     .sheet { height: 296mm; break-after: page; page-break-after: always; }
+    .pages.land .sheet { height: 209mm; }
     .sheet:last-child { break-after: auto; page-break-after: auto; }
   }
 </style>
@@ -514,7 +529,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '10/09 12:18', hiddenAt = 0, lastCheck = 0;
+  var VER = '10/09 12:55', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -2462,16 +2477,16 @@ return api;
     return d ? cleanPrice(parseInt(d.slice(0, 9), 10)) : null;
   }
   var PAYS = ['納入10日前までに銀行振込', '納入月末締め翌月10日以内銀行振込(振込手数料はご負担願います。)', '納入月末締め翌月末銀行振込払い', '工事着手前50%・工事完了後50%を銀行振込'];
-  var QKEYS = ['no', 'date', 'to', 'person', 'ref', 'title', 'place', 'pay', 'payFree', 'delivery', 'valid', 'note'];
+  var QKEYS = ['no', 'date', 'to', 'person', 'addr', 'tel', 'fax', 'mobile', 'mail', 'ref', 'title', 'place', 'pay', 'payFree', 'delivery', 'valid', 'note'];
   function quoteDefaults() {
     var m = curModel(), nm = specName(), to = '';
     if (m && nm) { to = nm.indexOf(m.name) === 0 ? nm.slice(m.name.length) : nm; to = to.replace(/向け\s*$/, '').trim(); }
-    return { no: '', date: '', tax: 'ex', hideBlank: false, to: to, honor: '御中', person: '', ref: '', title: m ? 'TSKSIM ' + m.name + ' の御見積' : '', place: '', pay: PAYS[0], payFree: '', delivery: '別途お打合せ', valid: '30日間有効', units: 1, discount: null, note: '' };
+    return { no: '', date: '', tax: 'ex', hideBlank: true, to: to, honor: '御中', person: '', addr: '', tel: '', fax: '', mobile: '', mail: '', ref: '', title: m ? 'TSKSIM ' + m.name + ' の御見積' : '', place: '', pay: PAYS[0], payFree: '', delivery: '別途お打合せ', valid: '30日間有効', units: 1, discount: null, note: '' };
   }
   function cleanQuote(q) {
     if (!q || typeof q !== 'object') return null;
     var o = {};
-    QKEYS.forEach(function (k) { o[k] = typeof q[k] === 'string' ? q[k].slice(0, k === 'note' ? 300 : 80) : ''; });
+    QKEYS.forEach(function (k) { o[k] = typeof q[k] === 'string' ? q[k].slice(0, k === 'note' ? 300 : k === 'addr' ? 120 : 80) : ''; });
     o.honor = q.honor === '様' ? '様' : '御中';
     o.tax = q.tax === 'in' ? 'in' : 'ex';                 // 'in' = the amounts typed already include tax
     o.hideBlank = q.hideBlank === true;                   // leave lines without an amount off the quotation
@@ -2480,10 +2495,11 @@ return api;
     if (PAYS.indexOf(o.pay) < 0) o.pay = PAYS[0];
     return o;
   }
+  var QLOGO = "data:image/jpeg;base64,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", QMARK = "data:image/png;base64,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";
   function quote() { var r = record(), base = (r && r.quote) || quoteDefaults(), q = {}; Object.keys(base).forEach(function (k) { q[k] = base[k]; }); q.units = units(); return q; }
   function quoteLines(q) {
     var v = values(), out = [];
-    FIELDS.forEach(function (f) { (v[f.k] || []).forEach(function (l) { if (l.name !== NONE && !(q && q.hideBlank && l.price == null)) out.push({ label: f.k === 'frame' ? l.name : f.label + '　' + l.name, price: l.price, once: !!f.once }); }); });
+    FIELDS.forEach(function (f) { (v[f.k] || []).forEach(function (l) { if (l.name !== NONE && !(q && q.hideBlank && l.price == null)) out.push({ label: f.k === 'frame' ? l.name : f.label + '　' + l.name, name: l.name, price: l.price, once: !!f.once }); }); });
     return out;
   }
   function quoteTotals(q) {
@@ -2604,7 +2620,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/09 12:18</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/09 12:55</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -2890,31 +2906,41 @@ return api;
     put(page, tail);
     if (!pageFits(page)) { take(page, tail); open(false); put(page, tail); }
   }
-  function quotePagesInto(stage) {
-    var q = quote(), t = quoteTotals(q), lines = quoteLines(q), pay = q.payFree.trim() || q.pay, inc = q.tax === 'in';
+  function quotePagesInto(stage, z) {                                    // z＝文字の縮尺（1ページに収めるために少し小さくすることがある）
+    var q = quote(), t = quoteTotals(q), lines = quoteLines(q), pay = q.payFree.trim() || q.pay, inc = q.tax === 'in', m = curModel();
     function num(n) { return n.toLocaleString('ja-JP'); }
-    var rows = lines.map(function (l, i) {
-      var n = l.once ? 1 : q.units;
-      return '<tr><td class="c">' + (i + 1) + '</td><td>' + esc(l.label) + '</td><td class="r">' + n + '</td><td class="c">式</td><td class="r">' + (l.price != null ? num(l.price) : '') + '</td><td class="r">' + (l.price != null ? num(l.price * n) : '') + '</td></tr>';
-    });
-    if (t.disc) rows.push('<tr><td class="c">' + (lines.length + 1) + '</td><td>お値引き</td><td class="r">1</td><td class="c">式</td><td class="r">▲' + num(t.disc) + '</td><td class="r">▲' + num(t.disc) + '</td></tr>');
-    rows.push('<tr><td></td><td>（以下余白）</td><td></td><td></td><td></td><td></td></tr>');
-    var tail = '<tr class="sumtop"><td class="qk" rowspan="3">備考：</td><td class="qn" rowspan="3" colspan="2">' + esc(q.note) + '</td><td class="sumk" colspan="2">' + (inc ? '税抜金額' : '合　計') + '</td><td class="r">' + yen(t.base) + '</td></tr>' +
-      '<tr><td class="sumk" colspan="2">消費税(10％)</td><td class="r">' + yen(t.tax) + '</td></tr>' +
+    function cell(l, n) { return '<td class="r">' + n + '</td><td class="c">式</td><td class="r">' + (l.price != null ? num(l.price) : '') + '</td><td class="r">' + (l.price != null ? num(l.price * n) : '') + '</td>'; }
+    // 1 は機種のまとまり：見出しの行の下に、1台分の構成を (1)(2)… で並べ、「計」で締める。送料など1回きりの品は 2、3… と続く（御見積書 D250157 の並び）。
+    var per = lines.filter(function (l) { return !l.once; }), once = lines.filter(function (l) { return l.once; }), rows = [], no = 1, perUnit = 0, perAll = 0;
+    per.forEach(function (l) { if (l.price != null) { perUnit += l.price; perAll += l.price * q.units; } });
+    if (per.length) {
+      var grp = '<tr class="qgrp"><td class="c">' + (no++) + '</td><td>TSK ' + esc(m ? m.name : '') + ' シミュレーター</td><td></td><td></td><td></td><td></td></tr>';
+      per.forEach(function (l, i) { var tr = '<tr><td></td><td class="sub">(' + (i + 1) + ') ' + esc(l.label) + '</td>' + cell(l, q.units) + '</tr>'; if (i === 0) rows.push(grp + tr); else rows.push(tr); });   // the heading never ends a page
+      rows.push('<tr class="kei"><td></td><td class="sub kei">計</td><td></td><td></td><td class="r">' + (perUnit ? num(perUnit) : '') + '</td><td class="r">' + (perAll ? num(perAll) : '') + '</td></tr>');
+    }
+    once.forEach(function (l) { rows.push('<tr><td class="c">' + (no++) + '</td><td>' + esc(l.name || l.label) + '</td>' + cell(l, 1) + '</tr>'); });
+    if (t.disc) rows.push('<tr><td class="c">' + (no++) + '</td><td>お値引き</td><td class="r">1</td><td class="c">式</td><td class="r">▲' + num(t.disc) + '</td><td class="r">▲' + num(t.disc) + '</td></tr>');
+    rows.push('<tr><td></td><td class="sub">(以下余白)</td><td></td><td></td><td></td><td></td></tr>');
+    var tail = '<tr class="sumtop"><td class="qk" rowspan="3">備考：</td><td class="qn" rowspan="3" colspan="2">' + esc(q.note) + '</td><td class="sumk" colspan="2">' + (inc ? '税抜金額' : '金額') + '</td><td class="r">' + yen(t.base) + '</td></tr>' +
+      '<tr><td class="sumk" colspan="2">消費税(10%)</td><td class="r">' + yen(t.tax) + '</td></tr>' +
       '<tr class="grand"><td class="sumk" colspan="2">税込み金額</td><td class="r">' + yen(t.total) + '</td></tr>';
-    var toLine = esc(q.to) + (q.to ? '　' + q.honor : '');
-    var head = '<div class="qhead"><span>' + esc(q.date.trim() || today()) + '</span><span>No. ' + esc(q.no || '　　　　　　') + '</span></div>' +
-      '<div class="qtitle"><span>御見積書</span></div>' +
-      '<div class="qparties"><div class="qto"><div class="nm' + (q.to ? '' : ' blank') + '">' + toLine + '</div>' + (q.person ? '<div class="pic">（ご担当：' + esc(q.person) + ' 様）</div>' : '') + '</div>' +
-      '<div class="qfrom"><b>ＴＳＫ株式会社</b>〒458-0004<br>名古屋市緑区乗鞍二丁目１２０１番地<br>代表取締役　田中鉄三郎<br>事業者登録番号：T1180001128623<br>TEL：052-728-0010　Mobile：090-8868-7502<br>E-Mail：tanaka@tsksim.com</div></div>' +
-      (q.ref ? '<div class="qref">【' + esc(q.ref) + '】</div>' : '<div class="qref"></div>') +
+    var toLine = esc(q.to) + (q.to ? ' ' + q.honor : '');
+    var addr = String(q.addr || '').trim(), am = addr.match(/^(〒?\s*[0-9０-９]{3}[-－ー‐]?[0-9０-９]{4})\s*(.*)$/);   // 「〒338-0001 住所」は2行に分ける
+    var addrHtml = addr ? (am ? esc(am[1]) + (am[2] ? '<br>' + esc(am[2]) : '') : esc(addr)) : '';
+    var contact = [q.tel ? 'ＴＥＬ：' + esc(q.tel) : '', q.fax ? 'ＦＡＸ：' + esc(q.fax) : ''].filter(Boolean).join('　　'), mob = q.mobile ? 'MOBILE：' + esc(q.mobile) : '', mail = q.mail ? 'メール：' + esc(q.mail) : '';
+    var head = '<div class="qtop"><div class="qlogo"><img src="' + QLOGO + '" alt="TSK racing simulator"></div><div class="qmeta"><span>' + esc(q.date.trim() || today()) + '</span><span>見積No. ' + esc(q.no || '　　　　　　') + '</span></div></div>' +
+      '<div class="qtitle">御 見 積 書</div>' +
+      '<div class="qparties"><div class="qto"><div class="nm' + (q.to ? '' : ' blank') + '">' + toLine + '</div>' + (q.person ? '<div class="pic">' + esc(q.person) + '様</div>' : '') +
+      (addrHtml ? '<div class="addr">' + addrHtml + '</div>' : '') + (contact ? '<div class="ct">' + contact + '</div>' : '') + (mob ? '<div class="ct">' + mob + '</div>' : '') + (mail ? '<div class="ct">' + mail + '</div>' : '') +
+      '<div class="qref">' + (q.ref ? '【' + esc(q.ref) + '】' : '') + '</div></div>' +
+      '<div class="qfrom"><div class="qmark"><img src="' + QMARK + '" alt="TSK"><b>ＴＳＫ株式会社</b></div>〒４５８－０００４<br>名古屋市緑区乗鞍二丁目１２０１番地<br>代表取締役　田中鉄三郎<br><span class="gap"></span>事業者登録番号：T1180001128623<br>TEL：052-803-5550<br>Mobile：090-8868-7502<br>メール：tanaka@tsksim.com</div></div>' +
       '<div class="qgreet">下記の通り御見積申し上げます。</div>' +
-      '<dl class="qterms"><dt>1、受渡条件：</dt><dd>' + esc(q.place || '別途お打合せ') + '</dd><dt>2、御支払条件：</dt><dd>' + esc(pay) + '</dd><dt>3、納入月日：</dt><dd>' + esc(q.delivery) + '</dd><dt>4、見積有効期限：</dt><dd>' + esc(q.valid) + '</dd></dl>' +
-      '<div class="qsubject"><span>' + esc(q.title) + '</span></div><div class="qunit">単位：円' + (inc ? '（単価・金額は消費税込み）' : '') + '</div>';
+      '<dl class="qterms"><dt>1、受渡場所：</dt><dd>' + esc(q.place || '別途お打合せ') + '</dd><dt>2、御支払条件：</dt><dd>' + esc(pay) + '</dd><dt>3、納入月日：</dt><dd>' + esc(q.delivery) + '</dd><dt>4、見積有効期限：</dt><dd>' + esc(q.valid) + '</dd></dl>' +
+      '<div class="qline"><div class="qsubject">' + (q.title ? '<span>' + esc(q.title) + '</span>' : '') + '</div><div class="qunit">単位：円' + (inc ? '（単価・金額は消費税込み）' : '') + '</div></div>';
     var cont = '<div class="qcont"><span>御見積書' + (q.no ? '　No. ' + esc(q.no) : '') + '</span><span>' + toLine + '</span></div>';
-    var table = '<table><thead><tr><th style="width:54px;white-space:nowrap">項目</th><th>製品名</th><th style="width:64px">数量</th><th style="width:54px">単位</th><th style="width:100px">単価</th><th style="width:116px">金額</th></tr></thead><tbody></tbody></table>';
+    var table = '<table><thead><tr><th style="width:52px;white-space:nowrap">項目</th><th>製品名</th><th style="width:72px">数量</th><th style="width:60px">単位</th><th style="width:120px">単価</th><th style="width:140px">金額</th></tr></thead><tbody></tbody></table>';
     var page, tb;
-    function open(first) { page = addSheet(stage, ' q', (first ? head : cont) + table); tb = page.querySelector('tbody'); }
+    function open(first) { page = addSheet(stage, ' q', (first ? head : cont) + table); page.style.setProperty('--qz', String(z || 1)); tb = page.querySelector('tbody'); }
     function add(html) { var nodes = toNodes(html, 'tbody'), had = tb.children.length; put(tb, nodes); if (had && !pageFits(page)) { take(tb, nodes); open(false); put(tb, nodes); } }
     open(true);
     rows.forEach(add);
@@ -2925,7 +2951,7 @@ return api;
   function buildPages(stage) {
     function onePage(z) { stage.innerHTML = ''; specPagesInto(stage, z); return stage.children.length === 1; }
     stage.innerHTML = '';
-    if (ui.printMode === 'quote') quotePagesInto(stage);
+    if (ui.printMode === 'quote') { var qfit = [1, .94, .88, .82].some(function (z) { stage.innerHTML = ''; quotePagesInto(stage, z); return stage.children.length === 1; }); if (!qfit) { stage.innerHTML = ''; quotePagesInto(stage, 1); } }
     else {
       var one = onePage(2);
       if (!one && onePage(0.9)) { var lo = 0.9, hi = 2; for (var zi = 0; zi < 7; zi++) { var mid = (lo + hi) / 2; if (onePage(mid)) lo = mid; else hi = mid; } one = onePage(Math.floor(lo * 100) / 100); }
@@ -2935,8 +2961,10 @@ return api;
     var n = stage.children.length;
     if (n > 1) for (var i = 0; i < n; i++) { var no = document.createElement('div'); no.className = 'pgno'; no.textContent = (i + 1) + ' / ' + n; stage.children[i].appendChild(no); }
   }
-  function measureStage() { var st = document.createElement('div'); st.className = 'pdfStage'; document.body.appendChild(st); return st; }
-  function currentSheet() { var st = measureStage(), html; try { buildPages(st); html = st.innerHTML; } finally { document.body.removeChild(st); } return '<div class="pages" id="sheet">' + html + '</div>'; }
+  function sheetW() { return ui.printMode === 'quote' ? 1123 : 794; }          // 見積書はA4横、仕様書はA4縦
+  function sheetH() { return ui.printMode === 'quote' ? 794 : 1123; }
+  function measureStage() { var st = document.createElement('div'); st.className = 'pdfStage'; st.style.width = sheetW() + 'px'; document.body.appendChild(st); return st; }
+  function currentSheet() { var st = measureStage(), html; try { buildPages(st); html = st.innerHTML; } finally { document.body.removeChild(st); } return '<div class="pages' + (ui.printMode === 'quote' ? ' land' : '') + '" id="sheet">' + html + '</div>'; }
   function screenQuote() {
     var q = quote();
     function f(id, label, inner, help) { return '<div class="f"><label for="' + id + '">' + label + '</label>' + inner + (help ? '<div class="help">' + help + '</div>' : '') + '</div>'; }
@@ -2947,13 +2975,16 @@ return api;
       f('q-no', '見積No.', text('no', '例：D260120'), '番号は川内さんの管理している番号を入れてください') +
       f('q-date', '見積日（空欄なら今日の日付）', text('date', '例：' + today())) +
       '<div class="f"><label for="q-to">宛先</label><div class="two">' + text('to', '例：○○株式会社') + '<select id="q-honor" data-q="honor" aria-label="敬称"><option' + (q.honor === '御中' ? ' selected' : '') + '>御中</option><option' + (q.honor === '様' ? ' selected' : '') + '>様</option></select></div></div>' +
-      f('q-person', 'ご担当（なければ空欄）', text('person', '例：営業部 ○○')) +
+      f('q-person', 'ご担当（なければ空欄）', text('person', '例：営業推進部 販売促進課　○○'), '「様」は自動で付きます') +
+      f('q-addr', '宛先の〒・住所（なければ空欄）', '<input id="q-addr" data-q="addr" type="text" maxlength="120" autocomplete="off" placeholder="例：〒338-0001 埼玉県さいたま市中央区上落合2-2-1" value="' + esc(q.addr) + '">') +
+      '<div class="f"><label for="q-tel">宛先のTEL／FAX</label><div class="two">' + text('tel', 'TEL') + text('fax', 'FAX') + '</div></div>' +
+      '<div class="f"><label for="q-mobile">宛先のMOBILE／メール</label><div class="two">' + text('mobile', 'MOBILE') + text('mail', 'メール') + '</div></div>' +
       f('q-ref', '見積の根拠（なければ空欄）', text('ref', '例：6月19日付メールに基づきます。')) +
       f('q-title', '件名', text('title', '例：TSKSIM GTpod用部品2点')) +
       f('q-discount', 'お値引き（円・なければ空欄）', '<input id="q-discount" data-q="discount" type="text" inputmode="numeric" maxlength="11" placeholder="0" value="' + (q.discount != null ? q.discount : '') + '">') +
       f('q-tax', '消費税の扱い', '<select id="q-tax" data-q="tax"><option value="ex"' + (q.tax !== 'in' ? ' selected' : '') + '>金額は税抜（消費税を加える）</option><option value="in"' + (q.tax === 'in' ? ' selected' : '') + '>金額は税込（内税で表示）</option></select>') +
       f('q-hideBlank', '金額のない品（在庫品・支給品など）', '<select id="q-hideBlank" data-q="hideBlank"><option value="show"' + (q.hideBlank ? '' : ' selected') + '>見積書に載せる</option><option value="hide"' + (q.hideBlank ? ' selected' : '') + '>見積書に載せない</option></select>') +
-      f('q-place', '受渡条件', text('place', '例：モビリティリゾート茂木')) +
+      f('q-place', '受渡場所', text('place', '例：埼玉県さいたま市中央区上落合2-2-1')) +
       f('q-pay', '御支払条件', pays) +
       f('q-payFree', '御支払条件（上にない場合はここに入力）', text('payFree')) +
       f('q-delivery', '納入月日', text('delivery')) +
@@ -2992,7 +3023,7 @@ return api;
   function fitSheet() {
     var wrap = document.getElementById('sheetWrap'), sheet = document.getElementById('sheet');
     if (!wrap || !sheet) return;
-    var s = Math.min(1, wrap.clientWidth / 794);
+    var s = Math.min(1, wrap.clientWidth / sheetW());
     sheet.style.transform = 'scale(' + s + ')';
     wrap.style.height = Math.ceil(sheet.offsetHeight * s) + 'px';
   }
@@ -3221,12 +3252,12 @@ return api;
       return document.fonts && document.fonts.ready ? document.fonts.ready : null;
     }).then(function () {
       buildPages(stage);                                          // measured again with the type in place
-      var sheets = Array.prototype.slice.call(stage.children), pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true }), i = 0;
+      var land = ui.printMode === 'quote', W = sheetW(), Hh = sheetH(), sheets = Array.prototype.slice.call(stage.children), pdf = new window.jspdf.jsPDF({ unit: 'mm', format: 'a4', orientation: land ? 'landscape' : 'portrait', compress: true }), i = 0;
       function next() {
         if (i >= sheets.length) return pdf.output('blob');
-        return window.html2canvas(sheets[i], { scale: 3, backgroundColor: '#FFFFFF', useCORS: true, logging: false, windowWidth: 794, windowHeight: 1123, scrollX: 0, scrollY: 0, onclone: function (doc, el) { try { doc.documentElement.setAttribute('data-theme', 'light'); el.style.transform = 'none'; el.style.margin = '0'; doc.body.innerHTML = ''; doc.body.style.cssText = 'margin:0;padding:0;width:794px;background:#FFFFFF'; doc.body.appendChild(el); } catch (e) {} } }).then(function (canvas) {
+        return window.html2canvas(sheets[i], { scale: 3, backgroundColor: '#FFFFFF', useCORS: true, logging: false, windowWidth: W, windowHeight: Hh, scrollX: 0, scrollY: 0, onclone: function (doc, el) { try { doc.documentElement.setAttribute('data-theme', 'light'); el.style.transform = 'none'; el.style.margin = '0'; doc.body.innerHTML = ''; doc.body.style.cssText = 'margin:0;padding:0;width:' + W + 'px;background:#FFFFFF'; doc.body.appendChild(el); } catch (e) {} } }).then(function (canvas) {
           if (i > 0) pdf.addPage();
-          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, 297, undefined, 'FAST');   // PNG keeps small type sharp
+          pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, land ? 297 : 210, land ? 210 : 297, undefined, 'FAST');   // PNG keeps small type sharp
           i++;
           return next();
         });
