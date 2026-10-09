@@ -509,6 +509,24 @@
   function loop() { clearTimeout(timer); tick().then(function () { timer = setTimeout(loop, delay()); }); }
   document.addEventListener('visibilitychange', function () { if (!document.hidden) loop(); });
 
+  // ---- 新しい版が公開されていたら、自分で読み込み直す ----
+  // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
+  // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
+  var VER = '10/09 10:45', hiddenAt = 0, lastCheck = 0;
+  function checkUpdate() {
+    if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
+    fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
+      var m = /\u7248 (\d\d\/\d\d \d\d:\d\d)/.exec(t || ''); if (!m || m[1] === VER) return;
+      var a = document.activeElement, typing = !!a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT');
+      var done = ''; try { done = sessionStorage.getItem('tsk-upd') || ''; } catch (e) {}
+      if (done === m[1] || typing || inflight || Object.keys(outbox).length) return;
+      try { sessionStorage.setItem('tsk-upd', m[1]); } catch (e) {}
+      location.replace(location.pathname + '?v=' + m[1].replace(/\D/g, ''));
+    }).catch(function () {});
+  }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) { hiddenAt = Date.now(); return; } if (hiddenAt && Date.now() - hiddenAt > 600000) checkUpdate(); hiddenAt = 0; });
+  setTimeout(checkUpdate, 4000);
+
   function write(op, path, data) {
     var cur = docs[path], had = outbox[path];
     if (op === 'set' && data && typeof data === 'object' && myName()) { data = clone(data); data._by = myName(); }
@@ -2379,7 +2397,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/08 19:45</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/09 10:45</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -3135,6 +3153,17 @@ return api;
   render();
   connect();
   if (board) setMode('board');   // アプリを開いたら、まず発注・納期ボード（仕様書へは左上の「仕様書」から）
+  // ホーム画面に置いたアプリは、閉じても裏で開いたままになり、次に開くと前の画面（仕様書）がそのまま出る。
+  // 10分以上離れてから戻ったときは「開き直した」とみなして、ボードから始める。入力中だった内容は先に保存する。
+  var awayAt = 0;
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { awayAt = Date.now(); return; }
+    var away = awayAt ? Date.now() - awayAt : 0; awayAt = 0;
+    if (!board || mode !== 'spec' || away < 600000 || ui.busy) return;
+    if (ui.screen === 'spec') { commitName(); commitMemo(); commitDay(); commitJob(); }
+    if (ui.screen === 'quote') commitQuote();
+    setMode('board');
+  });
 })();
 </script>
 </body>
