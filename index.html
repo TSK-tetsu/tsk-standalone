@@ -470,7 +470,7 @@
       return null;
     }
     if (col === 'specs') { var nm = '仕様書「' + ((nw || old || {}).name || '名前なし') + '」'; return !nw ? nm + ' を削除' : who + nm + (old ? ' を変更' : ' を作成'); }
-    if (col === 'tasks') return nw && !old ? who + 'タスク「' + (nw.title || '') + '」を追加' : null;
+    if (col === 'tasks') { var tt = 'タスク「' + ((nw || old || {}).title || '') + '」' + ((nw || old || {}).who ? '（' + (nw || old).who + '）' : ''); if (!nw) return old ? tt + ' を削除' : null; if (!old) return who + tt + ' を追加'; if (!old.done && nw.done) return who + tt + ' を完了'; if (old.done && !nw.done) return who + tt + ' を未完了に戻す'; return null; }
     if (col === 'projects' && nw && old && (old.deliveredAt || '') !== (nw.deliveredAt || '')) return who + '「' + (nw.client || '案件') + '」 ' + (nw.deliveredAt ? '納品済み（' + nw.deliveredAt.slice(5).replace('-', '/') + '）' : '納品済みを取り消し');
     return null;
   }
@@ -550,7 +550,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '10/09 13:31', hiddenAt = 0, lastCheck = 0;
+  var VER = '10/09 13:50', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -852,7 +852,36 @@ tfoot td{font-weight:700;background:var(--well)}
 .memo .tools .b{flex:1}
 .mic.on{background:var(--red);color:#fff;border-color:var(--red);animation:pulse 1.2s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(217,48,37,.5)}50%{box-shadow:0 0 0 10px rgba(217,48,37,0)}}
-.task{background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:flex-start}
+.tkbar{display:flex;gap:8px;margin-bottom:12px}
+.tkbar .b{flex:1;min-height:48px}
+.tkg{margin-bottom:14px}
+.tkg-h{display:flex;align-items:center;gap:8px;padding:0 4px 6px;font-size:17px;font-weight:900}
+.tkg-h .n{background:var(--navy);color:var(--gold);border-radius:999px;padding:0 9px;font-size:13px;font-weight:900}
+.tkg-h .b{margin-left:auto;min-height:34px;padding:4px 14px;font-size:18px;line-height:1}
+.task{background:var(--card);border-radius:14px;padding:10px 12px;margin-bottom:8px;box-shadow:var(--shadow);display:flex;gap:10px;align-items:flex-start}
+.task.late{border-left:4px solid var(--red)}
+.task .t{flex:1;min-width:0;background:none;border:0;padding:0;text-align:left;font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:rgba(11,31,58,.1)}
+.task .m .soon{color:var(--gold-dk);font-weight:900}
+.task .m .nt{flex:0 0 100%;color:var(--ink);font-weight:500}
+.task.done .title{text-decoration:line-through;color:var(--muted)}
+.memoFold{padding:0;margin-top:18px}
+.memoFold summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.memoFold summary::-webkit-details-marker{display:none}
+.memoFold summary b{font-size:16px;font-weight:900}
+.memoFold summary b::before{content:"▶";font-size:11px;color:var(--muted);margin-right:8px}
+.memoFold[open] summary b::before{content:"▼"}
+.memoFold summary span{font-size:13px;color:var(--muted)}
+.memoFold>:not(summary){margin-left:16px;margin-right:16px}
+.memoFold>.tools{margin-bottom:16px}
+.tkstrip{width:100%;display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:10px 14px;border:2px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font:inherit;font-size:15px;font-weight:700;box-shadow:var(--shadow);text-align:left}
+.tkstrip .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.tkstrip small{font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tkstrip .ico{width:26px;height:26px;border-radius:8px;background:var(--navy);color:var(--gold);display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:900}
+.tkstrip b{font-size:20px;font-weight:900}
+.tkstrip em{font-style:normal;color:var(--red);font-weight:900;margin-left:4px}
+.tkstrip.late{border-color:var(--red)}
+.tkstrip i{margin-left:auto;font-style:normal;color:var(--muted);font-size:20px}
+:host(.work) #tkStrip{display:none}
 .task .chk{flex:0 0 28px;width:28px;height:28px;border-radius:8px;border:2px solid var(--line);background:var(--well);display:flex;align-items:center;justify-content:center;margin-top:2px}
 .task.done .chk{background:var(--green);border-color:var(--green);color:#fff}
 .task .chk svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
@@ -1279,7 +1308,7 @@ details.done[open]>summary::before{content:"▾"}
       <button class="b b-gold" id="sideAdd">＋ 発注を追加</button>
       <button data-view="list" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>一覧<span class="badge" id="badgeSide" hidden>0</span></button>
       <button data-view="cal"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>スケジュール</button>
-      <button data-view="memo"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>議事録・タスク<span class="badge" id="badgeTaskSide" hidden>0</span></button>
+      <button data-view="memo"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>タスク・議事録<span class="badge" id="badgeTaskSide" hidden>0</span></button>
       <button data-view="ledger"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>月末台帳</button>
     </aside>
 
@@ -1294,6 +1323,7 @@ details.done[open]>summary::before{content:"▾"}
           <button class="stat" data-f="week"><div class="v" id="st-week">0</div><div class="l">今週納期</div></button>
           <button class="stat" data-f="open"><div class="v" id="st-open">0</div><div class="l">未入荷</div></button>
         </div>
+        <button class="tkstrip" id="tkStrip" type="button" hidden><span class="ico">✓</span><span class="tx"><span><b id="tkStripN">0</b><span id="tkStripT">件のタスク</span><em id="tkStripL" hidden></em></span><small id="tkStripNext"></small></span><i>›</i></button>
         <div class="chips" id="filters">
           <button class="chip" data-f="all" aria-pressed="true">すべて</button>
           <button class="chip" data-f="soon">要確認 <span class="n" id="chipSoon" hidden>0</span></button>
@@ -1310,15 +1340,16 @@ details.done[open]>summary::before{content:"▾"}
       <section class="view" id="view-cal"><div id="cal"></div></section>
 
       <section class="view" id="view-memo">
-        <div class="memo">
-          <h2>打ち合わせのメモを入れる</h2>
-          <div class="lead" style="color:var(--muted);font-size:14px;margin-bottom:10px">話した内容をそのまま。AIが「やること」と「注文するもの」に分けて、このアプリに登録します。</div>
+        <div class="secttl" style="margin-top:0">抱えているタスク<span class="n" id="taskN">0</span><button class="chip" id="toggleDone" aria-pressed="false" style="margin-left:auto;min-height:34px;padding:4px 12px;font-size:13px">完了も表示</button></div>
+        <div class="lead" style="color:var(--muted);font-size:14px;margin:-2px 0 10px">納品以外の「やること」を相手ごとに。押すと直せます。</div>
+        <div class="tkbar"><button class="b b-gold" id="addTask" type="button">＋ タスクを足す</button></div>
+        <div id="tasks"></div>
+        <details class="memo memoFold" id="memoBox">
+          <summary><b>打ち合わせのメモから足す</b><span>話した内容をそのまま入れると、AIが「やること」と「注文するもの」に分けて登録します</span></summary>
           <div class="row2" style="margin-bottom:10px"><div class="f" style="margin:0"><label for="m-title">会議・打ち合わせ名</label><input id="m-title" placeholder="例：埼玉中央 定例"></div><div class="f" style="margin:0"><label for="m-date">日付</label><input id="m-date" type="date"></div></div>
           <textarea id="m-text" placeholder="例：埼玉中央向けジュニア4台、モニターはXRJを流用。足りない分のアームをSPKに2本頼む。川内さん、納品日を先方に確認。tora、LINE通知の件を金曜までに。"></textarea>
           <div class="tools"><button class="b b-ghost mic" id="mic" type="button">🎤 音声で入力</button><button class="b b-gold" id="ai" type="button">AIで整理する</button></div>
-        </div>
-        <div class="secttl">やること<span class="n" id="taskN">0</span><button class="chip" id="toggleDone" aria-pressed="false" style="margin-left:auto;min-height:34px;padding:4px 12px;font-size:13px">完了も表示</button></div>
-        <div id="tasks"></div>
+        </details>
         <div class="secttl">議事録<span class="n" id="mtgN">0</span></div>
         <div id="mtgs"></div>
       </section>
@@ -1342,7 +1373,7 @@ details.done[open]>summary::before{content:"▾"}
       <button data-view="cal"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>予定</button>
     <button class="fab" id="fab" aria-label="発注を追加"><span><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><small>追加</small></button>
     <button data-view="ledger"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>台帳</button>
-    <button data-view="memo"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>議事録<span class="badge" id="badgeTaskNav" hidden>0</span></button>
+    <button data-view="memo"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>タスク<span class="badge" id="badgeTaskNav" hidden>0</span></button>
   </nav>
 
   <div class="okbar" id="okBar"><button type="button" class="b b-gold" id="okBtn">OK</button></div>
@@ -2049,19 +2080,53 @@ function renderTasks(){
   const open=tasks.filter(t=>!t.done);
   ["#badgeTaskNav","#badgeTaskSide"].forEach(s=>{ const b=$(s); const n=open.filter(t=>t.due&&t.due<todayStr()).length; b.textContent=n; b.hidden=!n; });
   $("#taskN").textContent=open.length;
+  { const late=open.filter(t=>t.due&&t.due<todayStr()).length, st=$("#tkStrip"); st.hidden=!open.length; $("#tkStripN").textContent=open.length; $("#tkStripT").textContent=`件のタスク（${new Set(open.map(t=>taskWho(t)||"相手なし")).size}先）`; $("#tkStripL").hidden=!late; $("#tkStripL").textContent=late?`期限超過 ${late}`:""; st.classList.toggle("late",late>0);
+    const nx=open.filter(t=>t.due).sort((a,b)=>a.due.localeCompare(b.due))[0]; $("#tkStripNext").textContent=nx?`次の期限 ${fmtDW(nx.due)}　${taskWho(nx)?taskWho(nx)+"：":""}${nx.title}`:""; }
   const rows=(showDone?tasks.slice():open).sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(a.due||"9999").localeCompare(b.due||"9999"));
-  $("#tasks").innerHTML = rows.length? rows.map(t=>{ const p=projects.find(x=>x.id===t.projectId); const late=!t.done&&t.due&&t.due<todayStr();
-    return `<div class="task ${t.done?"done":""}" data-id="${t.id}"><button class="chk" data-act="toggle" aria-label="完了にする">${t.done?'<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>':""}</button><div class="t"><div class="title">${esc(t.title)}</div><div class="m">${t.assignee?`<span>担当 ${esc(t.assignee)}</span>`:""}${t.due?`<span class="${late?"late":""}">期限 ${fmtD(t.due)}${late?"　超過":""}</span>`:""}${p?`<span>${esc(p.k||p.client||"")}</span>`:""}${t.source?`<span>${esc(t.source)}</span>`:""}</div></div>${canWrite?`<button class="b b-sm b-ghost" data-act="del" style="min-height:36px;padding:6px 10px">削除</button>`:""}</div>`; }).join("")
-    : `<div class="empty" style="padding:24px"><b>やることはありません</b>打ち合わせメモから自動で追加されます。</div>`;
+  // 相手（会社・人・案件）ごとにまとめる。期限の近い相手が上
+  const gm=new Map(); rows.forEach(t=>{ const w=taskWho(t)||"相手なし"; if(!gm.has(w)) gm.set(w,[]); gm.get(w).push(t); });
+  const gs=[...gm.entries()].map(([w,ls])=>({w,ls,key:ls.filter(t=>!t.done).map(t=>t.due||"9999").sort()[0]||"9999～"})).sort((a,b)=>a.key.localeCompare(b.key)||a.w.localeCompare(b.w,"ja"));
+  const row=t=>{ const late=!t.done&&t.due&&t.due<todayStr(), soon=!late&&!t.done&&t.due&&t.due<=addDays(todayStr(),3);
+    return `<div class="task ${t.done?"done":""} ${late?"late":""}" data-id="${t.id}"><button class="chk" data-act="toggle" aria-label="${t.done?"未完了に戻す":"完了にする"}">${t.done?'<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>':""}</button><button class="t" data-act="edit" type="button"><div class="title">${esc(t.title)}</div><div class="m">${t.due?`<span class="${late?"late":soon?"soon":""}">${late?"期限超過 ":soon?"期限 ":"期限 "}${fmtDW(t.due)}</span>`:""}${t.assignee?`<span>担当 ${esc(t.assignee)}</span>`:""}${t.note?`<span class="nt">${esc(t.note)}</span>`:""}${t.source?`<span>${esc(t.source)}</span>`:""}</div></button></div>`; };
+  $("#tasks").innerHTML = gs.length? gs.map(g=>`<section class="tkg"><div class="tkg-h"><b>${esc(g.w)}</b><span class="n">${g.ls.filter(t=>!t.done).length}</span>${canWrite?`<button class="b b-sm b-ghost" type="button" data-tadd="${esc(g.w)}" aria-label="${esc(g.w)} にタスクを足す">＋</button>`:""}</div>${g.ls.map(row).join("")}</section>`).join("")
+    : `<div class="empty" style="padding:24px"><b>抱えているタスクはありません</b>「＋ タスクを足す」か、打ち合わせのメモから足せます。</div>`;
   $("#mtgN").textContent=meetings.length;
   $("#mtgs").innerHTML = meetings.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||"").localeCompare(a.createdAt||"")).map(m=>`<div class="mtg"><div class="h"><b>${esc(m.title||"打ち合わせ")}</b><span>${m.date||""}　やること${m.taskCount||0}・注文${m.orderCount||0}</span></div><p>${esc(m.summary||"")}</p></div>`).join("") || `<div class="empty" style="padding:24px"><b>議事録はまだありません</b></div>`;
 }
+function taskWho(t){ if(t.who) return t.who; const p=projects.find(x=>x.id===t.projectId); return p?(p.client||p.k||""):""; }
+function addDays(d,n){ const t=new Date(d+"T00:00:00"); t.setDate(t.getDate()+n); return t.toLocaleDateString("sv-SE"); }
+// タスクを足す・直す（相手・やること・担当・期限・メモ）
+function openTask(t,presetWho){
+  const whos=[...new Set(tasks.map(taskWho).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
+  openSheet(`<h2>${t?"タスクを直す":"タスクを足す"}</h2>
+    <div class="f"><label for="tkWho">相手・案件</label><input id="tkWho" list="tkWhos" value="${esc(t?taskWho(t):(presetWho||""))}" placeholder="例：ポルシェセンター目黒" autocomplete="off"><datalist id="tkWhos">${whos.map(w=>`<option value="${esc(w)}">`).join("")}</datalist></div>
+    <div class="f"><label for="tkTitle">やること</label><input id="tkTitle" value="${esc(t?t.title:"")}" placeholder="例：ブレーキの交換" autocomplete="off"></div>
+    <div class="row2"><div class="f"><label for="tkAsg">担当</label><input id="tkAsg" value="${esc(t?t.assignee||"":"")}" placeholder="例：田中" autocomplete="off"></div><div class="f"><label for="tkDue">期限</label><input id="tkDue" type="date" value="${esc(t?t.due||"":"")}"></div></div>
+    <div class="f"><label for="tkNote">メモ</label><input id="tkNote" value="${esc(t?t.note||"":"")}" placeholder="例：部品は手配済み" autocomplete="off"></div>
+    <div class="btns">${t?`<button class="b b-ghost" data-t="del">削除</button>`:`<button class="b b-ghost" data-t="cancel">やめる</button>`}<button class="b b-gold" data-t="save" style="flex:1">${t?"保存する":"足す"}</button></div>`);
+  if(!t) setTimeout(()=>{ const el=$(presetWho?"#tkTitle":"#tkWho"); if(el) el.focus(); },80);
+  sheet.onkeydown=ev=>{ if(ev.key==="Enter"&&!ev.isComposing&&ev.keyCode!==229&&ev.target.tagName==="INPUT"){ ev.preventDefault(); const sb=sheet.querySelector("[data-t=save]"); if(sb) sb.click(); } };
+  sheet.onclick=async e=>{
+    const b=e.target.closest("button[data-t]"); if(!b) return;
+    const done=()=>{ sheet.onclick=null; sheet.onkeydown=null; closeSheet(); };
+    if(b.dataset.t==="cancel"){ done(); return; }
+    if(b.dataset.t==="del"){ if(!confirm("このタスクを削除しますか？")) return; b.disabled=true; try{ await deleteTask(t.id); toast("削除しました"); done(); }catch{ toast("削除できませんでした"); b.disabled=false; } return; }
+    const title=$("#tkTitle").value.trim(); if(!title){ toast("やることを入れてください"); $("#tkTitle").focus(); return; }
+    const now=new Date().toISOString(), who=$("#tkWho").value.trim(), x={...(t?strip(t):{done:false,createdAt:now}),title,who,assignee:$("#tkAsg").value.trim(),due:$("#tkDue").value,note:$("#tkNote").value.trim(),updatedAt:now};
+    if(t&&who&&who!==taskWho(t)&&t.projectId&&!t.who){ /* 案件から来た相手を書き換えたら、以後はその相手名で */ }
+    b.disabled=true;
+    try{ await saveTask(t?t.id:gid("t"),x); snd.ok(); toast(t?"直しました":"タスクを足しました"); done(); }catch{ toast("保存できませんでした"); b.disabled=false; }
+  };
+}
 $("#toggleDone").addEventListener("click",e=>{ showDone=!showDone; e.currentTarget.setAttribute("aria-pressed",showDone); renderTasks(); });
+$("#tkStrip").addEventListener("click",()=>{ snd.tap(); showView("memo"); });
+$("#addTask").addEventListener("click",()=>{ if(!canWrite){ toast("閲覧のみの権限です"); return; } openTask(null,""); });
 $("#tasks").addEventListener("click",async e=>{
-  const b=e.target.closest("button[data-act]"); if(!b) return; const id=b.closest(".task").dataset.id; const t=tasks.find(x=>x.id===id); if(!t) return;
+  const ga=e.target.closest("[data-tadd]"); if(ga){ if(!canWrite){ toast("閲覧のみの権限です"); return; } openTask(null,ga.dataset.tadd==="相手なし"?"":ga.dataset.tadd); return; }
+  const b=e.target.closest("[data-act]"); if(!b) return; const id=b.closest(".task").dataset.id; const t=tasks.find(x=>x.id===id); if(!t) return;
+  if(b.dataset.act==="edit"){ if(!canWrite){ toast("閲覧のみの権限です"); return; } openTask(t); return; }
   if(!canWrite){ toast("閲覧のみの権限です"); return; }
   if(b.dataset.act==="toggle"){ try{ await saveTask(id,{...strip(t),done:!t.done,updatedAt:new Date().toISOString()}); if(!t.done) snd.done(); }catch{ toast("更新できませんでした"); } }
-  if(b.dataset.act==="del"){ if(!confirm("このタスクを削除しますか？")) return; try{ await deleteTask(id); toast("削除しました"); }catch{ toast("削除できませんでした"); } }
 });
 
 /* ---------- 音声入力 ---------- */
@@ -2093,7 +2158,7 @@ $("#ai").addEventListener("click",async()=>{
 今日: ${todayStr()}
 既存の案件リスト（該当があれば id を使う。なければ null）: ${JSON.stringify(pj)}
 出力形式:
-{"summary":"3行以内の議事要約","tasks":[{"title":"動詞で終わる短い文","assignee":"人名 or 空","due":"YYYY-MM-DD or 空","projectId":"案件id or null"}],"orders":[{"item":"品名","supplier":"仕入先 or 空","qty":数値 or null,"due":"YYYY-MM-DD or 空","projectId":"案件id or null","projectHint":"該当案件が無い場合の宛先・仕様の手がかり or 空"}]}
+{"summary":"3行以内の議事要約","tasks":[{"title":"動詞で終わる短い文","who":"相手（会社・人・案件名） or 空","assignee":"人名 or 空","due":"YYYY-MM-DD or 空","projectId":"案件id or null"}],"orders":[{"item":"品名","supplier":"仕入先 or 空","qty":数値 or null,"due":"YYYY-MM-DD or 空","projectId":"案件id or null","projectHint":"該当案件が無い場合の宛先・仕様の手がかり or 空"}]}
 注意: 「金曜まで」などの相対表現は今日の日付から具体化。注文品はタスクに重複させない。不明は空にする。
 メモ:
 ${text}`;
@@ -2123,7 +2188,7 @@ function openReview(r,text){
     const now=new Date().toISOString(); const title=$("#m-title").value.trim()||"打ち合わせ"; const date=$("#m-date").value||todayStr(); const src=`${date.slice(5).replace("-","/")} ${title}`;
     let tc=0, oc=0;
     try{
-      for(const rv of sheet.querySelectorAll(".rv.on[data-kind='t']")){ const t=rv.querySelector(".rt").value.trim(); if(!t) continue; await saveTask(gid("t"),{title:t,assignee:rv.querySelector(".ra").value.trim(),due:rv.querySelector(".rd").value,projectId:rv.querySelector(".rp").value,done:false,source:src,createdAt:now,updatedAt:now}); tc++; }
+      for(const rv of sheet.querySelectorAll(".rv.on[data-kind='t']")){ const t=rv.querySelector(".rt").value.trim(); if(!t) continue; await saveTask(gid("t"),{title:t,who:String(tl[+rv.dataset.i]?.who||"").trim().slice(0,40),assignee:rv.querySelector(".ra").value.trim(),due:rv.querySelector(".rd").value,projectId:rv.querySelector(".rp").value,done:false,source:src,createdAt:now,updatedAt:now}); tc++; }
       for(const rv of sheet.querySelectorAll(".rv.on[data-kind='o']")){ const item=rv.querySelector(".ri").value.trim(); const sup=rv.querySelector(".rs").value.trim()||"未定"; if(!item) continue; const pid=rv.querySelector(".rp").value; const p=projects.find(x=>x.id===pid); await saveOrder(gid("o"),{projectId:pid,k:p?p.k:"",item,supplier:sup,orderDate:date,due:rv.querySelector(".rd").value,status:"未発注",createdAt:now,updatedAt:now}); oc++; }
       await saveMeeting(gid("m"),{title,date,summary:r.summary||"",text,taskCount:tc,orderCount:oc,createdAt:now});
       snd.ok(); toast(`やること${tc}件・注文${oc}件を登録しました`); sheet.onclick=null; closeSheet(); $("#m-text").value=""; $("#m-title").value="";
@@ -2649,7 +2714,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/09 13:31</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/09 13:50</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
