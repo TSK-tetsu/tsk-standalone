@@ -578,12 +578,13 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '10/13 12:11', hiddenAt = 0, lastCheck = 0;
+  var VER = '10/13 18:35', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
       var m = /\u7248 (\d\d\/\d\d \d\d:\d\d)/.exec(t || ''); if (!m || m[1] === VER) return;
-      var a = document.activeElement, typing = !!a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT');
+      var a = document.activeElement; while (a && a.shadowRoot && a.shadowRoot.activeElement) a = a.shadowRoot.activeElement;   // ボードの中（シャドウDOM）で入力しているときも
+      var typing = !!a && (a.tagName === 'TEXTAREA' || a.tagName === 'INPUT' || a.tagName === 'SELECT');
       var done = ''; try { done = sessionStorage.getItem('tsk-upd') || ''; } catch (e) {}
       if (done === m[1] || typing || inflight || Object.keys(outbox).length) return;
       try { sessionStorage.setItem('tsk-upd', m[1]); } catch (e) {}
@@ -779,9 +780,9 @@ tfoot td{font-weight:700;background:var(--well)}
 @media (prefers-color-scheme: dark){:host(:not([data-theme="light"])) .nav button[aria-current="page"]{color:var(--gold-soft)} :host(:not([data-theme="light"])) .nav .fab small{color:var(--gold-soft)}}
 
 /* sheet（CR流：全画面にしない・背景が見える・背景タップで閉じる） */
-.scrim{position:fixed;inset:0;background:rgba(5,14,30,.55);z-index:20;display:none;align-items:flex-end;justify-content:center}
+.scrim{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);background:rgba(5,14,30,.55);z-index:20;display:none;align-items:flex-end;justify-content:center}
 .scrim.open{display:flex}
-.sheet{background:var(--card);width:100%;max-width:560px;max-height:88dvh;border-radius:22px 22px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom,0px));overflow:auto;box-shadow:0 -10px 40px rgba(0,0,0,.3);animation:up .22s ease-out}
+.sheet{background:var(--card);width:100%;max-width:560px;max-height:min(88dvh,calc(var(--vvh,100dvh) - 12px));border-radius:22px 22px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom,0px));overflow:auto;box-shadow:0 -10px 40px rgba(0,0,0,.3);animation:up .22s ease-out}
 @keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
 .grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 12px}
 .sheet h2{font-size:20px;font-weight:900;margin-bottom:4px}
@@ -882,7 +883,7 @@ tfoot td{font-weight:700;background:var(--well)}
 :host(.mode-d) .pjgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px}
 :host(.mode-d) .pj{margin:0}
 :host(.mode-d) .scrim{align-items:center}
-:host(.mode-d) .sheet{border-radius:22px;max-height:86vh;padding:18px 26px 24px;animation:pop .18s ease-out}
+:host(.mode-d) .sheet{border-radius:22px;max-height:min(86vh,calc(var(--vvh,100vh) - 24px));padding:18px 26px 24px;animation:pop .18s ease-out}
 @keyframes pop{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}
 :host(.mode-d) .grab{display:none}
 :host(.mode-d) .toast{bottom:32px}
@@ -918,6 +919,7 @@ tfoot td{font-weight:700;background:var(--well)}
 .lift{position:relative;z-index:9;box-shadow:0 16px 34px rgba(11,31,58,.32)!important;outline:3px solid var(--gold);outline-offset:-1px;border-radius:16px;opacity:.97;transition:none!important}
 .grp.lift>.grp-h{cursor:grabbing}
 :host(.dragging) *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea,select{-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
 .grp-h,.tkg-h,.task .t{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .tkbar{display:flex;gap:8px;margin-bottom:10px}
 .tksort{margin:0 0 12px;align-items:center}
@@ -1470,7 +1472,7 @@ let ordersReady=false, projectsReady=false; const waiting=[]; const listeners=[]
 function setOrders(list){ allOrders=list; orders=list.filter(o=>!o.hidden); }   // hidden = 仕様書から来た発注をボードで外したもの（再作成させないための印）
 let sample=null, showDone=false;
 let taskSort="due"; try{ const v=localStorage.getItem("tsk_tasksort"); if(v==="name"||v==="manual") taskSort=v; }catch{}
-let settings={};   // 共有の設定（settings/board）：taskGroups＝相手の並び   // タスクの相手の並び：日程順／名前順（端末ごとに覚える）
+let settings={}; const dragEnders=[];   // 並び替えの「持ち上げ」を外から解除するための関数たち（reorderable が足す）   // 共有の設定（settings/board）：taskGroups＝相手の並び   // タスクの相手の並び：日程順／名前順（端末ごとに覚える）
 let db=null, downloads=null, canWrite=true;
 let filter="all";
 
@@ -1900,8 +1902,15 @@ function showGroup(key){ if(dlvAt(key)) showDlv=true; openGrp.clear(); grpF.clea
 
 /* ---------- sheet infra ---------- */
 const scrim=$("#scrim"), sheet=$("#sheet");
-function openSheet(html){ sheet.innerHTML=`<div class="grab"></div>${html}`; scrim.classList.add("open"); snd.open(); }
-function closeSheet(){ scrim.classList.remove("open"); sheet.innerHTML=""; }
+function openSheet(html){ clearDrag(); sheet.innerHTML=`<div class="grab"></div>${html}`; scrim.classList.add("open"); fitScrim(); snd.open(); }
+// キーボードが出ている間は、見えている範囲（visualViewport）にシートを収める。入力中の欄は、その中で見える位置へ
+function fitScrim(){ const vv=window.visualViewport; if(!vv||root.host.classList.contains("framed")){ html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); return; }
+  const kb=window.innerHeight-vv.height>80;   // キーボード（またはそれに近いもの）が出ている
+  if(kb){ html.style.setProperty("--vvh",Math.round(vv.height)+"px"); html.style.setProperty("--vvt",Math.round(vv.offsetTop)+"px"); } else { html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); } }
+if(window.visualViewport){ const onVV=()=>{ if(!scrim.classList.contains("open")) return; fitScrim(); const a=root.activeElement; if(a&&sheet.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) setTimeout(()=>{ try{ a.scrollIntoView({block:"nearest"}); }catch{} },30); };
+  visualViewport.addEventListener("resize",onVV); visualViewport.addEventListener("scroll",onVV); }
+sheet.addEventListener("focusin",e=>{ if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) setTimeout(()=>{ fitScrim(); try{ e.target.scrollIntoView({block:"nearest"}); }catch{} },300); });
+function closeSheet(){ scrim.classList.remove("open"); sheet.innerHTML=""; html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); }
 scrim.addEventListener("click",e=>{ if(e.target===scrim) closeSheet(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!host.hidden) closeSheet(); });
 
@@ -1949,7 +1958,7 @@ sheet.addEventListener("input",e=>{ const t=e.target; if(t.id==="n-k") kFeedback
 sheet.addEventListener("click",e=>{ const l=e.target.closest(".lnk[data-kk]"); if(!l) return; const inp=l.closest(".f").querySelector("input"); inp.value=l.dataset.kk; inp.dispatchEvent(new Event("input",{bubbles:true})); snd.tap(); });
 sheet.addEventListener("click",async e=>{
   const sb=e.target.closest("#seg button"); if(sb){ draft.status=+sb.dataset.i; sheet.querySelectorAll("#seg button").forEach(x=>x.setAttribute("aria-pressed",x===sb)); return; }
-  const po=e.target.closest("#pjopts .opt"); if(po){ draft.projectId=po.dataset.id; sheet.querySelectorAll("#pjopts .opt").forEach(x=>x.setAttribute("aria-pressed",x===po)); $("#newpj").style.display= po.dataset.id==="__new"?"block":"none"; if(po.dataset.id==="__new") $("#n-client").focus(); return; }
+  const po=e.target.closest("#pjopts .opt"); if(po){ draft.projectId=po.dataset.id; sheet.querySelectorAll("#pjopts .opt").forEach(x=>x.setAttribute("aria-pressed",x===po)); $("#newpj").style.display= po.dataset.id==="__new"?"block":"none"; if(po.dataset.id==="__new"){ if(matchMedia("(pointer:coarse)").matches) $("#n-client").scrollIntoView({block:"nearest"}); else $("#n-client").focus(); } return; }
   const b=e.target.closest("button[data-x]"); if(!b||!draft) return;
   const x=b.dataset.x;
   if(x==="cancel"){ closeSheet(); return; }
@@ -2508,6 +2517,7 @@ function foldOut(els){ if(calm) return Promise.resolve(); return Promise.all(els
 
 /* ---------- 名前の長押しで変更（案件の宛先・発注の品名） ---------- */
 let heldAt=0, holdT=null, hold0=null, holdOpen=false, relAt=0, dragLive=null;
+function clearDrag(){ dragEnders.forEach(f=>{ try{ f(); }catch{} }); dragLive=null; html.classList.remove("dragging"); root.querySelectorAll(".lift").forEach(e=>{ e.classList.remove("lift"); e.style.transform=""; }); }
 /* ---------- 長押しで並び替え（共通） ----------
    長押しで持ち上がり、上下に動かして離すと入れ替わる。動かさずに離したときは onHold（名前の変更など）。
    cont：入れ物、o.item：並べ替える要素、o.handle：長押しする場所、o.skip(target)：長押しにしない場所、o.canDrag()、o.onDrop(要素の配列)、o.onHold(要素) */
@@ -2519,6 +2529,9 @@ function reorderable(cont,o){
     cancel(); p0={x:e.clientX,y:e.clientY,id:e.pointerId,item}; t=setTimeout(()=>{ t=null; begin(); },500); });
   cont.addEventListener("pointermove",e=>{ if(t&&p0&&(Math.abs(e.clientX-p0.x)>8||Math.abs(e.clientY-p0.y)>8)) cancel(); if(d&&e.pointerId===d.pid){ d.y=e.clientY; if(Math.abs(e.clientY-d.y0)>4) d.moved=true; place(); } });
   ["pointerup","pointercancel"].forEach(n=>cont.addEventListener(n,e=>{ if(t) cancel(); if(d&&e.pointerId===d.pid) end(); }));
+  ["pointerup","pointercancel"].forEach(n=>window.addEventListener(n,e=>{ if(t) cancel(); if(d&&e.pointerId===d.pid) end(); },true));   // 指を一覧の外で離しても
+  cont.addEventListener("lostpointercapture",e=>{ if(d&&e.pointerId===d.pid&&!d.item.isConnected) end(); });
+  dragEnders.push(()=>{ cancel(); if(d) end(); });
   function begin(){ const item=p0.item, pid=p0.id, others=items(item); p0=null;
     heldAt=Date.now(); holdOpen=true;                                   // 持ち上げたあとの指離しをタップとみなさない
     if(!others.length){ if(o.onHold) o.onHold(item); return; }           // 1つしかないときは並べ替える相手がいない
@@ -2529,8 +2542,8 @@ function reorderable(cont,o){
   function place(){ if(!d) return; const it=d.item, want=d.y-d.grab;   // want＝札の上端が来てほしい画面上の位置
     it.style.transform="";                                              // いったん元の位置に戻して測る
     for(let n=0;n<8;n++){ const mid=want+it.offsetHeight/2; let prev=it.previousElementSibling; while(prev&&!prev.matches(o.item)) prev=prev.previousElementSibling; let next=it.nextElementSibling; while(next&&!next.matches(o.item)) next=next.nextElementSibling;
-      if(prev&&mid<prev.getBoundingClientRect().top+prev.offsetHeight/2) flip(prev,()=>prev.before(it));
-      else if(next&&mid>next.getBoundingClientRect().top+next.offsetHeight/2) flip(next,()=>next.after(it));
+      if(prev&&mid<prev.getBoundingClientRect().top+prev.offsetHeight/2) flip(prev,()=>it.after(prev));      // 持っている札ではなく、となりを動かす（指の捕まえが外れないように）
+      else if(next&&mid>next.getBoundingClientRect().top+next.offsetHeight/2) flip(next,()=>it.before(next));
       else break; }
     d.T=want-it.getBoundingClientRect().top; it.style.transform=`translateY(${d.T}px)`; }
   function flip(el,fn){ const a=el.getBoundingClientRect().top; fn(); const b=el.getBoundingClientRect().top; if(el.animate&&a!==b) el.animate([{transform:`translateY(${a-b}px)`},{transform:"none"}],{duration:150,easing:"cubic-bezier(.2,.8,.2,1)"}); }
@@ -2542,7 +2555,8 @@ function reorderable(cont,o){
 }
 let lastY=0; root.addEventListener("pointerdown",e=>{ lastY=e.clientY; },{passive:true,capture:true});
 root.addEventListener("contextmenu",e=>{ if(e.target.closest&&e.target.closest(".grp-h,.tkg-h,.task .t")) e.preventDefault(); });   // 長押しで右クリックメニューを出さない
-root.addEventListener("touchmove",e=>{ if(dragLive&&e.cancelable) e.preventDefault(); },{passive:false});   // 持ち上げている間は画面をスクロールさせない
+root.addEventListener("touchmove",e=>{ if(dragLive&&e.cancelable) e.preventDefault(); },{passive:false});
+document.addEventListener("visibilitychange",()=>{ if(document.hidden) clearDrag(); });   // 持ち上げている間は画面をスクロールさせない
 // 長押しで画面を開いたあと、指を離すまで（と離した直後の一瞬）はタップを無視する。離す合図が来なくても6秒で解除。
 function holding(){ return (holdOpen&&Date.now()-heldAt<6000)||Date.now()-relAt<350; }
 function endHold(){ clearTimeout(holdT); holdT=null; hold0=null; }
@@ -2932,7 +2946,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/13 12:11</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/13 18:35</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
