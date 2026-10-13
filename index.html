@@ -384,6 +384,34 @@
   .q td.qn { vertical-align: top; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .96em; }
   .q td.qk { vertical-align: top; text-align: center; font-size: .92em; white-space: nowrap; padding: .46em .15em; }
   .q .qcont { display: flex; justify-content: space-between; gap: 1.8em; padding-bottom: .6em; font-size: 1em; }
+  /* TO DO リストの PDF（ボードから作る。A4縦） */
+  .tdstage { position: fixed; left: -10000px; top: 0; width: 794px; background: #FFFFFF; }
+  .tdpage { width: 794px; height: 1123px; box-sizing: border-box; padding: 44px 46px 38px; background: #FFFFFF; color: #132033; font-family: 'Zen Kaku Gothic New', 'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', sans-serif; display: flex; flex-direction: column; overflow: hidden; }
+  .tdhead { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+  .tdtitle { font-size: 26px; font-weight: 900; color: #0B1F3A; letter-spacing: .02em; line-height: 1.2; }
+  .tdtitle span { font-size: 13px; font-weight: 700; color: #60708A; margin-left: 8px; }
+  .tdsub { font-size: 11.5px; color: #45546B; margin-top: 5px; }
+  .tdhead.small .tdtitle { font-size: 18px; }
+  .tdbrand { text-align: right; font-size: 11px; color: #0B1F3A; font-weight: 700; white-space: nowrap; line-height: 1.5; }
+  .tdbrand span { font-weight: 500; color: #7D622F; }
+  .tdrule { flex: 0 0 auto; height: 3px; background: linear-gradient(90deg, #0B1F3A 0, #0B1F3A 72%, #D4AF37 100%); margin: 10px 0 12px; border-radius: 2px; }
+  .tdbody { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  .tdsec { display: flex; align-items: center; gap: 10px; background: #0B1F3A; color: #FFFFFF; border-radius: 6px; padding: 5px 12px; margin: 10px 0 4px; font-size: 13.5px; font-weight: 900; }
+  .tdsec:first-child { margin-top: 0; }
+  .tdsec span { font-size: 11px; font-weight: 700; color: #F1E3A6; }
+  .tdrow { display: grid; grid-template-columns: 26px 92px 1fr 80px 220px; gap: 8px; align-items: center; padding: 5px 10px; border-radius: 4px; font-size: 12.5px; line-height: 1.35; }
+  .tdrow:nth-child(even) { background: #F3F5F9; }
+  .tdno { color: #60708A; font-size: 11px; text-align: right; font-variant-numeric: tabular-nums; }
+  .tdtag { display: inline-block; text-align: center; font-size: 10.5px; font-weight: 900; border-radius: 4px; padding: 2px 4px; background: #EEF1F6; color: #0B1F3A; white-space: nowrap; }
+  .tdtag.late { background: #D93025; color: #FFFFFF; }
+  .tdtag.soon { background: #D4AF37; color: #0B1F3A; }
+  .tdtag.none { color: #60708A; font-weight: 700; background: transparent; border: 1px dashed #A7B2C2; }
+  .tdtag.fin { background: #2E9E68; color: #FFFFFF; }
+  .tdtt { font-weight: 700; overflow-wrap: anywhere; }
+  .tdrow.done .tdtt { text-decoration: line-through; color: #60708A; font-weight: 500; }
+  .tdas { font-size: 11px; color: #45546B; white-space: nowrap; }
+  .tdnt { font-size: 11px; color: #45546B; overflow-wrap: anywhere; }
+  .tdfoot { flex: 0 0 auto; display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #DBE1E9; font-size: 9.5px; color: #60708A; margin-top: auto; }
   @page { size: A4 portrait; margin: 0; }
   @page land { size: A4 landscape; margin: 0; }
   .pages.land .sheet { page: land; }
@@ -550,7 +578,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '10/09 16:02', hiddenAt = 0, lastCheck = 0;
+  var VER = '10/13 12:11', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -887,6 +915,10 @@ tfoot td{font-weight:700;background:var(--well)}
 .memo .tools .b{flex:1}
 .mic.on{background:var(--red);color:#fff;border-color:var(--red);animation:pulse 1.2s infinite}
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(217,48,37,.5)}50%{box-shadow:0 0 0 10px rgba(217,48,37,0)}}
+.lift{position:relative;z-index:9;box-shadow:0 16px 34px rgba(11,31,58,.32)!important;outline:3px solid var(--gold);outline-offset:-1px;border-radius:16px;opacity:.97;transition:none!important}
+.grp.lift>.grp-h{cursor:grabbing}
+:host(.dragging) *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.grp-h,.tkg-h,.task .t{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .tkbar{display:flex;gap:8px;margin-bottom:10px}
 .tksort{margin:0 0 12px;align-items:center}
 .tksort span{font-size:13px;font-weight:700;color:var(--muted);margin-right:2px}
@@ -1378,10 +1410,10 @@ details.done[open]>summary::before{content:"▾"}
       <section class="view" id="view-cal"><div id="cal"></div></section>
 
       <section class="view" id="view-memo">
-        <div class="secttl" style="margin-top:0">抱えているタスク<span class="n" id="taskN">0</span><button class="chip" id="toggleDone" aria-pressed="false" style="margin-left:auto;min-height:34px;padding:4px 12px;font-size:13px">完了も表示</button></div>
-        <div class="lead" style="color:var(--muted);font-size:14px;margin:-2px 0 10px">納品以外の「やること」を相手ごとに。押すと直せます。</div>
-        <div class="tkbar"><button class="b b-gold" id="addTask" type="button">＋ タスクを足す</button></div>
-        <div class="chips tksort" id="tkSort" role="group" aria-label="相手の並び"><span>並び</span><button class="chip" data-ts="due" aria-pressed="true">日程順</button><button class="chip" data-ts="name" aria-pressed="false">名前順</button></div>
+        <div class="secttl" style="margin-top:0">TO DO リスト<span class="n" id="taskN">0</span><button class="chip" id="toggleDone" aria-pressed="false" style="margin-left:auto;min-height:34px;padding:4px 12px;font-size:13px">完了も表示</button></div>
+        <div class="lead" style="color:var(--muted);font-size:14px;margin:-2px 0 10px">納品以外の「やること」を相手ごとに。押すと直せます。長押しして動かすと順番を変えられます。</div>
+        <div class="tkbar"><button class="b b-gold" id="addTask" type="button">＋ タスクを足す</button><button class="b b-ghost" id="taskPdf" type="button" style="flex:0 0 auto;padding:0 16px">PDFにする</button></div>
+        <div class="chips tksort" id="tkSort" role="group" aria-label="相手の並び"><span>並び</span><button class="chip" data-ts="due" aria-pressed="true">日程順</button><button class="chip" data-ts="name" aria-pressed="false">名前順</button><button class="chip" data-ts="manual" aria-pressed="false">自分の順</button></div>
         <div id="tasks"></div>
         <details class="memo memoFold" id="memoBox">
           <summary><b>打ち合わせのメモから足す</b><span>話した内容をそのまま入れると、AIが「やること」と「注文するもの」に分けて登録します</span></summary>
@@ -1437,7 +1469,8 @@ let orders=[], allOrders=[], projects=[], tasks=[], meetings=[];
 let ordersReady=false, projectsReady=false; const waiting=[]; const listeners=[];
 function setOrders(list){ allOrders=list; orders=list.filter(o=>!o.hidden); }   // hidden = 仕様書から来た発注をボードで外したもの（再作成させないための印）
 let sample=null, showDone=false;
-let taskSort="due"; try{ if(localStorage.getItem("tsk_tasksort")==="name") taskSort="name"; }catch{}   // タスクの相手の並び：日程順／名前順（端末ごとに覚える）
+let taskSort="due"; try{ const v=localStorage.getItem("tsk_tasksort"); if(v==="name"||v==="manual") taskSort=v; }catch{}
+let settings={};   // 共有の設定（settings/board）：taskGroups＝相手の並び   // タスクの相手の並び：日程順／名前順（端末ごとに覚える）
 let db=null, downloads=null, canWrite=true;
 let filter="all";
 
@@ -1615,7 +1648,7 @@ function filtered(){ return orders.filter(o=>{ if(filter==="soon") return dueSoo
 
 /* ---------- list ---------- */
 function renderList(){
-  const typing=root.activeElement; if(typing&&typing.classList&&typing.classList.contains("pricein")&&$("#list").contains(typing)){ listPending=true; return; } listPending=false;
+  const typing=root.activeElement; if(typing&&typing.classList&&(typing.classList.contains("pricein")||typing.classList.contains("duein"))&&$("#list").contains(typing)){ listPending=true; return; } listPending=false;
   const el=$("#list"); const rows=filtered();
   const late=orders.filter(isLate).length, act=orders.filter(o=>!oDlv(o));   // 件数は、納品済みの案件を除いて数える
   $("#headCount").innerHTML = orders.length? `${act.length}件${late?`<br><b style="color:#FF8A80">遅延 ${late}</b>`:""}` : "まだ発注がありません";
@@ -1632,7 +1665,9 @@ function renderList(){
   const groups=new Map();
   rows.forEach(o=>{ const key=pjKey(o); if(!groups.has(key)) groups.set(key,[]); groups.get(key).push(o); });
   if(filter==="all") projects.forEach(p=>{ if(!groups.has(p.id)) groups.set(p.id,[]); });
-  const keys=[...groups.keys()].sort((a,b)=>pjCompare(a,groups.get(a)[0]||{projectId:a},b,groups.get(b)[0]||{projectId:b}));
+  const pjOrd=k=>{ const p=projects.find(x=>x.id===k); return p&&typeof p.order==="number"?p.order:null; };
+  const keys=[...groups.keys()].sort((a,b)=>{ const oa=pjOrd(a), ob=pjOrd(b); if(oa!=null&&ob!=null) return oa-ob; if(oa!=null!==(ob!=null)) return oa!=null?1:-1;   // 手で並べた案件はその順。まだ並べていない（新しい）案件は上
+    return pjCompare(a,groups.get(a)[0]||{projectId:a},b,groups.get(b)[0]||{projectId:b}); });
   const sec=key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]||{projectId:key}); const lateN=g.filter(isLate).length, dv=dlvAt(key);
@@ -1704,11 +1739,20 @@ function cardFull(o){
 }
 $("#list").addEventListener("toggle",e=>{ const d=e.target; if(d.matches&&d.matches("details.done")){ if(d.open) openDone.add(d.dataset.key); else openDone.delete(d.dataset.key); } },true);
 $("#list").addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.isComposing&&e.keyCode!==229&&e.target.classList&&e.target.classList.contains("pricein")){ e.preventDefault(); e.target.blur(); } });
-$("#list").addEventListener("focusout",e=>{ if(listPending&&e.target.classList&&e.target.classList.contains("pricein")) setTimeout(()=>{ if(listPending) renderList(); },60); });
+// 日付欄の確定。手元の控え（orders の中身）も先に直して、直後に押したボタンが古い日付で上書きしないようにする
+async function commitDateInput(t){ if(!t||!t.classList||!t.classList.contains("duein")) return; delete t.dataset.dirty;
+  const o=orders.find(x=>x.id===t.dataset.id); if(!o) return;
+  if(t.classList.contains("planin")){ if((o.planDate||"")===t.value) return; const ps=STATUSES.indexOf(o.status), ns=ps<ORD?STATUSES[t.value?PLAN:0]:o.status; o.planDate=t.value; o.status=ns;
+    try{ await saveOrder(o.id,{...strip(o),planDate:t.value,status:ns,updatedAt:new Date().toISOString()}); toast(t.value?`発注予定日を ${fmtD(t.value)} にしました`:"発注予定日を未定にしました"); }catch{ toast("更新できませんでした"); } return; }
+  if((o.due||"")===t.value) return; o.due=t.value;
+  try{ await saveOrder(o.id,{...strip(o),due:t.value,updatedAt:new Date().toISOString()}); toast(t.value?`納期を ${fmtD(t.value)} にしました`:"納期を消しました"); }catch{ toast("更新できませんでした"); } }
+$("#list").addEventListener("focusout",async e=>{ const el=e.target; if(!el.classList) return;
+  if(el.classList.contains("duein")&&el.dataset.dirty) await commitDateInput(el);
+  if(listPending&&(el.classList.contains("pricein")||el.classList.contains("duein"))) setTimeout(()=>{ if(listPending) renderList(); },60); });
 $("#list").addEventListener("change",async e=>{ const pr=e.target.closest(".pricein"); if(pr){ await savePrice(pr.dataset.id,pr.value); return; }
-  const pl=e.target.closest(".planin"); if(pl){ const op=orders.find(x=>x.id===pl.dataset.id); if(op&&(op.planDate||"")!==pl.value){ const ps=STATUSES.indexOf(op.status); try{ await saveOrder(op.id,{...strip(op),planDate:pl.value,status:ps<ORD?STATUSES[pl.value?PLAN:0]:op.status,updatedAt:new Date().toISOString()}); toast(pl.value?`発注予定日を ${fmtD(pl.value)} にしました`:"発注予定日を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
-  const t=e.target.closest(".duein"); if(!t) return; const o=orders.find(x=>x.id===t.dataset.id); if(!o||(o.due||"")===t.value) return;
-  try{ await saveOrder(o.id,{...strip(o),due:t.value,updatedAt:new Date().toISOString()}); toast(t.value?`納期を ${fmtD(t.value)} にしました`:"納期を消しました"); }catch{ toast("更新できませんでした"); } });
+  const t=e.target.closest(".duein"); if(!t) return;
+  if(root.activeElement===t){ t.dataset.dirty="1"; return; }   // 日付選びがまだ開いている（iPhone では開いた瞬間にも来る）。欄を離れたときに確定
+  await commitDateInput(t); });
 $("#list").addEventListener("click",async e=>{
   if(holding()){ e.preventDefault(); return; }
   const sp=e.target.closest("button[data-spec]"); if(sp){ bridge.openSpec(sp.dataset.spec); return; }
@@ -2160,18 +2204,24 @@ function renderTasks(){
   $("#taskN").textContent=open.length;
   { const late=open.filter(t=>t.due&&t.due<todayStr()).length, st=$("#tkStrip"); st.hidden=!open.length; $("#tkStripN").textContent=open.length; $("#tkStripT").textContent=`件のタスク（${new Set(open.map(t=>taskWho(t)||"相手なし")).size}先）`; $("#tkStripL").hidden=!late; $("#tkStripL").textContent=late?`期限超過 ${late}`:""; st.classList.toggle("late",late>0);
     const nx=open.filter(t=>t.due).sort((a,b)=>a.due.localeCompare(b.due))[0]; $("#tkStripNext").textContent=nx?`次の期限 ${fmtDW(nx.due)}　${taskWho(nx)?taskWho(nx)+"：":""}${nx.title}`:""; }
-  const rows=(showDone?tasks.slice():open).sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(a.due||"9999").localeCompare(b.due||"9999"));
-  // 相手（会社・人・案件）ごとにまとめる。期限の近い相手が上
-  const gm=new Map(); rows.forEach(t=>{ const w=taskWho(t)||"相手なし"; if(!gm.has(w)) gm.set(w,[]); gm.get(w).push(t); });
-  const gs=[...gm.entries()].map(([w,ls])=>({w,ls,key:ls.filter(t=>!t.done).map(t=>t.due||"9999").sort()[0]||"9999～",last:w==="相手なし"?1:0}))
-    .sort((a,b)=>a.last-b.last||(taskSort==="name"?a.w.localeCompare(b.w,"ja")||a.key.localeCompare(b.key):a.key.localeCompare(b.key)||a.w.localeCompare(b.w,"ja")));   // 日程順＝期限の近い相手が上、名前順＝あいうえお順。相手なしはいつも最後
+  const gs=taskGroupsOf(showDone?tasks.slice():open);
   $("#tkSort").querySelectorAll("[data-ts]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ts===taskSort));
   const row=t=>{ const late=!t.done&&t.due&&t.due<todayStr(), soon=!late&&!t.done&&t.due&&t.due<=addDays(todayStr(),3);
     return `<div class="task ${t.done?"done":""} ${late?"late":""}" data-id="${t.id}"><button class="chk" data-act="toggle" aria-label="${t.done?"未完了に戻す":"完了にする"}">${t.done?'<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>':""}</button><button class="t" data-act="edit" type="button"><div class="title">${esc(t.title)}</div><div class="m">${t.due?`<span class="${late?"late":soon?"soon":""}">${late?"期限超過 ":soon?"期限 ":"期限 "}${fmtDW(t.due)}</span>`:""}${t.assignee?`<span>担当 ${esc(t.assignee)}</span>`:""}${t.note?`<span class="nt">${esc(t.note)}</span>`:""}${t.source?`<span>${esc(t.source)}</span>`:""}</div></button></div>`; };
-  $("#tasks").innerHTML = gs.length? gs.map(g=>`<section class="tkg"><div class="tkg-h"><b>${esc(g.w)}</b><span class="n">${g.ls.filter(t=>!t.done).length}</span>${canWrite?`<button class="b b-sm b-ghost" type="button" data-tadd="${esc(g.w)}" aria-label="${esc(g.w)} にタスクを足す">＋</button>`:""}</div>${g.ls.map(row).join("")}</section>`).join("")
+  $("#tasks").innerHTML = gs.length? gs.map(g=>`<section class="tkg" data-who="${esc(g.w)}"><div class="tkg-h"><b>${esc(g.w)}</b><span class="n">${g.ls.filter(t=>!t.done).length}</span>${canWrite?`<button class="b b-sm b-ghost" type="button" data-tadd="${esc(g.w)}" aria-label="${esc(g.w)} にタスクを足す">＋</button>`:""}</div>${g.ls.map(row).join("")}</section>`).join("")
     : `<div class="empty" style="padding:24px"><b>抱えているタスクはありません</b>「＋ タスクを足す」か、打ち合わせのメモから足せます。</div>`;
   $("#mtgN").textContent=meetings.length;
-  $("#mtgs").innerHTML = meetings.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||"").localeCompare(a.createdAt||"")).map(m=>`<div class="mtg"><div class="h"><b>${esc(m.title||"打ち合わせ")}</b><span>${m.date||""}　やること${m.taskCount||0}・注文${m.orderCount||0}</span></div><p>${esc(m.summary||"")}</p></div>`).join("") || `<div class="empty" style="padding:24px"><b>議事録はまだありません</b></div>`;
+  $("#mtgs").innerHTML = meetings.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||"").localeCompare(a.createdAt||"")).map(m=>`<div class="mtg"><div class="h"><b>${esc(m.title||"打ち合わせ")}</b><span>${m.date||""}　やること${m.taskCount||0}・注文${m.orderCount||0}</span></div><p>${esc(m.summary||"")}</p></div>`).join("")||`<div class="empty" style="padding:20px">まだ議事録はありません</div>`;
+}
+// 相手（会社・人・案件）ごとにまとめ、画面の並び（日程順／名前順／自分の順）で返す
+function taskGroupsOf(rows){
+  rows=rows.slice().sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(a.due||"9999").localeCompare(b.due||"9999"));
+  const gm=new Map(); rows.forEach(t=>{ const w=taskWho(t)||"相手なし"; if(!gm.has(w)) gm.set(w,[]); gm.get(w).push(t); });
+  const gs=[...gm.entries()].map(([w,ls])=>({w,ls,key:ls.filter(t=>!t.done).map(t=>t.due||"9999").sort()[0]||"9999～",last:w==="相手なし"?1:0}))
+    .sort((a,b)=>{ if(a.last!==b.last) return a.last-b.last; if(taskSort==="manual"){ const go=settings.taskGroups||[], ia=go.indexOf(a.w), ib=go.indexOf(b.w); if(ia>=0&&ib>=0) return ia-ib; if(ia>=0||ib>=0) return ia>=0?1:-1; }
+      return taskSort==="name"?a.w.localeCompare(b.w,"ja")||a.key.localeCompare(b.key):a.key.localeCompare(b.key)||a.w.localeCompare(b.w,"ja"); });   // 日程順＝期限の近い相手が上、名前順＝あいうえお順、自分の順＝長押しで並べた順（新しい相手は上）。相手なしはいつも最後
+  gs.forEach(g=>g.ls.sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(typeof a.order==="number"?a.order:1e9)-(typeof b.order==="number"?b.order:1e9)||(a.due||"9999").localeCompare(b.due||"9999")));   // 中のタスクは、長押しで並べた順→期限の順
+  return gs;
 }
 function taskWho(t){ if(t.who) return t.who; const p=projects.find(x=>x.id===t.projectId); return p?(p.client||p.k||""):""; }
 function addDays(d,n){ const t=new Date(d+"T00:00:00"); t.setDate(t.getDate()+n); return t.toLocaleDateString("sv-SE"); }
@@ -2199,10 +2249,55 @@ function openTask(t,presetWho){
   };
 }
 $("#tkSort").addEventListener("click",e=>{ const b=e.target.closest("[data-ts]"); if(!b||b.dataset.ts===taskSort) return; taskSort=b.dataset.ts; try{ localStorage.setItem("tsk_tasksort",taskSort); }catch{} snd.tap(); renderTasks(); });
+/* ---------- TO DO リストを PDF に ----------
+   以前に作った「社内 TODO リスト」の紙と同じ作り（紺の帯で相手ごと、No.・期限・やること・担当・メモ）。
+   見出しと発行日の段は、印刷で読みやすいように白地にした。A4縦。 */
+async function savePdfBlob(filename,blob){ try{ if(downloads){ await downloads.save({filename,data:blob}); } else { const a=document.createElement("a"), u=URL.createObjectURL(blob); a.href=u; a.download=filename; document.body.appendChild(a); a.click(); setTimeout(()=>{ a.remove(); URL.revokeObjectURL(u); },4000); } snd.ok(); toast("PDFを保存しました"); }catch(e){ if(e?.code!=="declined") toast("保存できませんでした"); } }
+function buildTodoPages(stage,gs,dateStr,nOpen,nWho){
+  const head=`<div class="tdhead"><div><div class="tdtitle">社内 TO DO リスト</div><div class="tdsub">TSK株式会社　抱えているタスク一覧　｜　発行日 ${esc(dateStr)}　｜　未完了 ${nOpen}件（${nWho}先）</div></div><div class="tdbrand">TSK — Bespoke Simulator Maison<br><span>Crafted in Japan. Installed anywhere.</span></div></div><div class="tdrule"></div>`;
+  const cont=`<div class="tdhead small"><div class="tdtitle">社内 TO DO リスト<span>（つづき）</span></div><div class="tdsub">発行日 ${esc(dateStr)}</div></div><div class="tdrule"></div>`;
+  const foot=`<div class="tdfoot"><span>TSK Co., Ltd　〒458-0004 名古屋市緑区乗鞍2-1201　｜　CONFIDENTIAL — 社内限</span><span class="tdpg"></span></div>`;
+  let page=null, body=null, no=0;
+  const open=first=>{ page=document.createElement("div"); page.className="tdpage"; page.innerHTML=(first?head:cont)+'<div class="tdbody"></div>'+foot; stage.appendChild(page); body=page.querySelector(".tdbody"); };
+  const fits=()=>body.scrollHeight<=body.clientHeight+0.5;
+  const put=html=>{ const t=document.createElement("div"); t.innerHTML=html; const nodes=[...t.children]; nodes.forEach(n=>body.appendChild(n)); if(body.children.length>nodes.length&&!fits()){ nodes.forEach(n=>n.remove()); open(false); nodes.forEach(n=>body.appendChild(n)); } };
+  const rowHtml=t=>{ no++; const late=!t.done&&t.due&&t.due<todayStr(), soon=!late&&!t.done&&t.due&&t.due<=addDays(todayStr(),3);
+    return `<div class="tdrow ${t.done?"done":""}"><span class="tdno">${no}</span><span class="tdtag ${t.done?"fin":late?"late":soon?"soon":t.due?"":"none"}">${t.done?"完了":t.due?fmtDW(t.due):"期限なし"}</span><span class="tdtt">${esc(t.title)}</span><span class="tdas">${t.assignee?"担当 "+esc(t.assignee):""}</span><span class="tdnt">${esc(t.note||"")}</span></div>`; };
+  open(true);
+  gs.forEach(g=>{ const sec=`<div class="tdsec"><b>${esc(g.w)}</b><span>${g.ls.filter(t=>!t.done).length}件</span></div>`; g.ls.forEach((t,i)=>put(i===0?sec+rowHtml(t):rowHtml(t))); });   // 相手の帯は、最初の1件と離れない
+  const pages=[...stage.children]; pages.forEach((p,i)=>{ p.querySelector(".tdpg").textContent=`${i+1} / ${pages.length}`; });
+}
+async function taskPdf(){
+  if(!window.html2canvas||!window.jspdf){ toast("PDFの部品を読み込めませんでした。通信を確認して開き直してください"); return; }
+  const open=tasks.filter(t=>!t.done), rows=showDone?tasks.slice():open; if(!rows.length){ toast("TO DO がありません"); return; }
+  const gs=taskGroupsOf(rows), dateStr=(d=>`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${"日月火水木金土"[d.getDay()]}）`)(new Date()), nWho=new Set(open.map(t=>taskWho(t)||"相手なし")).size;
+  const btn=$("#taskPdf"); btn.disabled=true; btn.textContent="PDFを作っています…";
+  const stage=document.createElement("div"); stage.className="tdstage"; document.body.appendChild(stage);
+  try{
+    buildTodoPages(stage,gs,dateStr,open.length,nWho);
+    await (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve());
+    stage.innerHTML=""; buildTodoPages(stage,gs,dateStr,open.length,nWho);   // 字体がそろってから測り直す
+    const pages=[...stage.children], pdf=new window.jspdf.jsPDF({unit:"mm",format:"a4",orientation:"portrait",compress:true});
+    for(let i=0;i<pages.length;i++){
+      const cv=await window.html2canvas(pages[i],{scale:2.5,backgroundColor:"#FFFFFF",useCORS:true,logging:false,windowWidth:794,windowHeight:1123,scrollX:0,scrollY:0,onclone:(doc,el)=>{ try{ el.style.transform="none"; el.style.margin="0"; doc.body.innerHTML=""; doc.body.style.cssText="margin:0;padding:0;width:794px;background:#FFFFFF"; doc.body.appendChild(el); }catch{} }});
+      if(i) pdf.addPage(); pdf.addImage(cv.toDataURL("image/png"),"PNG",0,0,210,297,undefined,"FAST"); }
+    await savePdfBlob(`TSK_TODOリスト_${todayStr()}.pdf`,pdf.output("blob"));
+  }catch(e){ console.error(e); toast("PDFを作れませんでした"); }
+  finally{ stage.remove(); btn.disabled=false; btn.textContent="PDFにする"; }
+}
+$("#taskPdf").addEventListener("click",taskPdf);
 $("#toggleDone").addEventListener("click",e=>{ showDone=!showDone; e.currentTarget.setAttribute("aria-pressed",showDone); renderTasks(); });
 $("#tkStrip").addEventListener("click",()=>{ snd.tap(); showView("memo"); });
 $("#addTask").addEventListener("click",()=>{ if(!canWrite){ toast("閲覧のみの権限です"); return; } openTask(null,""); });
+// 長押しで並び替え：相手のまとまり（→「自分の順」になる）と、中のタスク
+reorderable($("#tasks"),{item:".tkg",handle:".tkg-h",skip:t=>!!t.closest("[data-tadd]"),canDrag:()=>canWrite,
+  onDrop:async els=>{ const order=els.map(el=>el.dataset.who).filter(w=>w&&w!=="相手なし"); taskSort="manual"; try{ localStorage.setItem("tsk_tasksort","manual"); }catch{} settings.taskGroups=order; renderTasks();
+    try{ await saveSettings({...settings,taskGroups:order,updatedAt:new Date().toISOString()}); toast("相手の並びを変えました（自分の順）"); }catch{ toast("並びを保存できませんでした"); } } });
+reorderable($("#tasks"),{item:".task",handle:".task .t",canDrag:()=>canWrite,
+  onDrop:async els=>{ const now=new Date().toISOString(), jobs=[]; els.forEach((el,i)=>{ const t=tasks.find(x=>x.id===el.dataset.id); if(t&&t.order!==i){ t.order=i; jobs.push(saveTask(t.id,{...strip(t),order:i,updatedAt:now})); } });
+    try{ await Promise.all(jobs); if(jobs.length) toast("並びを変えました"); }catch{ toast("並びを保存できませんでした"); } } });
 $("#tasks").addEventListener("click",async e=>{
+  if(holding()) return;
   const ga=e.target.closest("[data-tadd]"); if(ga){ if(!canWrite){ toast("閲覧のみの権限です"); return; } openTask(null,ga.dataset.tadd==="相手なし"?"":ga.dataset.tadd); return; }
   const b=e.target.closest("[data-act]"); if(!b) return; const id=b.closest(".task").dataset.id; const t=tasks.find(x=>x.id===id); if(!t) return;
   if(b.dataset.act==="edit"){ if(!canWrite){ toast("閲覧のみの権限です"); return; } openTask(t); return; }
@@ -2284,6 +2379,7 @@ async function deleteOrder(id){ if(db) await db.collection("orders").doc(id).del
 async function deleteProject(id){ if(db) await db.collection("projects").doc(id).delete(); else { projects=projects.filter(p=>p.id!==id); onData(); } }
 async function saveTask(id,data){ if(db) await db.collection("tasks").doc(id).set(data); else { const i=tasks.findIndex(t=>t.id===id); if(i>=0) tasks[i]={id,...data}; else tasks.push({id,...data}); onData(); } }
 async function deleteTask(id){ if(db) await db.collection("tasks").doc(id).delete(); else { tasks=tasks.filter(t=>t.id!==id); onData(); } }
+async function saveSettings(data){ if(db) await db.collection("settings").doc("board").set(data); else { settings=data; onData(); } }
 async function saveMeeting(id,data){ if(db) await db.collection("meetings").doc(id).set(data); else { meetings.push({id,...data}); onData(); } }
 async function saveProject(id,data){ if(db) await db.collection("projects").doc(id).set(data); else { const i=projects.findIndex(p=>p.id===id); if(i>=0) projects[i]={id,...data}; else projects.push({id,...data}); onData(); } }
 function onData(){ renderList(); renderPj(); renderTasks(); if($("#view-ledger").classList.contains("active")) renderLedger(); if($("#view-cal").classList.contains("active")) renderCal(); listeners.forEach(f=>{ try{ f(); }catch{} }); }
@@ -2347,6 +2443,7 @@ $("#month").value=todayStr().slice(0,7); $("#m-date").value=todayStr(); onData()
       db.collection("projects").onSnapshot(s=>{ projects=s.docs.filter(x=>x.exists).map(x=>({id:x.id,...x.data()})); projectsReady=true; onData(); markReady(); },err=>console.error(err));
       db.collection("tasks").onSnapshot(s=>{ tasks=s.docs.filter(x=>x.exists).map(x=>({id:x.id,...x.data()})); onData(); },err=>console.error(err));
       db.collection("meetings").onSnapshot(s=>{ meetings=s.docs.filter(x=>x.exists).map(x=>({id:x.id,...x.data()})); onData(); },err=>console.error(err));
+      db.collection("settings").onSnapshot(s=>{ const d=s.docs.find(x=>x.exists&&x.id==="board"); settings=d?{...d.data()}:{}; onData(); },err=>console.error(err));
     } else { $("#headCount").textContent="共有なし（この端末のみ）"; ordersReady=projectsReady=true; markReady(); }
   }catch{ $("#headCount").textContent="共有なし（この端末のみ）"; ordersReady=projectsReady=true; markReady(); }
 })();
@@ -2410,11 +2507,46 @@ function foldIn(els){ setTimeout(placePop,640); if(calm) return; els.forEach((el
 function foldOut(els){ if(calm) return Promise.resolve(); return Promise.all(els.map(el=>{ if(!el||!el.animate) return null; const h=el.getBoundingClientRect().height; el.style.overflow="hidden"; return el.animate([{height:h+"px",opacity:1},{height:"0px",opacity:0,transform:"translateY(-6px)"}],{duration:170,easing:"ease-in",fill:"forwards"}).finished.catch(()=>{}); })); }
 
 /* ---------- 名前の長押しで変更（案件の宛先・発注の品名） ---------- */
-let heldAt=0, holdT=null, hold0=null, holdOpen=false, relAt=0;
+let heldAt=0, holdT=null, hold0=null, holdOpen=false, relAt=0, dragLive=null;
+/* ---------- 長押しで並び替え（共通） ----------
+   長押しで持ち上がり、上下に動かして離すと入れ替わる。動かさずに離したときは onHold（名前の変更など）。
+   cont：入れ物、o.item：並べ替える要素、o.handle：長押しする場所、o.skip(target)：長押しにしない場所、o.canDrag()、o.onDrop(要素の配列)、o.onHold(要素) */
+function reorderable(cont,o){
+  let t=null, p0=null, d=null, tick=null;
+  const items=el=>{ const a=[]; let x=el; while((x=x.previousElementSibling)) if(x.matches(o.item)) a.unshift(x); x=el; while((x=x.nextElementSibling)) if(x.matches(o.item)) a.push(x); return a; };
+  const cancel=()=>{ if(t){ clearTimeout(t); t=null; } p0=null; };
+  cont.addEventListener("pointerdown",e=>{ if(d||!o.canDrag()||(e.pointerType==="mouse"&&e.button!==0)) return; const h=e.target.closest(o.handle); if(!h||!cont.contains(h)||(o.skip&&o.skip(e.target))) return; const item=h.closest(o.item); if(!item) return;
+    cancel(); p0={x:e.clientX,y:e.clientY,id:e.pointerId,item}; t=setTimeout(()=>{ t=null; begin(); },500); });
+  cont.addEventListener("pointermove",e=>{ if(t&&p0&&(Math.abs(e.clientX-p0.x)>8||Math.abs(e.clientY-p0.y)>8)) cancel(); if(d&&e.pointerId===d.pid){ d.y=e.clientY; if(Math.abs(e.clientY-d.y0)>4) d.moved=true; place(); } });
+  ["pointerup","pointercancel"].forEach(n=>cont.addEventListener(n,e=>{ if(t) cancel(); if(d&&e.pointerId===d.pid) end(); }));
+  function begin(){ const item=p0.item, pid=p0.id, others=items(item); p0=null;
+    heldAt=Date.now(); holdOpen=true;                                   // 持ち上げたあとの指離しをタップとみなさない
+    if(!others.length){ if(o.onHold) o.onHold(item); return; }           // 1つしかないときは並べ替える相手がいない
+    try{ item.setPointerCapture(pid); }catch{}
+    const r=item.getBoundingClientRect(); d={item,pid,y0:lastY,y:lastY,grab:lastY-r.top,T:0,moved:false};
+    item.classList.add("lift"); html.classList.add("dragging"); dragLive=d; try{ navigator.vibrate&&navigator.vibrate(12); }catch{} snd.tap();
+    tick=setInterval(()=>{ if(!d) return; const box=scrollBox(), vh=box===window?innerHeight:box.clientHeight, edge=90; let dy=0; if(d.y<edge) dy=-Math.min(14,(edge-d.y)/3); else if(d.y>vh-edge-56) dy=Math.min(14,(d.y-(vh-edge-56))/3); if(dy){ box.scrollBy(0,dy); place(); } },40); }
+  function place(){ if(!d) return; const it=d.item, want=d.y-d.grab;   // want＝札の上端が来てほしい画面上の位置
+    it.style.transform="";                                              // いったん元の位置に戻して測る
+    for(let n=0;n<8;n++){ const mid=want+it.offsetHeight/2; let prev=it.previousElementSibling; while(prev&&!prev.matches(o.item)) prev=prev.previousElementSibling; let next=it.nextElementSibling; while(next&&!next.matches(o.item)) next=next.nextElementSibling;
+      if(prev&&mid<prev.getBoundingClientRect().top+prev.offsetHeight/2) flip(prev,()=>prev.before(it));
+      else if(next&&mid>next.getBoundingClientRect().top+next.offsetHeight/2) flip(next,()=>next.after(it));
+      else break; }
+    d.T=want-it.getBoundingClientRect().top; it.style.transform=`translateY(${d.T}px)`; }
+  function flip(el,fn){ const a=el.getBoundingClientRect().top; fn(); const b=el.getBoundingClientRect().top; if(el.animate&&a!==b) el.animate([{transform:`translateY(${a-b}px)`},{transform:"none"}],{duration:150,easing:"cubic-bezier(.2,.8,.2,1)"}); }
+  function end(){ const x=d; d=null; dragLive=null; clearInterval(tick); tick=null; try{ x.item.releasePointerCapture(x.pid); }catch{}
+    const from=x.T; x.item.style.transform=""; x.item.classList.remove("lift"); html.classList.remove("dragging"); relAt=Date.now(); holdOpen=false;
+    if(x.item.animate&&from) x.item.animate([{transform:`translateY(${from}px)`},{transform:"none"}],{duration:160,easing:"cubic-bezier(.2,.8,.2,1)"});
+    if(x.moved){ snd.ok(); const seq=[]; for(let e0=x.item.parentElement.firstElementChild;e0;e0=e0.nextElementSibling) if(e0.matches(o.item)) seq.push(e0); o.onDrop(seq); }
+    else if(o.onHold) o.onHold(x.item); }
+}
+let lastY=0; root.addEventListener("pointerdown",e=>{ lastY=e.clientY; },{passive:true,capture:true});
+root.addEventListener("contextmenu",e=>{ if(e.target.closest&&e.target.closest(".grp-h,.tkg-h,.task .t")) e.preventDefault(); });   // 長押しで右クリックメニューを出さない
+root.addEventListener("touchmove",e=>{ if(dragLive&&e.cancelable) e.preventDefault(); },{passive:false});   // 持ち上げている間は画面をスクロールさせない
 // 長押しで画面を開いたあと、指を離すまで（と離した直後の一瞬）はタップを無視する。離す合図が来なくても6秒で解除。
 function holding(){ return (holdOpen&&Date.now()-heldAt<6000)||Date.now()-relAt<350; }
 function endHold(){ clearTimeout(holdT); holdT=null; hold0=null; }
-$("#list").addEventListener("pointerdown",e=>{ if(!canWrite) return; const who=e.target.closest(".grp-h .who"), item=e.target.closest(".card .item"); if(!who&&!item) return; endHold(); hold0={x:e.clientX,y:e.clientY};
+$("#list").addEventListener("pointerdown",e=>{ if(!canWrite) return; const who=null, item=e.target.closest(".card .item"); if(!who&&!item) return; endHold(); hold0={x:e.clientX,y:e.clientY};
   holdT=setTimeout(()=>{ holdT=null; heldAt=Date.now(); holdOpen=true; if(who) renamePj(who.closest(".grp").dataset.key); else renameOrder(item.closest(".card").dataset.id); },550); });
 $("#list").addEventListener("pointermove",e=>{ if(hold0&&(Math.abs(e.clientX-hold0.x)>8||Math.abs(e.clientY-hold0.y)>8)) endHold(); });
 ["pointerup","pointercancel","pointerleave"].forEach(n=>$("#list").addEventListener(n,endHold));
@@ -2427,6 +2559,11 @@ function renameSheet(title,label,value,save){
   inp.onkeydown=ev=>{ if(ev.key==="Enter"&&!ev.isComposing&&ev.keyCode!==229){ ev.preventDefault(); go(); } };
   sheet.onclick=ev=>{ if(ev.target.closest("[data-ok]")) go(); else if(ev.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
 }
+// 一覧の案件：帯を長押しして上下に動かすと順番が変わる（案件に order を持たせる）。動かさずに離すと名前の変更
+reorderable($("#list"),{item:".grp:not(.dlvd)",handle:".grp-h",skip:t=>!!t.closest("button:not(.who),[data-kedit],[data-dedit],[data-dlvgo],[data-spec],input"),canDrag:()=>canWrite&&filter==="all"&&!inWork(),
+  onHold:el=>{ renamePj(el.dataset.key); },
+  onDrop:async els=>{ const now=new Date().toISOString(), jobs=[]; els.forEach((el,i)=>{ const p=projects.find(x=>x.id===el.dataset.key); if(p&&p.order!==i){ p.order=i; jobs.push(saveProject(p.id,{...strip(p),order:i,updatedAt:now})); } });
+    try{ await Promise.all(jobs); if(jobs.length) toast("並びを変えました"); }catch{ toast("並びを保存できませんでした"); } } });
 function renamePj(key){ const p=projects.find(x=>x.id===key); if(!p){ toast("この案件は名前を変えられません"); return; }
   renameSheet("案件の名前を変える","だれ・どこ向け",p.client||"",async v=>{ if(p.specId&&bridge.renameSpec) bridge.renameSpec(p.specId,v); await saveProject(p.id,{...strip(p),client:v,updatedAt:new Date().toISOString()}); }); }
 function renameOrder(id){ const o=orders.find(x=>x.id===id); if(!o) return;
@@ -2476,7 +2613,7 @@ function peekShow(to){ const nv=$("#view-"+to); if(!nv) return null; if(to==="ca
   const top=parseFloat(cs.paddingTop)+scrollPos()-(viewY["view-"+to]||0);
   nv.style.cssText=`display:block;position:absolute;top:${top}px;left:${cs.paddingLeft};right:${cs.paddingRight};will-change:transform;pointer-events:none`; return nv; }
 function peekHide(nv){ if(nv) nv.style.cssText=""; }
-contentEl.addEventListener("touchstart",e=>{ if(sw&&sw.nv) peekHide(sw.nv); sw=null; if(e.touches.length!==1||html.classList.contains("mode-d")||scrollsSideways(e.target)) return; const v=curView(); if(!v) return;
+contentEl.addEventListener("touchstart",e=>{ if(sw&&sw.nv) peekHide(sw.nv); sw=null; if(dragLive||e.touches.length!==1||html.classList.contains("mode-d")||scrollsSideways(e.target)) return; const v=curView(); if(!v) return;
   sw={x:e.touches[0].clientX,y:e.touches[0].clientY,t:Date.now(),v,lock:0,dx:0,nv:null,to:null}; },{passive:true});
 contentEl.addEventListener("touchmove",e=>{ if(!sw) return; const t=e.touches[0], dx=t.clientX-sw.x, dy=t.clientY-sw.y;
   if(!sw.lock){ if(Math.abs(dx)<10&&Math.abs(dy)<10) return; if(Math.abs(dx)>Math.abs(dy)*1.3){ sw.lock=1; endHold&&endHold(); sw.v.style.transition="none"; sw.v.style.willChange="transform"; } else { sw=null; return; } }
@@ -2795,7 +2932,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/09 16:02</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/13 12:11</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
