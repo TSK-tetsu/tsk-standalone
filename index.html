@@ -215,6 +215,28 @@
   .sendBox .rcv span::before { content: "→ "; color: var(--gold); }
   .sendBox .rcv .none { font-weight: 500; color: var(--sub); }
   .sendBox .rcv i { font-style: normal; font-size: 13px; color: var(--sub); }
+  .sendBox .pair2 .btn.fill { flex: 2 1 0; }
+  .sendBox .rtot { color: var(--ink); font-size: 15px; }
+  .sendBox .rsheet { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--sub); }
+  .sendBox select { font: inherit; font-size: 16px; height: 40px; padding: 0 10px; border: 1.5px solid var(--edge); border-radius: 10px; background: var(--card); color: var(--ink); max-width: 100%; }
+  .sendBox select.guess { border-style: dashed; }
+  .sendBox .rrow { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .sendBox input[type=checkbox] { width: 22px; height: 22px; margin: 9px 0 0; accent-color: var(--on); }
+  .sendBox .rtop { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+  .sendBox .rtop em { font-style: normal; font-size: 13px; font-weight: 700; color: var(--gold); }
+  .sendBox .rtop em.same, .sendBox .rtop em.off { color: var(--sub); font-weight: 500; }
+  .sendBox .nm { margin-top: 4px; font-size: 15px; font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
+  .sendBox .pr { font-size: 14px; color: var(--ink); display: flex; flex-wrap: wrap; gap: 2px 10px; }
+  .sendBox .pr s, .sendBox .np, .sendBox .nt { color: var(--sub); font-weight: 500; }
+  .sendBox .rrow.off .nm, .sendBox .rrow.off .pr { color: var(--sub); opacity: .75; }
+  .sendBox .rext { display: flex; flex-direction: column; gap: 4px; padding-top: 10px; border-top: 1.5px solid var(--edge); }
+  .sendBox .rx { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 6px 0; font-size: 14px; color: var(--ink); overflow-wrap: anywhere; }
+  .sendBox .rx small { display: block; font-size: 12px; color: var(--sub); }
+  .sendBox .rx em { font-style: normal; font-size: 13px; font-weight: 700; color: var(--sub); margin-top: 10px; }
+  .sendBox .rx input:checked ~ em { color: var(--warn); }
+  .sendBox .rskip { font-size: 13px; color: var(--sub); }
+  .sendBox .rskip summary { cursor: pointer; padding: 6px 0; }
+  .sendBox .rskip div { padding: 3px 0; border-top: 1px dashed var(--line); overflow-wrap: anywhere; }
   .notice { margin: 12px 16px 0; padding: 10px 14px; border-radius: 10px; background: var(--warn-bg); color: var(--warn); font-size: 14px; font-weight: 700; }
   .dock { position: sticky; bottom: 0; margin-top: auto; padding: 12px 16px calc(16px + env(safe-area-inset-bottom)); background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -6px 16px rgba(11,31,58,.06); display: flex; flex-direction: column; gap: 10px; }
   .btn { width: 100%; height: 56px; border-radius: 28px; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -590,7 +612,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '10/15 21:21', hiddenAt = 0, lastCheck = 0;
+  var VER = '10/15 22:01', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -2989,10 +3011,238 @@ return api;
     if (ui.sendFor !== forId || !ui.sendText) return btn;
     return '<div class="sendBox"><b>Claude に送る内容</b><p>' + (ui.sendCopied === false ? '自動でコピーできませんでした。下の欄を長押しして全部を選び、コピーしてください。' : ui.sendCopied ? 'コピーしました。Claude のチャットにそのまま貼り付けてください。' : 'コピーしています…') + '</p><textarea readonly id="sendTxt">' + esc(ui.sendText) + '</textarea><div class="pair2"><button type="button" class="btn soft" data-act="copySend">もう一度コピー</button>' + (navigator.share ? '<button type="button" class="btn soft" data-act="shareSend">共有…</button>' : '') + '<button type="button" class="btn soft" data-act="closeSend">閉じる</button></div></div>';
   }
-  /* ---------- Claude から受け取る（貼り付けて取り込む） ----------
-     Claude が作った「仕様書の中身」（JSON）を貼り付けると、品ごとに今と取り込み後を並べて見せ、
-     「この内容で取り込む」を押したときだけ、この仕様書の品と金額を置き換える。名前・工事番号・納品日などは変えない。
-     取り込む直前の内容は手元に控えておき、「元に戻す」で戻せる。 */
+  /* ---------- データを取り込む（貼り付け・ファイル） ----------
+     ① Claude から届いた文（仕様書の中身の JSON）… 品と金額をまるごと置き換える（今までの「Claude から受け取る」）
+     ② Excel・スプレッドシートの表（コピーして貼る／ファイルを選ぶ）、CSV、LINE やメモの一覧、Claude の表 …
+        1行ずつ「項目・品名・金額・備考」を読み取り、同じ品名は金額を変え、無い品は足す。
+        表に無い今の品は残す（外すかはチェックで選ぶ）。項目は読み取った見出しや品名から当て、違えば選び直せる。
+     どちらも「この内容で取り込む」を押すまでは何も変わらない。取り込む直前の内容は控えておき、「元に戻す」で戻せる。 */
+  var XLSX_SRC = ['vendor/xlsx-0.18.5.full.min.js', 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'];
+  // 項目の見出しとして読む言葉（長いものから当てる）
+  var RLABEL = [['ゲーム機・ソフト', 'game'], ['ステアリングホイール', 'rim'], ['ホイールベース', 'wheel'], ['サイドブレーキ', 'hbrake'], ['ハンドブレーキ', 'hbrake'], ['フレーム本体', 'frame'], ['タッチパネル', 'touch'],
+    ['ステアリング', 'rim'], ['ディスプレイ', 'monitor'], ['モーション', 'motion'], ['フレーム', 'frame'], ['ハンコン', 'wheel'], ['シフター', 'shifter'], ['モニター', 'monitor'], ['パソコン', 'pc'],
+    ['ゲーム機', 'game'], ['輸送費', 'shipping'], ['その他', 'other'], ['ペダル', 'pedal'], ['シート', 'seat'], ['ゲーム', 'game'], ['音響', 'audio'], ['送料', 'shipping'], ['運賃', 'shipping'], ['PC', 'pc']];
+  // 見出しが無いときに品名から項目を当てる（上から順に）
+  var RGUESS = [['shipping', /送料|運賃|輸送|搬入|搬出|配送|運送|設置|現地作業|出張|梱包/], ['other', /セットアップ|ライセンス|保守|諸経費|調整費|作業費|サポート|講習/],
+    ['frame', /フレーム|筐体|コックピット|ステー/], ['seat', /シート|RECARO|レカロ|BRIDE|ブリッド|SPARCO|スパルコ|バケット/i], ['motion', /モーション|アクチュエータ|D-?BOX/i], ['touch', /タッチ/],
+    ['pedal', /ペダル|pedal|mBooster|CRP\d?/i], ['hbrake', /サイドブレーキ|ハンドブレーキ|handbrake/i], ['shifter', /シフター|シーケンシャル|shifter/i], ['rim', /ステアリング|ホイール(?!ベース)|リム/],
+    ['wheel', /ハンコン|ホイールベース|ダイレクトドライブ|\bDD\d*\b|wheel ?base|\bR\d{1,2}\b/i], ['monitor', /モニター|monitor|ディスプレイ|テレビ|BRAVIA|ブラビア|\d{2,3}\s*(?:型|インチ|inch)|OLED|有機EL/i],
+    ['audio', /音響|スピーカー|サウンド|オーディオ|アンプ|ウーファー|BOSE|Bang|B&O|ヘッドホン|ヘッドフォン|speaker/i], ['pc', /\bPC\b|パソコン|ゲーミング|GALLERIA|ガレリア|RTX|ドスパラ|G-Tune/i],
+    ['game', /PS5|PS4|プレステ|プレイステーション|グランツーリスモ|Gran ?Turismo|ゲーム|Assetto|iRacing|Xbox|ソフト/i]];
+  var RTOTAL = /^(?:合計|小計|総計|総額|消費税|税額|値引き?|お支払|ご請求|税込|税抜合計|御見積金額|見積金額)|^計$/, RJUNK = /合計|小計|総額|総計|消費税|出荷額|売価|参考|〒|\bTEL\b|\bFAX\b|電話|口座|銀行|振込|登録番号|見積番号|発行日|有効期限|支払/i;
+  var SEPS = /^[\s:：\-—–→⇒=＝…・、,，|｜]+|[\s:：\-—–→⇒=＝…・、,，|｜]+$/g;
+  function hw(s) { return String(s == null ? '' : s).replace(/[０-９]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); }).replace(/，/g, ',').replace(/￥/g, '¥').replace(/．/g, '.').replace(/：/g, ':').replace(/　/g, ' '); }   // 長さは変えない
+  function nrm(s) { return String(s == null ? '' : s).normalize('NFKC').replace(/\s+/g, '').toLowerCase(); }
+  function labelKey(t) { var n = nrm(t); if (!n) return null; for (var i = 0; i < RLABEL.length; i++) if (nrm(RLABEL[i][0]) === n) return RLABEL[i][1]; return null; }
+  function labelPrefix(name) {
+    for (var i = 0; i < RLABEL.length; i++) {
+      var w = RLABEL[i][0], head = name.slice(0, w.length).normalize('NFKC');
+      if (head !== w) continue;
+      var rest = name.slice(w.length);
+      if (!rest.trim() || /^[\s:：|｜、,，\-—→]/.test(rest)) return { k: RLABEL[i][1], rest: rest };
+    }
+    return null;
+  }
+  function importNote(t) {
+    t = String(t == null ? '' : t).replace(/^\s*円/, '').replace(/[（(]\s*(?:税抜き?|税別|税込み?|TSK出荷額?|出荷額)\s*[）)]/g, '').replace(/^\s*[\/／]\s*(?:台|式|個|セット)/, '');
+    t = t.replace(/^[\s:：\-—–→、,，|｜]+/, '').trim();
+    var p = t.match(/^[（(](.*)[）)]$/); if (p) t = p[1].trim();
+    t = t.replace(/^(?:備考|メモ|※)\s*[:：]?\s*/, '').trim();
+    if (/^(?:税抜き?|税別|税込み?|円|1台|一式|式)$/.test(t)) t = '';
+    return cleanNote(t);
+  }
+  // 1行ぶん（項目・品名・金額・備考）をそろえる。読まない行は null
+  function importRow(k, name, price, note, raw, loose) {   // loose：見出しのある表の行（金額の無い品も読む）
+    name = String(name == null ? '' : name).replace(/\s+/g, ' ');
+    var nm = name.match(/[（(]\s*(?:備考|メモ|※)\s*[:：]?\s*([^）)]*)[）)]/);
+    if (nm) { note = nm[1] + (note ? ' ' + note : ''); name = name.replace(nm[0], ''); }
+    name = name.replace(/^\s*(?:[・\-\*•●○■□◆◇▶►>＞]+|\d{1,2}[.．)）]|[①-⑳]|[（(]\d{1,2}[）)])\s*/, '');
+    var br = name.match(/^\s*[【\[［]([^】\]］]{1,12})[】\]］]\s*/);
+    if (br && labelKey(br[1])) { if (!k) k = labelKey(br[1]); name = name.slice(br[0].length); }
+    if (!k) { var lp = labelPrefix(name.trim()); if (lp) { k = lp.k; name = lp.rest; } }
+    name = name.replace(SEPS, '').trim().slice(0, 60);
+    note = importNote(note);
+    var probe = name || String(raw || '');
+    if (RTOTAL.test(probe.replace(/\s+/g, '')) || (!k && RJUNK.test(probe))) return null;
+    if (!k && (!name || (price == null && !loose))) return null;
+    if (k && !name && price == null) return null;              // 見出しだけの行
+    return { k: k, name: name, price: price, note: note, raw: String(raw || '').slice(0, 120) };
+  }
+  // 区切りの無い1行（LINE・メモ・箇条書き）：いちばん後ろの金額を金額、その前を品名、後ろを備考に
+  function rowFromText(orig) {
+    var raw = String(orig == null ? '' : orig).replace(/\t/g, ' ').trim(); if (!raw) return null;
+    var s = hw(raw), m = null, x, re = /¥\s*\d[\d,]*(?:\.\d+)?(?:\s*万\s*\d*)?\s*円?|\d+(?:\.\d+)?\s*万\s*(?:\d+\s*)?円?|\d{1,3}(?:,\d{3})+(?:\.\d+)?\s*円?|\d+\s*円/g;
+    while ((x = re.exec(s))) { var v = parsePrice(x[0]); if (v != null) m = { i: x.index, n: x[0].length, v: v }; }
+    if (!m) { re = /(^|[\s:=→])(\d{4,})(?=\s|$)/g; while ((x = re.exec(s))) m = { i: x.index + x[1].length, n: x[2].length, v: parsePrice(x[2]) }; }
+    if (!m) { x = /(^|[\s:=→])(\d+)\s*$/.exec(s); if (x && (+x[2] === 0 || +x[2] >= 100)) m = { i: x.index + x[1].length, n: x[2].length, v: parsePrice(x[2]) }; }
+    return importRow(null, m ? raw.slice(0, m.i) : raw, m ? m.v : null, m ? raw.slice(m.i + m.n) : '', raw);
+  }
+  function cellStr(c) { return c == null ? '' : typeof c === 'number' ? String(c) : c instanceof Date ? '' : String(c).replace(/\s+/g, ' ').trim(); }
+  function moneyCell(c) {
+    if (typeof c === 'number') return isFinite(c) && (c === 0 || c >= 100) && c <= 999999999;
+    var t = hw(c).trim(), m = t.match(/^¥?\s*(\d[\d,]*)(?:\.\d+)?\s*(円|万円?)?(?:\s*[（(][^）)]*[）)])?$/);
+    if (!m) return false;
+    var n = parseInt(m[1].replace(/,/g, ''), 10);
+    return /[¥円万,]/.test(t) || n >= 100 || n === 0;
+  }
+  function cellPrice(c) { if (typeof c === 'number') return cleanPrice(c); var t = cellStr(c); return /\d/.test(t) ? parsePrice(hw(t)) : null; }
+  function headerCols(row) {
+    var c = {}, hits = 0;
+    if (row.some(moneyCell)) return null;                      // 金額の入った行は見出しではない
+    row.forEach(function (v, j) {
+      var t = typeof v === 'string' ? v.replace(/\s+/g, '') : '';
+      if (!t || t.length > 16 || /先$|日$|日付|No\.?$|^No/i.test(t)) return;
+      if (/^(?:項目|区分|分類|カテゴリー?|部位|種類|部門|グループ)$/.test(t)) { if (c.label == null) c.label = j; hits++; }
+      else if (/品名|品目|商品名?|製品名?|名称|内容|型番|品番|摘要|仕様|アイテム/.test(t)) { if (c.name == null) c.name = j; hits++; }
+      else if (/備考|メモ|注記|コメント/.test(t)) { if (c.note == null) c.note = j; hits++; }
+      else if (/数量|台数|個数|^数$/.test(t)) { c.qty = j; hits++; }
+      else if (/出荷|金額|価格|単価|売価|小計|税抜|税込|定価|仕入|原価|費用/.test(t)) {
+        var sc = (/TSK/i.test(t) ? 4 : 0) + (/出荷/.test(t) ? 3 : 0) + (/金額/.test(t) ? 2 : 0) + (/税抜|税別/.test(t) ? 2 : 0) + (/単価/.test(t) ? 1 : 0) - (/税込/.test(t) ? 3 : 0) - (/MFD|定価|原価|仕入/i.test(t) ? 2 : 0);
+        if (c.price == null || sc > c.psc) { c.price = j; c.psc = sc; c.ptitle = v; }
+        hits++;
+      }
+    });
+    return hits >= 2 && (c.name != null || c.price != null) ? c : null;
+  }
+  // 表（行×列）から取り込む行を作る。見出し行があれば列の意味をそれで決め、無ければ中身から当てる
+  function rowsFromTable(tab) {
+    var col = null, rows = [], skipped = [], carry = null;
+    tab.forEach(function (row) {
+      if (!Array.isArray(row)) row = [row];
+      var cells = row.map(cellStr), filled = cells.filter(Boolean);
+      if (!filled.length) return;
+      var h = headerCols(row); if (h) { col = h; carry = null; return; }
+      if (/^:?-{2,}:?$/.test(filled[0])) return;                  // Markdown の区切り行
+      var r = null;
+      if (filled.length === 1) r = rowFromText(filled[0]);
+      else if (col) {
+        var lt = col.label != null ? cells[col.label] : '', k = labelKey(lt);
+        var hint = null; if (k) carry = k; else if (col.label != null && !lt) hint = carry;   // 項目が空のマスは、品名で当たらなければ上の行の項目
+        var used = [col.label, col.price, col.note, col.qty], name = col.name != null ? cells[col.name] : '';
+        if (col.name == null) cells.forEach(function (t, j) { if (used.indexOf(j) < 0 && t && !moneyCell(row[j]) && t.length > name.length) name = t; });
+        var pr = col.price != null ? cellPrice(row[col.price]) : null;
+        if (col.price == null) for (var j = row.length - 1; j >= 0; j--) if (moneyCell(row[j])) { pr = cellPrice(row[j]); break; }
+        r = importRow(k, name, pr, col.note != null ? cells[col.note] : '', filled.join(' '), col.name != null || !!hint); if (r && hint) r.carry = hint;
+      } else {
+        var li = -1, k2 = null, pi = -1;
+        for (var a = 0; a < cells.length; a++) if (cells[a] && labelKey(cells[a])) { li = a; k2 = labelKey(cells[a]); break; }
+        for (var b = cells.length - 1; b >= 0; b--) if (b !== li && cells[b] && moneyCell(row[b])) { pi = b; break; }
+        if (pi < 0 && li < 0) r = rowFromText(filled.join(' '));
+        else {
+          var nameBits = [], noteBits = [];
+          cells.forEach(function (t, j) { if (!t || j === li || j === pi) return; if (pi >= 0 && j > pi) noteBits.push(t); else if (!/^\d+(?:\.\d+)?$/.test(t)) nameBits.push(t); });
+          r = importRow(k2, nameBits.join(' '), pi >= 0 ? cellPrice(row[pi]) : null, noteBits.join(' '), filled.join(' '));
+        }
+      }
+      if (r) rows.push(r); else skipped.push(filled.join('　').slice(0, 80));
+    });
+    return { rows: rows, skipped: skipped };
+  }
+  // 貼り付けた文を表の形に：Markdown の表は | で、Excel からのコピーはタブで分ける。それ以外は1行を1マスに
+  function textTable(txt) {
+    return String(txt || '').replace(/^﻿/, '').split(/\r?\n/).map(function (ln) {
+      var t = ln.trim(); if (!t) return [];
+      if (/^\|.*\|$/.test(t) || (t.split('|').length >= 3 && /\|/.test(t))) return t.replace(/^\||\|$/g, '').split('|').map(function (c) { return c.trim(); });
+      if (ln.indexOf('\t') >= 0) return ln.split('\t').map(function (c) { return c.trim(); });
+      return [t];
+    });
+  }
+  function parseCSV(txt) {
+    txt = String(txt || '').replace(/^﻿/, '');
+    var first = txt.split(/\r?\n/)[0] || '', d = (first.split('\t').length > first.split(',').length) ? '\t' : ',';
+    var rows = [], row = [], f = '', q = false;
+    for (var i = 0; i < txt.length; i++) {
+      var ch = txt.charAt(i);
+      if (q) { if (ch === '"') { if (txt.charAt(i + 1) === '"') { f += '"'; i++; } else q = false; } else f += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === d) { row.push(f); f = ''; }
+      else if (ch === '\n' || ch === '\r') { if (ch === '\r' && txt.charAt(i + 1) === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; }
+      else f += ch;
+    }
+    if (f || row.length) { row.push(f); rows.push(row); }
+    return rows;
+  }
+  function decodeText(buf) {
+    try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch (e) {}
+    try { return new TextDecoder('shift_jis').decode(buf); } catch (e2) {}
+    return new TextDecoder().decode(buf);
+  }
+  var xlsxLoading = null;
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    if (xlsxLoading) return xlsxLoading;
+    xlsxLoading = XLSX_SRC.reduce(function (pr, src) {
+      return pr.catch(function () { return new Promise(function (ok, ng) { var s = document.createElement('script'); s.src = src; s.onload = function () { window.XLSX ? ok(window.XLSX) : ng(); }; s.onerror = ng; document.head.appendChild(s); }); });
+    }, Promise.reject());
+    xlsxLoading.catch(function () { xlsxLoading = null; });
+    return xlsxLoading;
+  }
+  // 品名からどの項目か当てる：今の仕様書の品 → 品の一覧 → 言葉
+  function guessField(name, cur) {
+    var n = nrm(name), i, k;
+    if (!n) return null;
+    for (i = 0; i < FIELDS.length; i++) { k = FIELDS[i].k; if ((cur[k] || []).some(function (l) { return nrm(l.name) === n; })) return { k: k, by: 'spec' }; }
+    for (i = 0; i < FIELDS.length; i++) { var f = FIELDS[i], pool = (f.items || []).concat(data.custom[f.k] || [], Object.keys(data.prices[f.k] || {})); if (pool.some(function (x) { return nrm(x) === n; })) return { k: f.k, by: 'list' }; }
+    for (i = 0; i < RGUESS.length; i++) if (RGUESS[i][1].test(name)) return { k: RGUESS[i][0], by: 'word' };
+    return null;
+  }
+  function importRows(found, cur) {
+    return found.map(function (r) {
+      var g = r.k ? { k: r.k, by: 'label' } : guessField(r.name, cur) || (r.carry ? { k: r.carry, by: 'carry' } : null);
+      return { k: g ? g.k : 'other', by: g ? g.by : 'none', on: !!g && (r.price != null || !!r.k || g.by !== 'word'), name: r.name, price: r.price, note: r.note, raw: r.raw };
+    });
+  }
+  // 選んだ行を今の仕様書に重ねた「取り込み後の姿」と、表に無い今の品の一覧
+  function importDerive(p) {
+    var r = data.specs[p.id], cur = (r && r.values) || {}, u = cleanUnits(r && r.units), v = {}, used = {}, touched = {}, adds = {};
+    FIELDS.forEach(function (f) { if (cur[f.k]) v[f.k] = cur[f.k].map(function (l) { var o = { name: l.name, price: l.price }; if (l.note) o.note = l.note; return o; }); });
+    p.rows.forEach(function (row) {
+      row.act = ''; row.old = null; row.target = '';
+      if (!row.on) return;
+      var k = row.k, ls = v[k] || (v[k] = []), base = (cur[k] || []).length, i;
+      used[k] = used[k] || {}; touched[k] = true;
+      if (row.name) {
+        var j = -1; for (i = 0; i < base; i++) if (!used[k][i] && nrm(ls[i].name) === nrm(row.name)) { j = i; break; }
+        if (j >= 0) {
+          used[k][j] = true; row.old = ls[j].price;
+          var oldNote = ls[j].note || '';
+          if (row.price != null) ls[j].price = row.price;
+          if (row.note) ls[j].note = row.note;
+          row.act = row.price != null && row.price !== row.old ? 'price' : row.note && row.note !== oldNote ? 'note' : 'same';
+        } else { var nl = { name: row.name, price: row.price }; if (row.note) nl.note = row.note; ls.push(nl); row.act = 'add'; if (RESERVED.indexOf(row.name) < 0) adds[k] = true; }
+      } else {
+        var j2 = -1; for (i = 0; i < base; i++) if (!used[k][i]) { j2 = i; break; }
+        if (j2 >= 0) { used[k][j2] = true; row.old = ls[j2].price; row.target = ls[j2].name; row.act = 'first'; ls[j2].price = row.price; if (row.note) ls[j2].note = row.note; }
+        else { var tl = { name: TBD, price: row.price }; if (row.note) tl.note = row.note; ls.push(tl); row.act = 'tbd'; }
+      }
+    });
+    var extras = [], drop = {};
+    FIELDS.forEach(function (f) {
+      var k = f.k; if (!touched[k]) return;
+      (cur[k] || []).forEach(function (l, i) {
+        if (used[k][i]) return;
+        var key = k + '|' + i, off = key in p.offX ? p.offX[key] : !!(adds[k] && (l.name === TBD || l.name === NONE));   // 新しい品が入る項目の「未定」「無し」ははじめから外す
+        extras.push({ key: key, k: k, label: f.label, name: l.name, price: l.price, off: off });
+        if (off) (drop[k] = drop[k] || {})[i] = true;
+      });
+    });
+    var out = {};
+    FIELDS.forEach(function (f) { var ls = (v[f.k] || []).filter(function (l, i) { return !(drop[f.k] && drop[f.k][i]); }); if (ls.length) out[f.k] = ls.slice(0, MAXL); });
+    out = cleanValues(out);
+    return { values: out, extras: extras, units: u, before: grandOf(cur, u), after: grandOf(out, u), on: p.rows.filter(function (x) { return x.on; }).length };
+  }
+  function lineText(l) { return (l.name || '') + (l.price != null ? '　' + yen(l.price) : '　（金額なし）') + (l.note ? '　※' + l.note : ''); }
+  function recvPlan(id, got) {
+    var r = data.specs[id], cur = (r && r.values) || {}, u = cleanUnits(r && r.units), rows = [], same = 0;
+    FIELDS.forEach(function (f) {
+      var a = (cur[f.k] || []).map(lineText), b = (got.values[f.k] || []).map(lineText);
+      if (a.join('\n') === b.join('\n')) { if (a.length) same++; return; }
+      var left = b.slice(), gone = [], keep = 0;                         // 行ごとに見て、変わった行だけを出す（そのままの行は数だけ）
+      a.forEach(function (t) { var i = left.indexOf(t); if (i >= 0) { left.splice(i, 1); keep++; } else gone.push(t); });
+      rows.push({ label: f.label, before: gone, after: left, keep: keep, emptyBefore: !a.length, emptyAfter: !b.length });
+    });
+    return { mode: 'json', id: id, got: got, rows: rows, same: same, units: u, before: grandOf(cur, u), after: grandOf(got.values, u), other: got.id && got.id !== id };
+  }
   function recvParse(txt) {
     var cands = [], s = String(txt || '');
     s.split(/\r?\n/).forEach(function (ln) { ln = ln.trim(); if (ln.charAt(0) === '{') cands.push(ln); });
@@ -3005,50 +3255,119 @@ return api;
     }
     return null;
   }
-  function lineText(l) { return (l.name || '') + (l.price != null ? '　' + yen(l.price) : '　（金額なし）') + (l.note ? '　※' + l.note : ''); }
-  function recvPlan(id, got) {
-    var r = data.specs[id], cur = (r && r.values) || {}, u = cleanUnits(r && r.units), rows = [], same = 0;
-    FIELDS.forEach(function (f) {
-      var a = (cur[f.k] || []).map(lineText), b = (got.values[f.k] || []).map(lineText);
-      if (a.join('\n') === b.join('\n')) { if (a.length) same++; return; }
-      var left = b.slice(), gone = [], keep = 0;                         // 行ごとに見て、変わった行だけを出す（そのままの行は数だけ）
-      a.forEach(function (t) { var i = left.indexOf(t); if (i >= 0) { left.splice(i, 1); keep++; } else gone.push(t); });
-      rows.push({ label: f.label, before: gone, after: left, keep: keep, emptyBefore: !a.length, emptyAfter: !b.length });
+  // 読み取ったもの（文 or 表のシートたち）から確認画面の中身を作る
+  function importFrom(id, src, sheets, book) {
+    var cur = (data.specs[id] && data.specs[id].values) || {}, best = -1, bestN = 0;
+    sheets.forEach(function (sh, i) {
+      var res = rowsFromTable(sh.tab); sh.rows = importRows(res.rows, cur); sh.skipped = res.skipped;
+      var n = sh.rows.filter(function (x) { return x.on; }).length * 1000 + sh.rows.length;
+      if (n > bestN) { bestN = n; best = i; }
     });
-    return { id: id, got: got, rows: rows, same: same, units: u, before: grandOf(cur, u), after: grandOf(got.values, u), other: got.id && got.id !== id };
+    if (best < 0) return null;
+    var list = sheets.filter(function (sh) { return sh.rows.length; });
+    return { mode: 'table', id: id, src: src, book: !!book, sheets: list.length > 1 ? list : null, sheet: list.indexOf(sheets[best]), rows: sheets[best].rows, skipped: sheets[best].skipped, sheetName: sheets[best].name, offX: {} };
+  }
+  function recvFile(file) {
+    if (!file || !ui.recvFor) return;
+    var id = ui.recvFor, nm = file.name || 'ファイル', ext = ((nm.match(/\.([a-z0-9]+)$/i) || [])[1] || '').toLowerCase();
+    ui.recvMsg = '「' + nm + '」を読んでいます…'; ui.recvBusy = true; render();
+    var fail = function (m) { ui.recvBusy = false; ui.recvMsg = m; render(); };
+    var done = function (sheets, book) {
+      ui.recvBusy = false; if (ui.recvFor !== id) return;
+      var p = importFrom(id, '「' + nm + '」', sheets, book);
+      if (!p) return fail('「' + nm + '」の中に、品名と金額が並んだ行が見つかりませんでした。');
+      ui.recvMsg = ''; ui.recvPlan = p; render();
+    };
+    var buf = file.arrayBuffer ? file.arrayBuffer() : new Promise(function (ok, ng) { var fr = new FileReader(); fr.onload = function () { ok(fr.result); }; fr.onerror = ng; fr.readAsArrayBuffer(file); });
+    if (/^(xlsx|xlsm|xls|ods)$/.test(ext)) {
+      buf.then(function (b) {
+        return loadXlsx().then(function (X) {
+          var wb = X.read(new Uint8Array(b), { type: 'array', cellDates: true });
+          return wb.SheetNames.map(function (n) { return { name: n, tab: X.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: '', blankrows: false }) }; });
+        });
+      }).then(function (sh) { done(sh, true); }, function () { fail('Excel のファイルを開けませんでした（通信が切れているかもしれません）。表をコピーして上の欄に貼り付けるか、CSV で保存して選んでください。'); });
+    } else {
+      buf.then(function (b) {
+        var txt = decodeText(b), got = /^(csv|tsv)$/.test(ext) ? null : recvParse(txt);
+        if (got) { ui.recvBusy = false; ui.recvMsg = ''; ui.recvPlan = recvPlan(id, got); render(); return; }
+        done([{ name: nm, tab: /^(csv|tsv)$/.test(ext) ? parseCSV(txt) : textTable(txt) }]);
+      }).catch(function () { fail('「' + nm + '」を読めませんでした。'); });
+    }
+  }
+  function recvChange(t) {
+    var p = ui.recvPlan, a;
+    if (t.id === 'recvFile') { var f = t.files && t.files[0]; t.value = ''; recvFile(f); return true; }
+    if (!p || p.mode !== 'table') return false;
+    if ((a = t.getAttribute('data-rcv-on')) != null) { if (p.rows[+a]) p.rows[+a].on = t.checked; }
+    else if ((a = t.getAttribute('data-rcv-k')) != null) { var row = p.rows[+a]; if (row && field(t.value)) { row.k = t.value; row.by = 'user'; row.on = true; } }
+    else if ((a = t.getAttribute('data-rcv-off')) != null) p.offX[a] = t.checked;
+    else if (t.hasAttribute('data-rcv-sheet')) { var sh = p.sheets && p.sheets[+t.value]; if (!sh) return true; p.sheet = +t.value; p.rows = sh.rows; p.skipped = sh.skipped; p.sheetName = sh.name; p.offX = {}; }
+    else return false;
+    render(); return true;
+  }
+  var ACT = { add: '新しく足す', price: '金額を変える', same: '今と同じ', note: '備考を変える', first: '', tbd: '品名「未定」で足す' };
+  function importHtml(p) {
+    var d = importDerive(p), opts = function (k) { return FIELDS.map(function (f) { return '<option value="' + f.k + '"' + (f.k === k ? ' selected' : '') + '>' + esc(f.label) + '</option>'; }).join(''); };
+    var sheetSel = p.sheets ? '<label class="rsheet">シート<select data-rcv-sheet>' + p.sheets.map(function (sh, i) { return '<option value="' + i + '"' + (i === p.sheet ? ' selected' : '') + '>' + esc(sh.name) + '（' + sh.rows.length + '行）</option>'; }).join('') + '</select></label>' : '';
+    var rows = p.rows.map(function (row, i) {
+      var st = !row.on ? (row.by === 'none' ? '項目が分からないので外しています。入れるなら項目を選ぶか✓' : '取り込みません')
+        : row.act === 'first' ? '「' + esc(row.target) + '」の金額を変える' : ACT[row.act] || '';
+      var pr = row.price != null ? ((row.act === 'price' || row.act === 'first') ? '<s>' + (row.old != null ? yen(row.old) : '金額なし') + '</s> → ' : '') + '<strong>' + yen(row.price) + '</strong>' : '<span class="np">金額なし</span>';
+      return '<div class="rrow' + (row.on ? '' : ' off') + '"><input type="checkbox" data-rcv-on="' + i + '"' + (row.on ? ' checked' : '') + ' aria-label="この行を取り込む"><div class="rbody">' +
+        '<div class="rtop"><select data-rcv-k="' + i + '" aria-label="項目"' + (row.by === 'word' || row.by === 'none' ? ' class="guess"' : '') + '>' + opts(row.k) + '</select><em class="' + (row.on ? row.act : 'off') + '">' + st + '</em></div>' +
+        '<div class="nm">' + (row.name ? esc(row.name) : '<span class="np">（品名なし）</span>') + '</div><div class="pr">' + pr + (row.note ? '<span class="nt">※' + esc(row.note) + '</span>' : '') + '</div></div></div>';
+    }).join('');
+    var ext = d.extras.length ? '<div class="rext"><b>表に無い、今の品</b><p>そのまま残します。外すものにチェックを入れてください。</p>' + d.extras.map(function (e) {
+      return '<label class="rx"><input type="checkbox" data-rcv-off="' + esc(e.key) + '"' + (e.off ? ' checked' : '') + '><span><small>' + esc(e.label) + '</small>' + esc(e.name) + '　' + (e.price != null ? yen(e.price) : '（金額なし）') + '</span><em>' + (e.off ? '外す' : '残す') + '</em></label>';
+    }).join('') + '</div>' : '';
+    var skip = p.skipped.length ? '<details class="rskip"><summary>読み取らなかった行 ' + p.skipped.length + '（見出し・合計・説明の文など）</summary>' + p.skipped.slice(0, 40).map(function (t) { return '<div>' + esc(t) + '</div>'; }).join('') + (p.skipped.length > 40 ? '<div>ほか ' + (p.skipped.length - 40) + ' 行</div>' : '') + '</details>' : '';
+    var r = data.specs[p.id];
+    return '<div class="sendBox imp"><b>取り込む内容の確認</b><p>' + esc(p.src) + (p.book && !p.sheets && p.sheetName ? 'のシート「' + esc(p.sheetName) + '」' : '') + 'から ' + p.rows.length + ' 行を読み取りました。✓の行だけ取り込みます。項目が違うときは選び直してください。</p>' + sheetSel +
+      '<p class="rtot">取り込む行 ' + d.on + '　／　合計' + (d.units > 1 ? '（' + d.units + '台）' : '') + '　' + yen(d.before) + ' → <b>' + yen(d.after) + '</b></p>' + rows + ext + skip +
+      '<p>同じ品名の品は金額を変え、無い品は足します。名前・工事番号・台数・納品日は変わりません。' + (r && r.board ? 'ボードに載っている仕様書なので、発注の一覧も合わせて変わります（外した品の発注は消えずに残ります）。' : '') + '</p>' +
+      '<div class="pair2">' + (d.on || d.extras.some(function (e) { return e.off; }) ? '<button type="button" class="btn fill" data-act="recvApply">この内容で取り込む</button>' : '') + '<button type="button" class="btn soft" data-act="recvClose">やめる</button></div></div>';
   }
   function recvHtml(id) {
     if (store.readOnly) return '';
-    var btn = '<div class="stack" style="margin-top:10px"><button type="button" class="btn soft" data-act="recvOpen" data-id="' + esc(id) + '">Claude から受け取る（貼り付けて取り込む）</button></div>';
+    var btn = '<div class="stack" style="margin-top:10px"><button type="button" class="btn soft" data-act="recvOpen" data-id="' + esc(id) + '">データを取り込む（Excel・一覧・Claude の文）</button></div>';
     var undo = ui.recvUndo && ui.recvUndo.id === id ? '<div class="sendBox"><b>取り込みました</b><p>前の内容に戻すときは、下のボタンを押してください。</p><div class="pair2"><button type="button" class="btn soft" data-act="recvUndo">元に戻す</button><button type="button" class="btn soft" data-act="recvDone">閉じる</button></div></div>' : '';
     if (ui.recvFor !== id) return undo || btn;
     var p = ui.recvPlan;
-    if (!p) return '<div class="sendBox"><b>Claude から受け取る</b><p>Claude から届いた文を、全部そのまま下に貼り付けて「読み取る」を押してください。まだ何も変わりません。</p><textarea id="recvTxt" placeholder="ここに貼り付け">' + esc(ui.recvText || '') + '</textarea>' + (ui.recvMsg ? '<p style="color:var(--warn);font-weight:700">' + esc(ui.recvMsg) + '</p>' : '') +
-      '<div class="pair2"><button type="button" class="btn fill" data-act="recvRead">読み取る</button><button type="button" class="btn soft" data-act="recvClose">やめる</button></div></div>';
+    if (!p) return '<div class="sendBox"><b>データを取り込む</b><p>Excel の表（コピーして貼り付け）、LINE やメモの一覧、Claude から届いた文。どれでも全部そのまま下に貼り付けて「読み取る」を押してください。Excel・CSV のファイルからも読めます。まだ何も変わりません。</p>' +
+      '<textarea id="recvTxt" placeholder="例）&#10;モニター　THE FULL DIVER Arc Monitor 49　200,000&#10;ハンコン　MOZA R25　149,000&#10;シート　200,000">' + esc(ui.recvText || '') + '</textarea>' + (ui.recvMsg ? '<p style="color:' + (ui.recvBusy ? 'var(--sub)' : 'var(--warn)') + ';font-weight:700">' + esc(ui.recvMsg) + '</p>' : '') +
+      '<div class="pair2"><button type="button" class="btn fill" data-act="recvRead">読み取る</button></div>' +
+      '<div class="pair2"><button type="button" class="btn soft" data-act="recvPick">ファイルを選ぶ</button><button type="button" class="btn soft" data-act="recvClose">やめる</button></div>' +
+      '<input type="file" id="recvFile" accept=".xlsx,.xlsm,.xls,.ods,.csv,.tsv,.txt" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" tabindex="-1" aria-hidden="true"></div>';
+    if (p.mode === 'table') return importHtml(p);
     var other = p.other ? '<p style="color:var(--warn);font-weight:700">別の仕様書' + (p.got.name ? '（' + esc(p.got.name) + '）' : '') + 'のデータです。この仕様書に入れてよいか確かめてください。</p>' : '';
     var list = p.rows.length ? p.rows.map(function (r) {
       return '<div class="rcv"><b>' + esc(r.label) + '</b>' + (r.emptyBefore ? '<s class="none">（なし）</s>' : r.before.map(function (t) { return '<s>' + esc(t) + '</s>'; }).join('')) +
         (r.emptyAfter ? '<span class="none">（なし）</span>' : r.after.map(function (t) { return '<span>' + esc(t) + '</span>'; }).join('')) + (r.keep ? '<i>ほか ' + r.keep + ' 件はそのまま</i>' : '') + '</div>';
     }).join('') : '<p>今の内容と同じです。変わるところはありません。</p>';
-    return '<div class="sendBox"><b>取り込む内容の確認</b>' + other + '<p>変わる項目 ' + p.rows.length + '　／　そのままの項目 ' + p.same + '<br>合計' + (p.units > 1 ? '（' + p.units + '台）' : '') + '　' + yen(p.before) + ' → <b>' + yen(p.after) + '</b></p>' + list +
+    return '<div class="sendBox"><b>取り込む内容の確認（Claude から届いた仕様書）</b>' + other + '<p>品と金額をまるごと、届いた内容に置き換えます。<br>変わる項目 ' + p.rows.length + '　／　そのままの項目 ' + p.same + '<br>合計' + (p.units > 1 ? '（' + p.units + '台）' : '') + '　' + yen(p.before) + ' → <b>' + yen(p.after) + '</b></p>' + list +
       '<p>取り込むのは品と金額（と品の備考）だけです。名前・工事番号・台数・納品日は変わりません。' + (data.specs[p.id] && data.specs[p.id].board ? 'ボードに載っている仕様書なので、発注の一覧も合わせて変わります（外れた品の発注は消えずに残ります）。' : '') + '</p>' +
       '<div class="pair2">' + (p.rows.length ? '<button type="button" class="btn fill" data-act="recvApply">この内容で取り込む</button>' : '') + '<button type="button" class="btn soft" data-act="recvClose">やめる</button></div></div>';
   }
   function recvAct(act, id) {
-    if (act === 'recvOpen') { ui.recvFor = id; ui.recvPlan = null; ui.recvMsg = ''; ui.recvText = ''; ui.recvUndo = null; render(); var ta = document.getElementById('recvTxt'); if (ta) ta.scrollIntoView({ block: 'center' }); return; }
-    if (act === 'recvClose') { ui.recvFor = null; ui.recvPlan = null; ui.recvText = ''; ui.recvMsg = ''; render(); return; }
+    if (act === 'recvOpen') { ui.recvFor = id; ui.recvPlan = null; ui.recvMsg = ''; ui.recvText = ''; ui.recvUndo = null; ui.recvBusy = false; render(); var ta = document.getElementById('recvTxt'); if (ta) ta.scrollIntoView({ block: 'center' }); return; }
+    if (act === 'recvClose') { ui.recvFor = null; ui.recvPlan = null; ui.recvText = ''; ui.recvMsg = ''; ui.recvBusy = false; render(); return; }
     if (act === 'recvDone') { ui.recvUndo = null; render(); return; }
+    if (act === 'recvPick') { var fi = document.getElementById('recvFile'); if (fi) fi.click(); return; }
     if (act === 'recvRead') {
       var ta2 = document.getElementById('recvTxt'), txt = ta2 ? ta2.value : ui.recvText; ui.recvText = txt;
+      if (!String(txt || '').trim()) { ui.recvMsg = '上の欄に貼り付けてから「読み取る」を押してください。'; render(); return; }
       var got = recvParse(txt);
-      if (!got) { ui.recvMsg = '読み取れませんでした。Claude から届いた文を、最初から最後まで全部貼り付けてください。'; render(); return; }
-      ui.recvMsg = ''; ui.recvPlan = recvPlan(ui.recvFor, got); render(); return;
+      if (got) { ui.recvMsg = ''; ui.recvPlan = recvPlan(ui.recvFor, got); render(); return; }
+      var p0 = importFrom(ui.recvFor, '貼り付けた文', [{ name: '', tab: textTable(txt) }]);
+      if (!p0) { ui.recvMsg = '読み取れませんでした。品名と金額が並んだ表や一覧（例：「ハンコン　MOZA R25　149,000」）を貼り付けてください。'; render(); return; }
+      ui.recvMsg = ''; ui.recvPlan = p0; render(); return;
     }
     if (act === 'recvApply') {
       var p = ui.recvPlan, r = p && data.specs[p.id]; if (!r || store.readOnly) return;
+      var next = p.mode === 'table' ? importDerive(p).values : p.got.values;
       var prev = JSON.parse(JSON.stringify(r.values || {}));
       try { localStorage.setItem('tsk-recv-undo', JSON.stringify({ id: p.id, values: prev, at: Date.now() })); } catch (e) {}
-      r.values = JSON.parse(JSON.stringify(p.got.values)); saveSpec();
+      r.values = JSON.parse(JSON.stringify(next)); saveSpec();
       ui.recvUndo = { id: p.id, values: prev }; ui.recvFor = null; ui.recvPlan = null; ui.recvText = '';
       render(); flash('取り込みました（' + yen(grandOf(r.values, cleanUnits(r.units))) + '）'); return;
     }
@@ -3060,7 +3379,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/15 21:21</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/15 22:01</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -3865,6 +4184,7 @@ return api;
   app.addEventListener('change', function (ev) { if (!ev.target) return; if (ev.target.id === 'specName') commitName(); else if (ev.target.id === 'specMemo') commitMemo(); else if (ev.target.id === 'specDate') commitDay(); else if (ev.target.id === 'specDlv') { var dvv = cleanDay(ev.target.value); if (dvv && board && !store.readOnly) board.setDelivered(ui.specId, dvv); } else if (ev.target.id === 'specJob') commitJob(); else if (ev.target.getAttribute && ev.target.getAttribute('data-q')) commitQuote(); else if (ev.target.getAttribute && ev.target.getAttribute('data-mp') != null) commitMasterPrice(ev.target); });
   app.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && !ev.isComposing && ev.keyCode !== 229 && ev.target && ev.target.id === 'specName') { ev.preventDefault(); ev.target.blur(); } });
   app.addEventListener('input', function (ev) { if (ev.target && ev.target.classList && ev.target.classList.contains('grow')) grow(ev.target); if (ev.target && ev.target.id === 'recvTxt') ui.recvText = ev.target.value; });
+  app.addEventListener('change', function (ev) { if (ev.target && ev.target.getAttribute && ui.recvFor) recvChange(ev.target); });   // 取り込みの確認画面（✓・項目・シート・ファイル）
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { growAll(); if (ui.screen === 'print') render(); });
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', function () { if (ui.screen === 'print') render(); });   // page breaks are measured, so measure again once the type is in
   window.addEventListener('resize', function () { growAll(); if (ui.screen === 'print') fitSheet(); });
