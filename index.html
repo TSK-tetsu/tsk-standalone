@@ -203,6 +203,11 @@
   :root[data-theme="dark"] .opt.sel svg { color: inherit; }
   .opt.clear { color: var(--sub); }
   .note { margin: 12px 24px 0; font-size: 15px; font-weight: 700; color: var(--sub); }
+  .sendBox { margin: 12px 16px 0; padding: 12px 14px 14px; background: var(--card); border: 1.5px solid var(--band); border-radius: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .sendBox b { font-size: 15px; }
+  .sendBox p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--sub); }
+  .sendBox textarea { width: 100%; min-height: 140px; padding: 8px 10px; border: 1.5px solid var(--edge); border-radius: 10px; background: var(--ground); color: var(--ink); font: 12px/1.5 ui-monospace, Menlo, monospace; resize: vertical; }
+  .sendBox .pair2 { display: flex; gap: 8px; } .sendBox .pair2 .btn { height: 48px; flex: 1 1 0; }
   .notice { margin: 12px 16px 0; padding: 10px 14px; border-radius: 10px; background: var(--warn-bg); color: var(--warn); font-size: 14px; font-weight: 700; }
   .dock { position: sticky; bottom: 0; margin-top: auto; padding: 12px 16px calc(16px + env(safe-area-inset-bottom)); background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -6px 16px rgba(11,31,58,.06); display: flex; flex-direction: column; gap: 10px; }
   .btn { width: 100%; height: 56px; border-radius: 28px; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -578,7 +583,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '10/13 18:35', hiddenAt = 0, lastCheck = 0;
+  var VER = '10/15 17:40', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -2943,10 +2948,44 @@ return api;
     if (store.mode === 'local') return '<div class="notice">いまはこの端末だけに保存されます。</div>';
     return '';
   }
+  /* ---------- Claude にリンクを送る ---------- */
+  // アプリのリンクと、仕様書の名前・保存先・中身を1つの文にして、共有・コピーする。貼ってもらえば Claude 側で中身を読める。
+  var APP_URL = location.origin + location.pathname;
+  function whereSaved() { return store.mode === 'shared' ? '共有（スプレッドシート）' : store.mode === 'local' ? 'この端末だけ' : '読み込み中'; }
+  function specLine(id) { var r = data.specs[id], c = byId(CONFIGS, r.config); return '・' + (r.name || '（名前なし）') + '（' + modelLabel(r) + '・' + (c ? c.name : r.config) + '）ID ' + id; }
+  function sendText(id) {
+    var lines = ['【TSK 仕様書アプリ（独立版）】', APP_URL, '保存先：' + whereSaved(), ''];
+    if (id && data.specs[id]) {
+      lines.push('仕様書：', specLine(id), '', '--- データ ---', JSON.stringify({ id: id, spec: outRecord(data.specs[id]) }));
+    } else {
+      var ids = Object.keys(data.specs);
+      lines.push('仕様書 ' + ids.length + '件：'); ids.forEach(function (x) { lines.push(specLine(x)); });
+      if (ids.length) { lines.push('', '--- データ ---'); ids.forEach(function (x) { lines.push(JSON.stringify({ id: x, spec: outRecord(data.specs[x]) })); }); }
+    }
+    return lines.join('\n');
+  }
+  function flash(m) { var t = document.getElementById('specFlash'); if (!t) { t = document.createElement('div'); t.id = 'specFlash'; t.setAttribute('role', 'status'); t.style.cssText = 'position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);max-width:calc(100% - 32px);background:#0B1F3A;color:#fff;border:1px solid #D9BC7A;padding:11px 18px;border-radius:999px;font-size:15px;font-weight:700;z-index:1000;transition:opacity .2s;opacity:0;pointer-events:none;text-align:center'; document.body.appendChild(t); } t.textContent = m; t.style.opacity = '1'; clearTimeout(t._sh); t._sh = setTimeout(function () { t.style.opacity = '0'; }, 2800); }
+  function copyText(txt) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(txt).then(function () { return true; }, function () { return legacyCopy(txt); });
+    return Promise.resolve(legacyCopy(txt));
+  }
+  function legacyCopy(txt) { try { var ta = document.createElement('textarea'); ta.value = txt; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.appendChild(ta); ta.select(); var ok = document.execCommand('copy'); ta.remove(); return ok; } catch (e) { return false; } }
+  function openSend(id) { ui.sendFor = id || '_app'; ui.sendText = sendText(id); ui.sendCopied = null; render(); copyText(ui.sendText).then(function (ok) { ui.sendCopied = ok; if (!isTyping()) render(); flash(ok ? 'コピーしました。Claude のチャットに貼り付けてください' : '下の欄を長押ししてコピーしてください'); }); }
+  function shareSend() {
+    var txt = ui.sendText || sendText(null);
+    if (navigator.share) navigator.share({ title: 'TSK 仕様書アプリ', text: txt }).catch(function (e) { if (!e || e.name !== 'AbortError') copyText(txt).then(function (ok) { flash(ok ? 'コピーしました' : '下の欄を長押ししてコピーしてください'); }); });
+    else copyText(txt).then(function (ok) { flash(ok ? 'コピーしました' : '下の欄を長押ししてコピーしてください'); });
+  }
+  function sendHtml(forId) {
+    var label = forId === '_app' ? 'アプリのリンクを Claude に送る' : 'この仕様書のリンクを Claude に送る';
+    var btn = '<div class="stack" style="margin-top:16px"><button type="button" class="btn soft" data-act="sendLink" data-id="' + esc(forId) + '">' + label + '</button></div>';
+    if (ui.sendFor !== forId || !ui.sendText) return btn;
+    return '<div class="sendBox"><b>Claude に送る内容</b><p>' + (ui.sendCopied === false ? '自動でコピーできませんでした。下の欄を長押しして全部を選び、コピーしてください。' : ui.sendCopied ? 'コピーしました。Claude のチャットにそのまま貼り付けてください。' : 'コピーしています…') + '</p><textarea readonly id="sendTxt">' + esc(ui.sendText) + '</textarea><div class="pair2"><button type="button" class="btn soft" data-act="copySend">もう一度コピー</button>' + (navigator.share ? '<button type="button" class="btn soft" data-act="shareSend">共有…</button>' : '') + '<button type="button" class="btn soft" data-act="closeSend">閉じる</button></div></div>';
+  }
   function screenModels() {
-    return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() +
+    return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/13 18:35</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/15 17:40</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -2989,6 +3028,7 @@ return api;
       (!memoText().trim() && !ui.memoOpen ? (store.readOnly ? '' : '<div class="stack" style="margin-top:12px"><button type="button" class="btn soft" data-act="openMemo">＋ 全体の備考を書く</button></div>') :
       '<div class="memoBox"><label for="specMemo">全体の備考（任意）</label><small>品ごとの備考は、それぞれの品を押して入れます。ここは全体に関わることだけ。</small><textarea id="specMemo" maxlength="300" placeholder="例：納品時の注意など"' + (store.readOnly ? ' readonly' : '') + '>' + esc(memoText()) + '</textarea></div>') +
       linkBox() +
+      (record() ? sendHtml(ui.specId) : '') +
       (record() && !store.readOnly ? '<div class="stack" style="margin-top:20px"><button type="button" class="btn danger" data-act="delete">' + (ui.confirmDelete ? 'もう一度押すと削除します' : 'この仕様書を削除') + '</button></div>' : '') +
       '<div class="spacer"></div><div class="dock">' + (sp ? '<div class="total"><span>' + (u > 1 ? '合計（' + u + '台）' : '合計') + '</span><b>' + yen(grandOf(v, u)) + '</b></div>' : '') + '<button type="button" class="btn line" data-act="toPrint">A4で印刷する</button></div>';
   }
@@ -3713,6 +3753,10 @@ return api;
     else if (act === 'cancelAdd') { ui.adding = false; render(); }
     else if (act === 'register') register();
     else if (act === 'toPrint') go({ screen: 'print', printMsg: '' });
+    else if (act === 'sendLink') { var sid = t.getAttribute('data-id'); openSend(sid === '_app' ? null : sid); }
+    else if (act === 'copySend') { copyText(ui.sendText || '').then(function (ok) { if (!ok) { var ta = document.getElementById('sendTxt'); if (ta) ta.select(); } flash(ok ? 'コピーしました' : '欄を長押ししてコピーしてください'); }); }
+    else if (act === 'shareSend') shareSend();
+    else if (act === 'closeSend') { ui.sendFor = null; ui.sendText = ''; render(); }
     else if (act === 'modeSpec') go({ printMode: 'spec', printMsg: '' });
     else if (act === 'modeQuote') go({ printMode: 'quote', printMsg: '' });
     else if (act === 'toQuote') go({ screen: 'quote' });
