@@ -612,7 +612,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '10/15 22:01', hiddenAt = 0, lastCheck = 0;
+  var VER = '10/15 22:12', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -3212,7 +3212,7 @@ return api;
         } else { var nl = { name: row.name, price: row.price }; if (row.note) nl.note = row.note; ls.push(nl); row.act = 'add'; if (RESERVED.indexOf(row.name) < 0) adds[k] = true; }
       } else {
         var j2 = -1; for (i = 0; i < base; i++) if (!used[k][i]) { j2 = i; break; }
-        if (j2 >= 0) { used[k][j2] = true; row.old = ls[j2].price; row.target = ls[j2].name; row.act = 'first'; ls[j2].price = row.price; if (row.note) ls[j2].note = row.note; }
+        if (j2 >= 0) { used[k][j2] = true; row.old = ls[j2].price; row.target = ls[j2].name; row.act = row.price === row.old && !(row.note && row.note !== (ls[j2].note || '')) ? 'same' : 'first'; ls[j2].price = row.price; if (row.note) ls[j2].note = row.note; }
         else { var tl = { name: TBD, price: row.price }; if (row.note) tl.note = row.note; ls.push(tl); row.act = 'tbd'; }
       }
     });
@@ -3379,7 +3379,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/15 22:01</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/15 22:12</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
