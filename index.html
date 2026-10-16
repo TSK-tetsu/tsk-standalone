@@ -612,7 +612,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '10/15 22:12', hiddenAt = 0, lastCheck = 0;
+  var VER = '10/16 12:53', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -2737,12 +2737,15 @@ return api;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function byId(list, id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; return null; }
-  function allModels() { return MODELS.concat(data.models); }
-  function findModel(id) { return byId(MODELS, id) || byId(data.models, id); }
+  var TBDM = { id: 'tbd', name: '未定' };   // 機種がまだ決まっていない手配書。選ぶ一覧のいちばん下に出し、マスター（金額）には出さない
+  function realModels() { return MODELS.concat(data.models); }
+  function allModels() { return realModels().concat([TBDM]); }
+  function findModel(id) { return byId(MODELS, id) || byId(data.models, id) || (id === TBDM.id ? TBDM : null); }
   // The machine on screen. A record whose added machine is not loaded (yet) still opens, under the name it was saved with.
   function curModel() { if (!ui.model) return null; var m = findModel(ui.model); if (m) return m; var r = record(); return { id: ui.model, name: (r && r.modelName) || '機種' }; }
   function modelLabel(r) { var m = findModel(r.model); return m ? m.name : (r.modelName || '機種'); }
-  function frameName(m) { return m.name + ' フレーム本体'; }
+  function frameName(m) { return m.id === TBDM.id ? '機種未定 フレーム本体' : m.name + ' フレーム本体'; }
+  function quoteTitleOf(m) { return m.id === TBDM.id ? 'TSKSIM シミュレーターの御見積' : 'TSKSIM ' + m.name + ' の御見積'; }
   function isFrameBody(f, n) { return f.k === 'frame' && allModels().some(function (m) { return frameName(m) === n; }); }
   function cleanModels(v) {
     var out = [], seen = {};
@@ -2790,7 +2793,7 @@ return api;
   function memoText() { var r = record(); return r ? r.memo || '' : ''; }
   function showPrice() { var r = record(); return r ? r.showPrice !== false : ui.draftShow !== false; }
   function switchHtml() { var on = showPrice(); return '<button type="button" class="switch" role="switch" aria-checked="' + on + '" data-act="togglePrice"><span>金額を表示</span><em>' + (on ? 'する' : 'しない') + '</em><i></i></button>'; }
-  function defaultName() { var m = curModel(); return m ? m.name + ' ' : ''; }
+  function defaultName() { var m = curModel(); return m && m.id !== TBDM.id ? m.name + ' ' : ''; }
   function nameInBox() { return record() ? specName() : (ui.draftName != null ? ui.draftName : defaultName()); }
   function newId() { return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function ensureRecord() {
@@ -2803,7 +2806,7 @@ return api;
     if (!body || typeof body !== 'object') return null;
     var model = body.model, config = body.config;
     if (typeof model !== 'string' || typeof config !== 'string') { var cut = String(id).lastIndexOf('_'); model = String(id).slice(0, cut); config = String(id).slice(cut + 1); }
-    if ((!byId(MODELS, model) && !/^m[a-z0-9]{4,24}$/.test(model)) || !byId(CONFIGS, config)) return null;
+    if ((!byId(MODELS, model) && model !== TBDM.id && !/^m[a-z0-9]{4,24}$/.test(model)) || !byId(CONFIGS, config)) return null;
     return { model: model, modelName: typeof body.modelName === 'string' ? body.modelName.trim().slice(0, 30) : '', config: config, name: typeof body.name === 'string' ? body.name.trim().slice(0, 60) : '', showPrice: body.showPrice !== false, units: cleanUnits(body.units != null ? body.units : (body.quote && body.quote.units)), job: cleanJob(body.job), board: body.board === true, delivery: cleanDay(body.delivery), vendors: cleanVendors(body.vendors), memo: typeof body.memo === 'string' ? body.memo.slice(0, 300) : '', quote: cleanQuote(body.quote), values: cleanValues(body.values), updatedAt: typeof body.updatedAt === 'number' ? body.updatedAt : 0 };
   }
   function cleanList(v) { return Array.isArray(v) ? v.filter(function (x) { return typeof x === 'string' && x.trim(); }).map(function (x) { return x.trim().slice(0, 60); }) : []; }
@@ -2833,7 +2836,7 @@ return api;
   function quoteDefaults() {
     var m = curModel(), nm = specName(), to = '';
     if (m && nm) { to = nm.indexOf(m.name) === 0 ? nm.slice(m.name.length) : nm; to = to.replace(/向け\s*$/, '').trim(); }
-    return { no: '', date: '', tax: 'ex', hideBlank: true, to: to, honor: '御中', person: '', addr: '', tel: '', fax: '', mobile: '', mail: '', ref: '', title: m ? 'TSKSIM ' + m.name + ' の御見積' : '', place: '', pay: PAYS[0], payFree: '', delivery: '別途お打合せ', valid: '30日間有効', units: 1, discount: null, note: '' };
+    return { no: '', date: '', tax: 'ex', hideBlank: true, to: to, honor: '御中', person: '', addr: '', tel: '', fax: '', mobile: '', mail: '', ref: '', title: m ? quoteTitleOf(m) : '', place: '', pay: PAYS[0], payFree: '', delivery: '別途お打合せ', valid: '30日間有効', units: 1, discount: null, note: '' };
   }
   function cleanQuote(q) {
     if (!q || typeof q !== 'object') return null;
@@ -3379,7 +3382,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/15 22:12</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/16 12:53</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -3550,7 +3553,7 @@ return api;
         if (l.note) n.note = l.note;
         return n;
       });
-      if (r.quote && r.quote.title === 'TSKSIM ' + from.name + ' の御見積') r.quote.title = 'TSKSIM ' + to.name + ' の御見積';
+      if (r.quote && r.quote.title === quoteTitleOf(from)) r.quote.title = quoteTitleOf(to);
       r.model = to.id; r.modelName = to.name;
     }
     ui.model = to.id;
@@ -3567,7 +3570,7 @@ return api;
     var body = GROUPS.map(function (g) {
       return '<div class="grp"><span>' + g.name + '</span></div>' + fieldsOf(g.id).map(function (f) {
         var rows = '';
-        if (f.k === 'frame') rows += allModels().map(function (m) { var n = frameName(m); return '<div class="mrow"><span class="mname">' + esc(n) + '</span>' + priceBox(f.k, n) + '</div>'; }).join('');
+        if (f.k === 'frame') rows += realModels().map(function (m) { var n = frameName(m); return '<div class="mrow"><span class="mname">' + esc(n) + '</span>' + priceBox(f.k, n) + '</div>'; }).join('');
         rows += ownItems(f).map(function (n) { return '<div class="mrow"><button type="button" class="mname" data-act="masterOpt" data-id="' + f.k + '" data-v="' + esc(n) + '"' + (ro ? ' disabled' : '') + '>' + esc(n) + '</button>' + priceBox(f.k, n) + '</div>'; }).join('');
         return '<div class="mhead">' + f.label + '</div><div class="list">' + rows + (ro ? '' : '<button type="button" class="opt add" data-act="masterAdd" data-id="' + f.k + '">' + PLUS + '<span>' + f.label + 'の選択肢を追加</span></button>') + '</div>';
       }).join('');
