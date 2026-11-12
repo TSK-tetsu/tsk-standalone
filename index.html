@@ -612,7 +612,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '10/16 12:53', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/13 00:20', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -627,6 +627,27 @@
   }
   document.addEventListener('visibilitychange', function () { if (document.hidden) { hiddenAt = Date.now(); return; } if (hiddenAt && Date.now() - hiddenAt > 600000) checkUpdate(); hiddenAt = 0; });
   setTimeout(checkUpdate, 4000);
+
+  // ---- 掲示板モード（事務所のモニターなど、24時間つけっぱなしで表示する端末） ----
+  // URLに ?kiosk=1 を付けて一度開いた端末だけ有効。この端末に覚える（?kiosk=0 で解除）。スマホなど他の端末は今まで通り。
+  var KIOSK = (function () { try { var q = new URLSearchParams(location.search).get('kiosk'); if (q === '1') localStorage.setItem('tsk-kiosk', '1'); else if (q === '0') localStorage.removeItem('tsk-kiosk'); return localStorage.getItem('tsk-kiosk') === '1'; } catch (e) { return false; } })();
+  if (KIOSK) {
+    // 画面を消さない・PCをスリープさせない（ブラウザが表示中の間だけ効く）
+    var wakeLock = null, wake = function () {
+      if (wakeLock || document.hidden || !navigator.wakeLock) return;
+      navigator.wakeLock.request('screen').then(function (l) { wakeLock = l; l.addEventListener('release', function () { wakeLock = null; }); }).catch(function () {});
+    };
+    wake(); document.addEventListener('visibilitychange', wake); setInterval(wake, 60000);
+    // 表示しっぱなしでも新しい版を取り込む（30分ごと。さわっている最中・入力中・未送信があるときは見送る）
+    setInterval(function () { if (Date.now() - lastActive > 120000) checkUpdate(); }, 1800000);
+    // 毎日4時台に一度だけ読み込み直す（長時間開きっぱなしによる重さや不調を溜めない）
+    var bootDay = new Date().toDateString();
+    setInterval(function () {
+      var n = new Date(); if (n.getHours() !== 4 || n.toDateString() === bootDay) return;
+      if (Date.now() - lastActive < 120000 || inflight || Object.keys(outbox).length) return;
+      location.reload();
+    }, 300000);
+  }
 
   function write(op, path, data) {
     var cur = docs[path], had = outbox[path];
@@ -3382,7 +3403,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 10/16 12:53</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/13 00:20</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
