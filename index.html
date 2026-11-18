@@ -632,7 +632,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/18 14:40', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/18 14:55', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1605,6 +1605,10 @@ details.done[open]>summary::before{content:"▾"}
 .ln-card .tag.today,.ln-card .tag.soon{background:#F2C14E;color:#0B1F3A}
 .ln-empty{color:var(--muted);font-size:13px;font-weight:700;padding:8px 6px}
 .grp .gact .delpj{margin-left:auto}
+/* 案件を開いたとき・ほかの画面から案件へ飛んだとき、見出しが上の帯に隠れないように */
+.grp{scroll-margin-top:80px}
+:host(.unified.mode-d) .grp{scroll-margin-top:calc(var(--bandh,64px) + 14px)}
+:host(.framed) .grp{scroll-margin-top:12px}
 /* タッチキーボード（Windows）：画面の下半分に浮かんで出るので、指で入力するときは入力画面を上に寄せて低くする */
 .scrim.kb{align-items:flex-start !important;padding-top:12px}
 .scrim.kb .sheet{max-height:min(52vh,560px) !important;overflow-y:auto;animation:none}
@@ -2035,7 +2039,7 @@ $("#list").addEventListener("click",async e=>{
   const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="xlsx") exportProject(gk); else if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(ga.dataset.gact==="dlv") openDelivered(gk); else if(ga.dataset.gact==="extra") openExtra(gk); else if(ga.dataset.gact==="delpj") openDeletePj(gk); else if(gp) openEditPj(gp); return; }
   const sa=e.target.closest("[data-supall]"); if(sa){ openSupAll(sa.dataset.supall); return; }
   const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)){ const gr=sh.closest(".sup-row").nextElementSibling; await foldOut(gr&&gr.classList.contains("grid")?[...gr.children]:[]); openSup.delete(k); renderList(); } else { openSup.add(k); renderList(); const nh=[...root.querySelectorAll(".sup-h")].find(x=>x.dataset.sup===k); const g2=nh&&nh.closest(".sup-row").nextElementSibling; foldIn(g2&&g2.classList.contains("grid")?[...g2.children]:[]); } return; }
-  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); const y0=bandY(k); openGrp.delete(k); grpF.delete(k); renderList(); holdBand(k,y0); flipBand(k,y0); } else { const y0=bandY(k); openGrp.add(k); renderList(); scrollBox().scrollTo(0,0); flipBand(k,y0); foldIn(grpParts(bandEl(k))); } return; }
+  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); const y0=bandY(k); openGrp.delete(k); grpF.delete(k); renderList(); holdBand(k,y0); flipBand(k,y0); } else { const y0=bandY(k); openGrp.add(k); renderList(); bandEl(k)?.scrollIntoView({block:"start"}); flipBand(k,y0); foldIn(grpParts(bandEl(k))); } return; }
   const pc=e.target.closest(".planclr"); if(pc){ const op=orders.find(x=>x.id===pc.dataset.id); if(op&&op.planDate){ const ps=STATUSES.indexOf(op.status); try{ await saveOrder(op.id,{...strip(op),planDate:"",status:ps===PLAN?STATUSES[0]:op.status,updatedAt:new Date().toISOString()}); toast("発注予定日を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const dc=e.target.closest(".dueclr"); if(dc){ const od=orders.find(x=>x.id===dc.dataset.id); if(od&&od.due){ try{ await saveOrder(od.id,{...strip(od),due:"",updatedAt:new Date().toISOString()}); toast("納期を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const cm=e.target.closest("[data-cm]"); if(cm){ cardMode=cm.dataset.cm==="tile"?"tile":"full"; selId=null; try{ localStorage.setItem("tsk_cards2",cardMode); }catch{} renderList(); return; }
@@ -3799,7 +3803,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 14:40</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 14:55</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
