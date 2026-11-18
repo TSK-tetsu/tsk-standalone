@@ -632,7 +632,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/18 14:00', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/18 14:40', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1544,7 +1544,70 @@ details.done[open]>summary::before{content:"▾"}
 :host(.unified.mode-d) .content{min-height:calc(100vh - var(--bandh,64px))}
 @media (prefers-color-scheme: dark){ :host(:not([data-theme="light"])){ --outer:#060E1A } }
 :host([data-theme="dark"]){ --outer:#060E1A }
+
+/* ===== 広い画面の使い方（PC表示） ===== */
+/* (2) 上の数字を1行に詰める */
+:host(.mode-d) .stats{grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+:host(.mode-d) .stat{display:flex;align-items:baseline;gap:10px;padding:10px 16px}
+:host(.mode-d) .stat .v{font-size:28px}
+:host(.mode-d) .stat .l{font-size:14px;font-weight:800}
+/* (1) 案件を2列に。開いた案件と「納品済み」は横いっぱい */
+@media (min-width:1200px){
+  :host(.mode-d) #list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:18px;align-items:start}
+  :host(.mode-d) #list>.grp.open,:host(.mode-d) #list>.dlvsec,:host(.mode-d) #list>.empty{grid-column:1 / -1}
+  :host(.mode-d) #list .dlvsec.open{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:18px;align-items:start}
+  :host(.mode-d) #list .dlvsec.open>.dlvsec-h,:host(.mode-d) #list .dlvsec.open>.grp.open{grid-column:1 / -1}
+}
+/* (3) 右の「今週」欄 */
+.rail{display:none}
+@media (min-width:1500px){
+  :host(.unified.mode-d) .rail{display:flex;flex-direction:column;gap:16px;width:350px;flex:0 0 350px;box-sizing:border-box;padding:20px 16px 30px 4px;position:sticky;top:var(--bandh,64px);align-self:flex-start;max-height:calc(100vh - var(--bandh,64px));overflow-y:auto}
+  :host(.unified.mode-d) .tkstrip{display:none !important}
+}
+.rl-sec{background:var(--card);border-radius:14px;padding:12px 12px 10px;box-shadow:var(--shadow)}
+.rl-h{display:flex;align-items:center;gap:8px;margin:0 2px 8px;font-size:16px;font-weight:900}
+.rl-h .n{background:var(--well);border-radius:999px;padding:0 10px;font-size:14px}
+.rl-h .n.hot{background:var(--red);color:#fff}
+.rl-row{display:grid;grid-template-columns:auto 1fr;gap:1px 10px;align-items:center;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;padding:8px 4px;cursor:pointer}
+.rl-row:first-of-type{border-top:0}
+.rl-row:active{background:var(--well)}
+.rl-row .d{grid-row:1 / span 2;min-width:54px;text-align:center;line-height:1.15}
+.rl-row .d b{display:block;font-size:16px;font-weight:900}
+.rl-row .d i{font-style:normal;font-size:11px;font-weight:900;border-radius:999px;padding:0 6px;background:var(--well);color:var(--muted)}
+.rl-row .d i.late{background:var(--red);color:#fff}
+.rl-row .d i.today,.rl-row .d i.soon{background:#F2C14E;color:#0B1F3A}
+.rl-row .t{font-size:15px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rl-row .m{font-size:12px;color:var(--muted);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rl-empty{color:var(--muted);font-size:13px;font-weight:700;padding:6px 4px}
+.rl-more{width:100%;border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;font-weight:800;padding:6px 0 0;cursor:pointer;text-decoration:underline}
+/* (5) 納期で並べる（列） */
+.lane{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:start}
+.ln-col{background:var(--well);border-radius:16px;padding:12px;min-height:200px}
+.ln-col.now{background:color-mix(in srgb,var(--red) 12%,var(--well))}
+.ln-h{display:flex;align-items:center;gap:8px;margin:2px 4px 10px;font-size:17px;font-weight:900}
+.ln-h .n{background:var(--card);border-radius:999px;padding:0 10px;font-size:14px}
+.ln-h small{margin-left:auto;font-size:12px;color:var(--muted);font-weight:700}
+.ln-card{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left;border:2px solid var(--line);border-left:6px solid var(--gold);border-radius:12px;background:var(--card);color:var(--ink);font:inherit;padding:10px 12px;margin-bottom:10px;cursor:pointer;box-shadow:var(--shadow)}
+.ln-card.late{border-left-color:var(--red)}
+.ln-card .ltop{display:flex;align-items:center;gap:8px}
+.ln-card .k{background:var(--gold);color:var(--navy);border-radius:7px;padding:2px 8px;font-size:16px;font-weight:900;letter-spacing:.04em}
+.ln-card .k.none{background:var(--well);color:var(--muted)}
+.ln-card .when{margin-left:auto;font-size:15px;font-weight:900;white-space:nowrap}
+.ln-card .who{font-size:16px;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ln-card .spec{font-size:13px;color:var(--muted);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ln-card .bar{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--muted)}
+.ln-card .bar .track{flex:1;height:7px;border-radius:999px;background:var(--well);overflow:hidden}
+.ln-card .bar .track i{display:block;height:100%;background:linear-gradient(90deg,#3E7BE0,#5FC48A)}
+.ln-card .bar em{font-style:normal;white-space:nowrap}
+.ln-card .bar em.r{color:var(--red)}
+.ln-card .tag{align-self:flex-start;font-size:12px;font-weight:900;border-radius:999px;padding:1px 8px;background:var(--well);color:var(--muted)}
+.ln-card .tag.late{background:var(--red);color:#fff}
+.ln-card .tag.today,.ln-card .tag.soon{background:#F2C14E;color:#0B1F3A}
+.ln-empty{color:var(--muted);font-size:13px;font-weight:700;padding:8px 6px}
 .grp .gact .delpj{margin-left:auto}
+/* タッチキーボード（Windows）：画面の下半分に浮かんで出るので、指で入力するときは入力画面を上に寄せて低くする */
+.scrim.kb{align-items:flex-start !important;padding-top:12px}
+.scrim.kb .sheet{max-height:min(52vh,560px) !important;overflow-y:auto;animation:none}
 .grp .grp-h .ghint{flex:0 0 100%;order:99;margin-top:2px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.18);text-align:center;font-size:13px;font-weight:800;color:var(--gold-soft);letter-spacing:.04em;opacity:.9}
 :host(.mode-d) .grp .grp-h .ghint{font-size:14px}
 .grp.dlvd .grp-h .ghint{color:#C9D2E0}
@@ -1575,6 +1638,7 @@ details.done[open]>summary::before{content:"▾"}
     <aside class="side">
       <button class="b b-gold" id="sideAdd">＋ 発注を追加</button>
       <button data-view="list" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>一覧<span class="badge" id="badgeSide" hidden>0</span></button>
+      <button data-view="lane"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="11" rx="1.5"/><rect x="17" y="4" width="4" height="7" rx="1.5"/></svg>納期で並べる</button>
       <button data-view="cal"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>スケジュール</button>
       <button data-view="memo"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>タスク・議事録<span class="badge" id="badgeTaskSide" hidden>0</span></button>
       <button data-view="ledger"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>月末台帳</button>
@@ -1603,6 +1667,8 @@ details.done[open]>summary::before{content:"▾"}
         </div>
         <div id="list"></div>
       </section>
+
+      <section class="view" id="view-lane"><div class="lead" style="color:var(--muted);font-size:14px;margin:0 0 12px">案件を納品日（未定なら次の入荷日）で列に分けています。押すとその案件を開きます。</div><div id="lane" class="lane"></div></section>
 
       <section class="view" id="view-pj"><div id="pjlist" class="pjgrid"></div></section>
 
@@ -1637,6 +1703,7 @@ details.done[open]>summary::before{content:"▾"}
         <p class="hint" style="margin-top:10px">「Excelで保存」は、いま表に出ている発注を1枚にまとめます。案件→工事番号→納期の順に並びます。</p>
       </section>
     </main>
+    <aside class="rail" id="rail" aria-label="今週"></aside>
   </div>
 
   <nav class="nav" aria-label="画面切替">
@@ -1833,6 +1900,7 @@ function showView(v){
   root.querySelectorAll(".view").forEach(e=>e.classList.toggle("active",e.id==="view-"+v));
   root.querySelectorAll("[data-view]").forEach(b=>{ if(b.dataset.view===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   if(v==="ledger") renderLedger();
+  if(v==="lane") renderLane();
   if(v==="cal") renderCal();
   syncFocus();
   scrollBox().scrollTo(0,viewY["view-"+v]||0);
@@ -2111,7 +2179,7 @@ function fitScrim(){ const vv=window.visualViewport; if(!vv||root.host.classList
 if(window.visualViewport){ const onVV=()=>{ if(!scrim.classList.contains("open")) return; fitScrim(); const a=root.activeElement; if(a&&sheet.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) setTimeout(()=>{ try{ a.scrollIntoView({block:"nearest"}); }catch{} },30); };
   visualViewport.addEventListener("resize",onVV); visualViewport.addEventListener("scroll",onVV); }
 sheet.addEventListener("focusin",e=>{ if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) setTimeout(()=>{ fitScrim(); try{ e.target.scrollIntoView({block:"nearest"}); }catch{} },300); });
-function closeSheet(){ scrim.classList.remove("open"); sheet.innerHTML=""; html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); }
+function closeSheet(){ scrim.classList.remove("open","kb"); sheet.innerHTML=""; html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); }
 scrim.addEventListener("click",e=>{ if(e.target===scrim) closeSheet(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!host.hidden) closeSheet(); });
 
@@ -2690,6 +2758,56 @@ const api={ layout:()=>(html.classList.contains("mode-d")?"d":"m"), setLayout:m=
   setDelivered:(id,v)=>{ chain=chain.then(async()=>{ await whenReady(); if(!canWrite) return; await setDelivered("sp_"+id,v); }).catch(err=>console.error(err)); return chain; } };
 
 { const tp=$(".top"); if(tp&&window.ResizeObserver) new ResizeObserver(()=>host.style.setProperty("--toph",tp.offsetHeight+"px")).observe(tp); }   // 左メニューを上の帯のすぐ下に留める
+/* ---------- タッチキーボード対策 ----------
+   指（またはペン）で入力欄を押したら、キーボードが下半分を覆う前提で、入力画面を上に寄せる。
+   入力画面の外の入力欄は、画面の上の方までスクロールして見えるようにする。マウスで押したときは今まで通り。 */
+let lastPtr="mouse";
+window.addEventListener("pointerdown",e=>{ lastPtr=e.pointerType||"mouse"; },{capture:true,passive:true});
+const isTextInput=el=>!!el&&(el.tagName==="TEXTAREA"||(el.tagName==="INPUT"&&!/^(checkbox|radio|button|submit|date|month|color|range|file)$/.test(el.type)));
+root.addEventListener("focusin",e=>{
+  const el=e.target; if(lastPtr==="mouse"||!isTextInput(el)) return;
+  if(el.closest("#sheet")){ scrim.classList.add("kb"); setTimeout(()=>el.scrollIntoView({block:"nearest"}),60); }
+  else { el.style.scrollMarginTop=`calc(var(--bandh,64px) + 24px)`; setTimeout(()=>el.scrollIntoView({block:"start",behavior:"smooth"}),80); }
+});
+root.addEventListener("focusout",()=>{ setTimeout(()=>{ if(!isTextInput(root.activeElement)) scrim.classList.remove("kb"); },150); });
+
+/* ---------- 広い画面：納期で並べる（列）と、右の「今週」欄 ---------- */
+function weekEnd(off){ const now=new Date(todayStr()+"T00:00:00"); const day=(now.getDay()+6)%7; const sun=new Date(now); sun.setDate(now.getDate()-day+6+7*off); return sun.toLocaleDateString("sv-SE"); }
+function laneTag(d){ const n=Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000); return n<0?{t:`${-n}日超過`,c:"late"}:n===0?{t:"本日",c:"today"}:{t:`あと${n}日`,c:n<=3?"soon":""}; }
+function renderLane(){
+  const el=$("#lane"); if(!el) return;
+  const pjs=wallProjects(), e1=weekEnd(0), e2=weekEnd(1);
+  const cols=[["遅れ・今週","今週の日曜まで",x=>x.date&&x.date<=e1,"now"],["来週","",x=>x.date&&x.date>e1&&x.date<=e2,""],["それ以降","",x=>x.date&&x.date>e2,""],["日付未定","",x=>!x.date,""]];
+  const card=x=>{ const tg=x.date?laneTag(x.date):null, pct=x.n?Math.round(x.in/x.n*100):0;
+    return `<button type="button" class="ln-card ${tg&&tg.c==="late"?"late":""}" data-lpj="${esc(x.k)}"><div class="ltop"><span class="k ${x.L.k?"":"none"}">${esc(x.L.k||"番号未定")}</span><span class="when">${x.date?(x.isDlv?"納品 ":"入荷 ")+fmtDW(x.date):""}</span></div>
+      <div class="who">${esc(x.L.who||"案件未設定")}</div>${x.L.spec?`<div class="spec">${esc(x.L.spec)}</div>`:""}
+      <div class="bar">${x.n?`<span class="track"><i style="width:${pct}%"></i></span><em>入荷 ${x.in}/${x.n}</em>`:`<em>発注なし</em>`}${x.late?`<em class="r">遅延 ${x.late}</em>`:""}</div>${tg?`<span class="tag ${tg.c}">${tg.t}</span>`:""}</button>`; };
+  el.innerHTML=cols.map(([t,sub,f,c])=>{ const ls=pjs.filter(f); return `<div class="ln-col ${c}"><div class="ln-h">${t}<span class="n">${ls.length}</span>${sub?`<small>${sub}</small>`:""}</div>${ls.map(card).join("")||`<div class="ln-empty">なし</div>`}</div>`; }).join("");
+}
+$("#lane").addEventListener("click",e=>{ const b=e.target.closest("[data-lpj]"); if(b) showGroup(b.dataset.lpj); });
+const railOpen=new Set();
+function renderRail(){
+  const el=$("#rail"); if(!el) return;
+  const today=todayStr(), e1=weekEnd(0), lim=7;
+  const soon=orders.filter(dueSoon).sort((a,b)=>a.due.localeCompare(b.due));
+  const dlv=wallProjects().filter(x=>x.isDlv&&x.date&&x.date<=e1);
+  const tk=tasks.filter(t=>!t.done&&t.due&&t.due<=addDays(today,7)).sort((a,b)=>a.due.localeCompare(b.due));
+  const dt=d=>{ const g=laneTag(d); return `<span class="d"><b>${fmtD(d)}</b><i class="${g.c}">${g.t}</i></span>`; };
+  const sec=(id,title,ls,row,hot,empty)=>{ const all=railOpen.has(id), show=all?ls:ls.slice(0,lim);
+    return `<div class="rl-sec"><div class="rl-h">${title}<span class="n ${hot&&ls.length?"hot":""}">${ls.length}</span></div>${show.map(row).join("")||`<div class="rl-empty">${empty}</div>`}${ls.length>lim?`<button type="button" class="rl-more" data-rmore="${id}">${all?"たたむ":`ほか ${ls.length-lim}件を見る`}</button>`:""}</div>`; };
+  el.innerHTML=
+    sec("o","遅れ・要確認の発注",soon,o=>{ const P=pjLabel(o); return `<button type="button" class="rl-row" data-rpj="${esc(pjKey(o))}">${dt(o.due)}<span class="t">${esc(o.item||"（品名なし）")}</span><span class="m">${esc(o.supplier||"")}　${esc(P.k||"")} ${esc(P.who||"")}</span></button>`; },true,"遅れ・要確認の発注はありません")+
+    sec("p","今週の納品",dlv,x=>`<button type="button" class="rl-row" data-rpj="${esc(x.k)}">${dt(x.date)}<span class="t">${esc(x.L.who||"")}</span><span class="m">${esc(x.L.k||"番号未定")}　入荷 ${x.in}/${x.n}${x.late?`　遅延 ${x.late}`:""}</span></button>`,false,"今週の納品はありません")+
+    sec("t","期限の近いタスク",tk,t=>`<button type="button" class="rl-row" data-rtk="1">${dt(t.due)}<span class="t">${esc(t.title||"")}</span><span class="m">${esc(taskWho(t)||"相手なし")}${t.assignee?`　担当：${esc(t.assignee)}`:""}</span></button>`,false,"1週間以内に期限のタスクはありません");
+}
+$("#rail").addEventListener("click",e=>{
+  const m=e.target.closest("[data-rmore]"); if(m){ const id=m.dataset.rmore; railOpen.has(id)?railOpen.delete(id):railOpen.add(id); renderRail(); return; }
+  const p=e.target.closest("[data-rpj]"); if(p){ showGroup(p.dataset.rpj); return; }
+  if(e.target.closest("[data-rtk]")) showView("memo");
+});
+listeners.push(()=>{ renderRail(); if(root.querySelector("#view-lane.active")) renderLane(); });
+setInterval(()=>{ renderRail(); if(root.querySelector("#view-lane.active")) renderLane(); },600000);   // 日付が変わっても「あと何日」を進める
+
 /* ---------- 掲示画面（事務所のタッチモニター用） ----------
    横長の1画面に「納品予定」「要確認の発注」「タスク」を並べ、離れていても読める大きさで出す。
    掲示板モード（?kiosk=1 で開いた端末）は、開いたときと、3分さわらなかったときにこの画面へ戻る。ほかの端末は左の「掲示画面」から開ける。 */
@@ -3681,7 +3799,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 14:00</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 14:40</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -4518,7 +4636,7 @@ return api;
     if (boardHost) boardHost.classList.toggle('unified', wide);
     if (!wide) return;
     var de = document.documentElement;
-    de.style.setProperty('--framew', mode === 'board' ? '1480px' : '1040px');
+    de.style.setProperty('--framew', mode === 'board' ? 'min(1880px, calc(100vw - 32px))' : '1040px');
     de.style.setProperty('--bandh', band.offsetHeight + 'px');
     band.querySelectorAll('[data-go]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-go') === mode)); });
     band.querySelector('.tb-board').hidden = mode !== 'board';
@@ -4541,6 +4659,14 @@ return api;
     if (sn && board.toggleSound) { board.toggleSound(); updateBand(); }
   });
   window.addEventListener('resize', updateBand);
+  // 仕様書の画面：指で入力欄を押したら、タッチキーボードに隠れないよう画面の上の方までスクロールする
+  var lastPtr = 'mouse';
+  window.addEventListener('pointerdown', function (ev) { lastPtr = ev.pointerType || 'mouse'; }, { capture: true, passive: true });
+  app.addEventListener('focusin', function (ev) {
+    var el = ev.target; if (lastPtr === 'mouse' || !el || !(el.tagName === 'TEXTAREA' || (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|date|month|color|range|file)$/.test(el.type)))) return;
+    el.style.scrollMarginTop = 'calc(var(--bandh, 0px) + 90px)';
+    setTimeout(function () { el.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 80);
+  });
   if (board) board.onChange(function () { setTimeout(updateBand, 0); });
   updateBand();
   if (board) setMode('board');   // アプリを開いたら、まず発注・納期ボード（仕様書へは左上の「仕様書」から）
