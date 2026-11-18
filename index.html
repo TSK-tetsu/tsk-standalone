@@ -632,7 +632,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/18 13:30', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/18 13:50', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1544,6 +1544,7 @@ details.done[open]>summary::before{content:"▾"}
 :host(.unified.mode-d) .content{min-height:calc(100vh - var(--bandh,64px))}
 @media (prefers-color-scheme: dark){ :host(:not([data-theme="light"])){ --outer:#060E1A } }
 :host([data-theme="dark"]){ --outer:#060E1A }
+.grp .gact .delpj{margin-left:auto}
 .grp .grp-h .ghint{flex:0 0 100%;order:99;margin-top:2px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.18);text-align:center;font-size:13px;font-weight:800;color:var(--gold-soft);letter-spacing:.04em;opacity:.9}
 :host(.mode-d) .grp .grp-h .ghint{font-size:14px}
 .grp.dlvd .grp-h .ghint{color:#C9D2E0}
@@ -1913,7 +1914,7 @@ const openSup=new Set();
 function baseHtml(L){ if(!L.spec) return ""; let units=0; const rest=[]; String(L.spec).split("　").filter(Boolean).forEach(t=>{ const m=t.match(/^×(\d+)$/); if(m) units=+m[1]; else rest.push(t); }); if(!units&&L.specId) units=1;
   return `<i class="brk"></i><span class="base"><b>${esc(rest[0]||"")}</b>${rest.length>1?`<small>${esc(rest.slice(1).join("　"))}</small>`:""}</span>${units?`<span class="units"><b>${units}</b>台</span>`:""}<i class="brk"></i>`; }
 // 開いた案件の先頭に置く操作（以前は「案件」画面にあったもの）
-function gAct(key){ const xb=`<button type="button" class="b b-sm b-ghost xlsb" data-gact="xlsx">購入品の表（Excel）</button>`; if(!canWrite) return `<div class="gact">${xb}</div>`; const p=projects.find(x=>x.id===key); return `<div class="gact">${p&&p.deliveredAt?`<button type="button" class="b b-sm b-gold" data-gact="extra">＋ 追加工事を立てる</button>`:""}<button type="button" class="b b-sm ${p&&p.deliveredAt?"b-ghost":"b-gold"}" data-gact="addto">＋ この案件に発注を足す</button>${p&&!p.specId?`<button type="button" class="b b-sm b-ghost" data-gact="editpj">案件を編集</button>`:""}${p?`<button type="button" class="b b-sm b-ghost dlvb" data-gact="dlv">${p.deliveredAt?"納品済みを取り消す・日付を直す":"✓ 納品済みにする"}</button>`:""}${xb}</div>`; }
+function gAct(key){ const xb=`<button type="button" class="b b-sm b-ghost xlsb" data-gact="xlsx">購入品の表（Excel）</button>`; if(!canWrite) return `<div class="gact">${xb}</div>`; const p=projects.find(x=>x.id===key); return `<div class="gact">${p&&p.deliveredAt?`<button type="button" class="b b-sm b-gold" data-gact="extra">＋ 追加工事を立てる</button>`:""}<button type="button" class="b b-sm ${p&&p.deliveredAt?"b-ghost":"b-gold"}" data-gact="addto">＋ この案件に発注を足す</button>${p&&!p.specId?`<button type="button" class="b b-sm b-ghost" data-gact="editpj">案件を編集</button>`:""}${p?`<button type="button" class="b b-sm b-ghost dlvb" data-gact="dlv">${p.deliveredAt?"納品済みを取り消す・日付を直す":"✓ 納品済みにする"}</button>`:""}${xb}${p?`<button type="button" class="b b-sm b-red delpj" data-gact="delpj">案件を削除</button>`:""}</div>`; }
 // 納品日の表示：日付を大きく、残り日数つき。過ぎていれば赤、未入力なら「納品日 未定」。
 function dlvHtml(d,done){ if(done) return `<span class="dlv done">納品済み<b>${fmtDW(done)}</b></span>`; if(!d) return `<span class="dlv none">納品日 未定</span>`; const n=Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000); return `<span class="dlv ${n<0?"over":""}">納品<b>${fmtDW(d)}</b><small>${n>0?`あと${n}日`:n===0?"本日":`${-n}日超過`}</small></span>`; }
 // カードの形：tile＝小さい札（初期）／full＝大きいカード（以前の形）（2列。押した札だけ広がって、いまのカードと同じ操作が出る）。端末ごとに覚える。
@@ -1963,7 +1964,7 @@ $("#list").addEventListener("click",async e=>{
   const dg=e.target.closest("[data-dlvgo]"); if(dg){ openDelivered(dg.closest(".grp").dataset.key); return; }
   const ds=e.target.closest("[data-dlvsec]"); if(ds){ if(showDlv){ await foldOut([...ds.parentElement.querySelectorAll(".grp")]); showDlv=false; renderList(); } else { showDlv=true; renderList(); foldIn([...root.querySelectorAll(".dlvsec .grp")]); } return; }
   const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv){ if(!openGrp.has(fk)) await foldOut(grpParts(gf.closest(".grp"))); const y0=bandY(fk); grpF.delete(fk); renderList(); holdBand(fk,y0); flipBand(fk,y0); } else { const y0=bandY(fk), was=inWork(); grpF.set(fk,fv); renderList(); if(!was){ scrollBox().scrollTo(0,0); flipBand(fk,y0); } foldIn(grpParts(bandEl(fk))); } return; }
-  const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="xlsx") exportProject(gk); else if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(ga.dataset.gact==="dlv") openDelivered(gk); else if(ga.dataset.gact==="extra") openExtra(gk); else if(gp) openEditPj(gp); return; }
+  const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="xlsx") exportProject(gk); else if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(ga.dataset.gact==="dlv") openDelivered(gk); else if(ga.dataset.gact==="extra") openExtra(gk); else if(ga.dataset.gact==="delpj") openDeletePj(gk); else if(gp) openEditPj(gp); return; }
   const sa=e.target.closest("[data-supall]"); if(sa){ openSupAll(sa.dataset.supall); return; }
   const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)){ const gr=sh.closest(".sup-row").nextElementSibling; await foldOut(gr&&gr.classList.contains("grid")?[...gr.children]:[]); openSup.delete(k); renderList(); } else { openSup.add(k); renderList(); const nh=[...root.querySelectorAll(".sup-h")].find(x=>x.dataset.sup===k); const g2=nh&&nh.closest(".sup-row").nextElementSibling; foldIn(g2&&g2.classList.contains("grid")?[...g2.children]:[]); } return; }
   const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); const y0=bandY(k); openGrp.delete(k); grpF.delete(k); renderList(); holdBand(k,y0); flipBand(k,y0); } else { const y0=bandY(k); openGrp.add(k); renderList(); scrollBox().scrollTo(0,0); flipBand(k,y0); foldIn(grpParts(bandEl(k))); } return; }
@@ -2228,6 +2229,30 @@ function openExtra(key){
       openGrp.clear(); grpF.clear(); openGrp.add(p.id); setFilter("all"); showView("list"); scrollBox().scrollTo(0,0);
       setTimeout(()=>openAdd(p.id),350);
     }catch{ toast("保存できませんでした"); b.disabled=false; }
+  };
+}
+// 案件の削除：案件と、その発注をすべて消す。仕様書から載せた案件は、仕様書は残して「ボードに載せていない」状態に戻す（次の同期で戻ってこないように）。
+// タスクは消さず、相手の名前だけ残して案件とのつながりを外す。
+function openDeletePj(key){
+  const p=projects.find(x=>x.id===key); if(!p||!canWrite) return;
+  const ols=allOrders.filter(o=>o.projectId===key), tks=tasks.filter(t=>t.projectId===key);
+  openSheet(`<h2>案件を削除</h2><div class="lead"><b>${p.k?esc(p.k)+"　":""}${esc(p.client||"（宛先未入力）")}</b>${p.spec?`<br>${esc(p.spec)}`:""}</div>
+    <div class="dlvwarn">この案件と、発注 ${ols.length}件 をすべて削除します。元に戻せません。</div>
+    ${p.specId?`<p class="hint">仕様書は消えません。「ボードに載せていない」状態に戻ります。</p>`:""}${tks.length?`<p class="hint">この案件のタスク ${tks.length}件 は残します（相手の名前はそのまま）。</p>`:""}
+    <div class="btns"><button class="b b-ghost" data-d="close">やめる</button><button class="b b-red" data-d="ok" style="flex:1">削除する</button></div>`);
+  sheet.onclick=async e=>{
+    const b=e.target.closest("button[data-d]"); if(!b) return;
+    if(b.dataset.d==="close"){ sheet.onclick=null; closeSheet(); return; }
+    b.disabled=true;
+    try{
+      if(p.specId&&bridge.unboardSpec) bridge.unboardSpec(p.specId);
+      for(const o of ols) await deleteOrder(o.id);
+      const who=p.client||p.k||"";
+      for(const t of tks){ const {projectId,...r}=strip(t); await saveTask(t.id,{...r,who:t.who||who,updatedAt:new Date().toISOString()}); }
+      await deleteProject(key);
+      openGrp.delete(key); grpF.delete(key);
+      sheet.onclick=null; closeSheet(); toast("案件を削除しました");
+    }catch{ toast("削除できませんでした"); b.disabled=false; }
   };
 }
 function openEditPj(p){
@@ -3656,7 +3681,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 13:30</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 13:50</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -4223,6 +4248,13 @@ return api;
     if (r) go({ screen: 'spec', model: r.model, config: r.config, specId: id, printMode: 'spec', fromBoard: true }); else go({ screen: 'models', model: null, config: null, specId: null });
   }
   // ボードで案件の名前を長押しして変えたとき、元の仕様書の名前も同じにする
+  // ボードで仕様書から来た案件を削除したとき：仕様書は残し、「ボードに載せていない」状態に戻す
+  function unboardSpecFromBoard(id) {
+    var r = data.specs[id]; if (!r || store.readOnly) return false;
+    r.board = false;
+    var keep = ui.specId; ui.specId = id; saveSpec(); ui.specId = keep;
+    return true;
+  }
   function renameSpecFromBoard(id, name) {
     var r = data.specs[id]; if (!r || store.readOnly) return false;
     r.name = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 60);
@@ -4471,7 +4503,7 @@ return api;
     if (window.TSKBoardInit && boardHost.attachShadow) {
       var boardRoot = boardHost.attachShadow({ mode: 'open' });
       boardRoot.appendChild(document.getElementById('boardTpl').content.cloneNode(true));
-      board = window.TSKBoardInit(boardHost, boardRoot, { home: function () { setMode('spec'); }, openSpec: openSpecFromBoard, renameSpec: renameSpecFromBoard, editSpec: editSpecFromBoard });
+      board = window.TSKBoardInit(boardHost, boardRoot, { home: function () { setMode('spec'); }, openSpec: openSpecFromBoard, renameSpec: renameSpecFromBoard, editSpec: editSpecFromBoard, unboardSpec: unboardSpecFromBoard });
       board.onChange(function () { if (mode === 'spec' && (ui.screen === 'models' || (ui.screen === 'spec' && record() && record().board)) && (!document.activeElement || document.activeElement === document.body)) render(); });
     }
   } catch (e) { board = null; }
