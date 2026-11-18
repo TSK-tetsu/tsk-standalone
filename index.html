@@ -612,7 +612,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/18 12:10', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/18 12:40', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1499,6 +1499,17 @@ details.done[open]>summary::before{content:"▾"}
 :host(.mode-d) .side{border-right:0}
 :host(.mode-d) .content{border-left:1px solid var(--line);min-height:calc(100vh - var(--toph,66px));flex:1;min-width:0}
 @media (min-width:1600px){ :host(.mode-d) .body,:host(.mode-d) .top .in{max-width:1560px} }
+/* 工事番号を大きく（離れていても読める） */
+.grp .grp-h .k{font-size:21px;padding:5px 14px;border-radius:10px;letter-spacing:.06em;min-height:40px;display:inline-flex;align-items:center;line-height:1}
+:host(.mode-d) .grp .grp-h .k{font-size:25px;min-height:46px;padding:6px 16px}
+.grp .grp-h .kbtn.none{font-size:15px;min-height:36px}
+:host(.mode-d) .grp .grp-h .kbtn.none{font-size:16px;min-height:40px}
+/* 追加工事：納品済みの案件から、新しい案件として立てる */
+.grp-h .xtag{background:#6D3FD1;color:#fff;border-radius:8px;padding:4px 10px;font-size:14px;font-weight:900;white-space:nowrap}
+.grp-h .xtag small{font-size:12px;font-weight:700;opacity:.9;margin-left:6px}
+.grp .grp-h .xadd{border:2px solid var(--gold);background:var(--navy);color:var(--gold);border-radius:10px;padding:6px 14px;min-height:40px;font:inherit;font-size:15px;font-weight:900;white-space:nowrap;cursor:pointer}
+.grp .grp-h .xadd:active{transform:translateY(1px)}
+.xk{font-size:13px;color:var(--muted);margin-top:6px}
 </style><div class="bd-body">
 <section class="wall" id="wall" hidden aria-label="掲示画面">
   <header class="wl-top">
@@ -1725,7 +1736,8 @@ function checkK(raw){ // 入力を判定 → {ok, k, msg, level}
   if(m[1]==="D") return {ok:true,k:s,msg:`見積番号です。受注済なら工事番号は K${m[2]}${m[3]} になります`,level:"warn",kk:"K"+m[2]+m[3]};
   return {ok:true,k:s,msg:"",level:""};
 }
-function dupK(k,exceptId){ if(!k) return null; return projects.find(p=>p.k===k&&p.id!==exceptId)||null; }
+function pjFamily(id){ const p=projects.find(x=>x.id===id); if(!p) return [id]; const r=p.parentId||p.id; return [r,...projects.filter(x=>x.parentId===r).map(x=>x.id)]; }   // 元の案件＋その追加工事
+function dupK(k,exceptId){ if(!k) return null; const fam=exceptId?pjFamily(exceptId):[]; return projects.find(p=>p.k===k&&p.id!==exceptId&&!fam.includes(p.id))||null; }
 function kFeedback(inp,exceptId){ let f=inp.parentElement.querySelector(".kfb"); if(!f){ f=document.createElement("div"); f.className="kfb"; inp.after(f); }
   const r=checkK(inp.value); const d=r.ok?dupK(r.k,exceptId):null;
   if(!r.k){ f.hidden=true; inp.classList.remove("bad"); return r; }
@@ -1821,7 +1833,7 @@ function renderList(){
   const sec=key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]||{projectId:key}); const lateN=g.filter(isLate).length, dv=dlvAt(key);
-    return `<section class="grp ${gOpen(key)?"open":""} ${dv?"dlvd":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${baseHtml(L)}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="${dv?"納品した日を変更":"納品日を変更"}">${dlvHtml(L.delivery,dv)}</span>${canWrite&&!dv&&L.delivery&&L.delivery<=todayStr()&&projects.some(x=>x.id===key)?`<button type="button" class="dlvgo" data-dlvgo="1">✓ 納品済みにする</button>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
+    return `<section class="grp ${gOpen(key)?"open":""} ${dv?"dlvd":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${xTag(key)}${baseHtml(L)}${dv&&canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="xadd" data-xadd="1">＋ 追加工事</button>`:""}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="${dv?"納品した日を変更":"納品日を変更"}">${dlvHtml(L.delivery,dv)}</span>${canWrite&&!dv&&L.delivery&&L.delivery<=todayStr()&&projects.some(x=>x.id===key)?`<button type="button" class="dlvgo" data-dlvgo="1">✓ 納品済みにする</button>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
   };
   // 納品済みの案件は、いちばん下にたたんでまとめる（納品した日の新しい順）。押せば開いて見返せる。
   const ak=keys.filter(k=>!dlvAt(k)), dk=keys.filter(k=>dlvAt(k)).sort((a,b)=>dlvAt(b).localeCompare(dlvAt(a)));
@@ -1862,7 +1874,7 @@ const openSup=new Set();
 function baseHtml(L){ if(!L.spec) return ""; let units=0; const rest=[]; String(L.spec).split("　").filter(Boolean).forEach(t=>{ const m=t.match(/^×(\d+)$/); if(m) units=+m[1]; else rest.push(t); }); if(!units&&L.specId) units=1;
   return `<i class="brk"></i><span class="base"><b>${esc(rest[0]||"")}</b>${rest.length>1?`<small>${esc(rest.slice(1).join("　"))}</small>`:""}</span>${units?`<span class="units"><b>${units}</b>台</span>`:""}<i class="brk"></i>`; }
 // 開いた案件の先頭に置く操作（以前は「案件」画面にあったもの）
-function gAct(key){ const xb=`<button type="button" class="b b-sm b-ghost xlsb" data-gact="xlsx">購入品の表（Excel）</button>`; if(!canWrite) return `<div class="gact">${xb}</div>`; const p=projects.find(x=>x.id===key); return `<div class="gact"><button type="button" class="b b-sm b-gold" data-gact="addto">＋ この案件に発注を足す</button>${p&&!p.specId?`<button type="button" class="b b-sm b-ghost" data-gact="editpj">案件を編集</button>`:""}${p?`<button type="button" class="b b-sm b-ghost dlvb" data-gact="dlv">${p.deliveredAt?"納品済みを取り消す・日付を直す":"✓ 納品済みにする"}</button>`:""}${xb}</div>`; }
+function gAct(key){ const xb=`<button type="button" class="b b-sm b-ghost xlsb" data-gact="xlsx">購入品の表（Excel）</button>`; if(!canWrite) return `<div class="gact">${xb}</div>`; const p=projects.find(x=>x.id===key); return `<div class="gact">${p&&p.deliveredAt?`<button type="button" class="b b-sm b-gold" data-gact="extra">＋ 追加工事を立てる</button>`:""}<button type="button" class="b b-sm ${p&&p.deliveredAt?"b-ghost":"b-gold"}" data-gact="addto">＋ この案件に発注を足す</button>${p&&!p.specId?`<button type="button" class="b b-sm b-ghost" data-gact="editpj">案件を編集</button>`:""}${p?`<button type="button" class="b b-sm b-ghost dlvb" data-gact="dlv">${p.deliveredAt?"納品済みを取り消す・日付を直す":"✓ 納品済みにする"}</button>`:""}${xb}</div>`; }
 // 納品日の表示：日付を大きく、残り日数つき。過ぎていれば赤、未入力なら「納品日 未定」。
 function dlvHtml(d,done){ if(done) return `<span class="dlv done">納品済み<b>${fmtDW(done)}</b></span>`; if(!d) return `<span class="dlv none">納品日 未定</span>`; const n=Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000); return `<span class="dlv ${n<0?"over":""}">納品<b>${fmtDW(d)}</b><small>${n>0?`あと${n}日`:n===0?"本日":`${-n}日超過`}</small></span>`; }
 // カードの形：tile＝小さい札（初期）／full＝大きいカード（以前の形）（2列。押した札だけ広がって、いまのカードと同じ操作が出る）。端末ごとに覚える。
@@ -1906,12 +1918,13 @@ $("#list").addEventListener("change",async e=>{ const pr=e.target.closest(".pric
 $("#list").addEventListener("click",async e=>{
   if(holding()){ e.preventDefault(); return; }
   const sp=e.target.closest("button[data-spec]"); if(sp){ bridge.openSpec(sp.dataset.spec); return; }
+  const xa=e.target.closest("[data-xadd]"); if(xa){ openExtra(xa.closest(".grp").dataset.key); return; }
   const ke=e.target.closest("[data-kedit]"); if(ke){ editK(ke.closest(".grp").dataset.key); return; }
   const de=e.target.closest("[data-dedit]"); if(de){ const dkey=de.closest(".grp").dataset.key; if(dlvAt(dkey)) openDelivered(dkey); else editDelivery(dkey); return; }
   const dg=e.target.closest("[data-dlvgo]"); if(dg){ openDelivered(dg.closest(".grp").dataset.key); return; }
   const ds=e.target.closest("[data-dlvsec]"); if(ds){ if(showDlv){ await foldOut([...ds.parentElement.querySelectorAll(".grp")]); showDlv=false; renderList(); } else { showDlv=true; renderList(); foldIn([...root.querySelectorAll(".dlvsec .grp")]); } return; }
   const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv){ if(!openGrp.has(fk)) await foldOut(grpParts(gf.closest(".grp"))); const y0=bandY(fk); grpF.delete(fk); renderList(); holdBand(fk,y0); flipBand(fk,y0); } else { const y0=bandY(fk), was=inWork(); grpF.set(fk,fv); renderList(); if(!was){ scrollBox().scrollTo(0,0); flipBand(fk,y0); } foldIn(grpParts(bandEl(fk))); } return; }
-  const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="xlsx") exportProject(gk); else if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(ga.dataset.gact==="dlv") openDelivered(gk); else if(gp) openEditPj(gp); return; }
+  const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="xlsx") exportProject(gk); else if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(ga.dataset.gact==="dlv") openDelivered(gk); else if(ga.dataset.gact==="extra") openExtra(gk); else if(gp) openEditPj(gp); return; }
   const sa=e.target.closest("[data-supall]"); if(sa){ openSupAll(sa.dataset.supall); return; }
   const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)){ const gr=sh.closest(".sup-row").nextElementSibling; await foldOut(gr&&gr.classList.contains("grid")?[...gr.children]:[]); openSup.delete(k); renderList(); } else { openSup.add(k); renderList(); const nh=[...root.querySelectorAll(".sup-h")].find(x=>x.dataset.sup===k); const g2=nh&&nh.closest(".sup-row").nextElementSibling; foldIn(g2&&g2.classList.contains("grid")?[...g2.children]:[]); } return; }
   const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); const y0=bandY(k); openGrp.delete(k); grpF.delete(k); renderList(); holdBand(k,y0); flipBand(k,y0); } else { const y0=bandY(k); openGrp.add(k); renderList(); scrollBox().scrollTo(0,0); flipBand(k,y0); foldIn(grpParts(bandEl(k))); } return; }
@@ -2150,6 +2163,34 @@ function openDetail(o){
     if(a==="edit"){ sheet.onclick=null; draft={step:2,projectId:o.projectId||null,newPj:{client:"",spec:"",k:""},item:o.item,supplier:o.supplier,orderDate:o.orderDate,due:o.due,status:Math.max(0,si),editId:o.id}; renderStep(); }
     if(a==="del"){ if(!confirm(o.specKey?"この発注をボードから外します。仕様書の品はそのまま残ります。よろしいですか？":"この発注を削除します。よろしいですか？")) return; try{ if(o.specKey) await saveOrder(o.id,{...strip(o),hidden:true,updatedAt:new Date().toISOString()}); else await deleteOrder(o.id); toast("削除しました"); closeSheet(); }catch{ toast("削除できませんでした"); } }
     if(a!=="edit") sheet.onclick=null;
+  };
+}
+// 追加工事：納品済みの案件に、先方から追加の工事を頼まれたとき。元の案件は「納品済み」のまま残し、
+// 同じお客様の新しい案件（追加工事）を立てて、そこに発注を足していく。工事番号は新しい番号でも、元と同じ番号でもよい。
+function xTag(key){ const p=projects.find(x=>x.id===key); if(!p||!p.parentId) return ""; const par=projects.find(x=>x.id===p.parentId); return `<span class="xtag">追加工事${par&&par.k?`<small>元 ${esc(par.k)}</small>`:""}</span>`; }
+function openExtra(key){
+  const p=projects.find(x=>x.id===key); if(!p||!canWrite) return;
+  const base=p.parentId?(projects.find(x=>x.id===p.parentId)||p):p;
+  openSheet(`<h2>追加工事を立てる</h2><div class="lead">「${esc(base.client||"（宛先未入力）")}」${base.k?`（${esc(base.k)}）`:""}の追加工事を、新しい案件として立てます。納品済みの元の案件はそのまま残ります。</div>
+    <div class="f"><label for="x-what">追加工事の内容</label><input id="x-what" placeholder="例：シート交換、モニター追加、ペダル交換"></div>
+    <div class="f"><label for="x-k">工事番号</label><input id="x-k" placeholder="新しい番号（例 K260130）"><div class="xk">元の工事番号：${base.k?`<b>${esc(base.k)}</b>　<button type="button" class="lnk" data-xsame="1">同じ番号にする</button>`:"なし"}</div></div>
+    <div class="f"><label for="x-dlv">納品日（決まっていれば）</label><input id="x-dlv" type="date"></div>
+    <div class="btns"><button class="b b-ghost" data-x="close">やめる</button><button class="b b-gold" data-x="save">立てて、発注を足す</button></div>`);
+  const kin=$("#x-k"); kin.addEventListener("input",()=>kFeedback(kin,base.id)); setTimeout(()=>$("#x-what")?.focus(),60);
+  sheet.onclick=async e=>{
+    if(e.target.closest("[data-xsame]")){ kin.value=base.k||""; kFeedback(kin,base.id); return; }
+    const b=e.target.closest("button[data-x]"); if(!b) return;
+    if(b.dataset.x==="close"){ sheet.onclick=null; closeSheet(); return; }
+    const what=$("#x-what").value.trim(); if(!what){ toast("追加工事の内容を入れてください"); $("#x-what").focus(); return; }
+    const r=kFeedback(kin,base.id); if(!r.ok){ toast("工事番号の形式を直してください"); return; } if(r.dup){ toast("この工事番号は別の案件で使われています"); return; }
+    const id=gid("p"), now=new Date().toISOString();
+    b.disabled=true;
+    try{
+      await saveProject(id,{client:base.client||"",spec:`追加工事　${what}`,k:r.k,delivery:$("#x-dlv").value||"",parentId:base.id,createdAt:now,updatedAt:now});
+      sheet.onclick=null; closeSheet(); toast("追加工事を立てました。続けて発注を足せます");
+      openGrp.clear(); grpF.clear(); openGrp.add(id); setFilter("all"); showView("list");
+      setTimeout(()=>openAdd(id),350);
+    }catch{ toast("保存できませんでした"); b.disabled=false; }
   };
 }
 function openEditPj(p){
@@ -3578,7 +3619,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 12:10</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 12:40</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
