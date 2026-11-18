@@ -612,7 +612,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/18 12:40', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/18 13:00', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1510,6 +1510,9 @@ details.done[open]>summary::before{content:"▾"}
 .grp .grp-h .xadd{border:2px solid var(--gold);background:var(--navy);color:var(--gold);border-radius:10px;padding:6px 14px;min-height:40px;font:inherit;font-size:15px;font-weight:900;white-space:nowrap;cursor:pointer}
 .grp .grp-h .xadd:active{transform:translateY(1px)}
 .xk{font-size:13px;color:var(--muted);margin-top:6px}
+.grp .grp-h .ghint{flex:0 0 100%;order:99;margin-top:2px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.18);text-align:center;font-size:13px;font-weight:800;color:var(--gold-soft);letter-spacing:.04em;opacity:.9}
+:host(.mode-d) .grp .grp-h .ghint{font-size:14px}
+.grp.dlvd .grp-h .ghint{color:#C9D2E0}
 </style><div class="bd-body">
 <section class="wall" id="wall" hidden aria-label="掲示画面">
   <header class="wl-top">
@@ -1828,12 +1831,14 @@ function renderList(){
   rows.forEach(o=>{ const key=pjKey(o); if(!groups.has(key)) groups.set(key,[]); groups.get(key).push(o); });
   if(filter==="all") projects.forEach(p=>{ if(!groups.has(p.id)) groups.set(p.id,[]); });
   const pjOrd=k=>{ const p=projects.find(x=>x.id===k); return p&&typeof p.order==="number"?p.order:null; };
-  const keys=[...groups.keys()].sort((a,b)=>{ const oa=pjOrd(a), ob=pjOrd(b); if(oa!=null&&ob!=null) return oa-ob; if(oa!=null!==(ob!=null)) return oa!=null?1:-1;   // 手で並べた案件はその順。まだ並べていない（新しい）案件は上
+  const pinOf=k=>{ const p=projects.find(x=>x.id===k); return p&&!p.deliveredAt&&p.pinTop||""; };
+  const keys=[...groups.keys()].sort((a,b)=>{ const pa=pinOf(a), pb=pinOf(b); if(pa||pb) return pa&&pb?pb.localeCompare(pa):(pa?-1:1);   // 追加工事で納品済みから戻した案件は、いちばん上
+    const oa=pjOrd(a), ob=pjOrd(b); if(oa!=null&&ob!=null) return oa-ob; if(oa!=null!==(ob!=null)) return oa!=null?1:-1;   // 手で並べた案件はその順。まだ並べていない（新しい）案件は上
     return pjCompare(a,groups.get(a)[0]||{projectId:a},b,groups.get(b)[0]||{projectId:b}); });
   const sec=key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]||{projectId:key}); const lateN=g.filter(isLate).length, dv=dlvAt(key);
-    return `<section class="grp ${gOpen(key)?"open":""} ${dv?"dlvd":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${xTag(key)}${baseHtml(L)}${dv&&canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="xadd" data-xadd="1">＋ 追加工事</button>`:""}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="${dv?"納品した日を変更":"納品日を変更"}">${dlvHtml(L.delivery,dv)}</span>${canWrite&&!dv&&L.delivery&&L.delivery<=todayStr()&&projects.some(x=>x.id===key)?`<button type="button" class="dlvgo" data-dlvgo="1">✓ 納品済みにする</button>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
+    return `<section class="grp ${gOpen(key)?"open":""} ${dv?"dlvd":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${xTag(key)}${baseHtml(L)}${dv&&canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="xadd" data-xadd="1">＋ 追加工事</button>`:""}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="${dv?"納品した日を変更":"納品日を変更"}">${dlvHtml(L.delivery,dv)}</span>${canWrite&&!dv&&L.delivery&&L.delivery<=todayStr()&&projects.some(x=>x.id===key)?`<button type="button" class="dlvgo" data-dlvgo="1">✓ 納品済みにする</button>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span><span class="ghint">${gOpen(key)?"▲ タップしてたたむ":"▼ タップして詳細を表示"}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
   };
   // 納品済みの案件は、いちばん下にたたんでまとめる（納品した日の新しい順）。押せば開いて見返せる。
   const ak=keys.filter(k=>!dlvAt(k)), dk=keys.filter(k=>dlvAt(k)).sort((a,b)=>dlvAt(b).localeCompare(dlvAt(a)));
@@ -2167,29 +2172,27 @@ function openDetail(o){
 }
 // 追加工事：納品済みの案件に、先方から追加の工事を頼まれたとき。元の案件は「納品済み」のまま残し、
 // 同じお客様の新しい案件（追加工事）を立てて、そこに発注を足していく。工事番号は新しい番号でも、元と同じ番号でもよい。
-function xTag(key){ const p=projects.find(x=>x.id===key); if(!p||!p.parentId) return ""; const par=projects.find(x=>x.id===p.parentId); return `<span class="xtag">追加工事${par&&par.k?`<small>元 ${esc(par.k)}</small>`:""}</span>`; }
+function xTag(key){ const p=projects.find(x=>x.id===key); if(!p) return "";
+  if(!p.parentId){ const x=(p.extras||[]).slice(-1)[0]; return x&&!p.deliveredAt?`<span class="xtag">追加工事<small>${esc(x.what)}${x.prevDelivered?`（前回納品 ${fmtD(x.prevDelivered)}）`:""}</small></span>`:""; } const par=projects.find(x=>x.id===p.parentId); return `<span class="xtag">追加工事${par&&par.k?`<small>元 ${esc(par.k)}</small>`:""}</span>`; }
 function openExtra(key){
   const p=projects.find(x=>x.id===key); if(!p||!canWrite) return;
-  const base=p.parentId?(projects.find(x=>x.id===p.parentId)||p):p;
-  openSheet(`<h2>追加工事を立てる</h2><div class="lead">「${esc(base.client||"（宛先未入力）")}」${base.k?`（${esc(base.k)}）`:""}の追加工事を、新しい案件として立てます。納品済みの元の案件はそのまま残ります。</div>
+  openSheet(`<h2>追加工事</h2><div class="lead">「${esc(p.client||"（宛先未入力）")}」${p.k?`（${esc(p.k)}）`:""}を納品済みから戻して、一覧のいちばん上に出します。今までの発注はそのまま残り、ここに追加の発注を足していけます。</div>
     <div class="f"><label for="x-what">追加工事の内容</label><input id="x-what" placeholder="例：シート交換、モニター追加、ペダル交換"></div>
-    <div class="f"><label for="x-k">工事番号</label><input id="x-k" placeholder="新しい番号（例 K260130）"><div class="xk">元の工事番号：${base.k?`<b>${esc(base.k)}</b>　<button type="button" class="lnk" data-xsame="1">同じ番号にする</button>`:"なし"}</div></div>
-    <div class="f"><label for="x-dlv">納品日（決まっていれば）</label><input id="x-dlv" type="date"></div>
-    <div class="btns"><button class="b b-ghost" data-x="close">やめる</button><button class="b b-gold" data-x="save">立てて、発注を足す</button></div>`);
-  const kin=$("#x-k"); kin.addEventListener("input",()=>kFeedback(kin,base.id)); setTimeout(()=>$("#x-what")?.focus(),60);
+    <div class="f"><label for="x-dlv">追加工事の納品日（決まっていれば）</label><input id="x-dlv" type="date"></div>
+    <div class="btns"><button class="b b-ghost" data-x="close">やめる</button><button class="b b-gold" data-x="save">戻して、発注を足す</button></div>`);
+  setTimeout(()=>$("#x-what")?.focus(),60);
   sheet.onclick=async e=>{
-    if(e.target.closest("[data-xsame]")){ kin.value=base.k||""; kFeedback(kin,base.id); return; }
     const b=e.target.closest("button[data-x]"); if(!b) return;
     if(b.dataset.x==="close"){ sheet.onclick=null; closeSheet(); return; }
     const what=$("#x-what").value.trim(); if(!what){ toast("追加工事の内容を入れてください"); $("#x-what").focus(); return; }
-    const r=kFeedback(kin,base.id); if(!r.ok){ toast("工事番号の形式を直してください"); return; } if(r.dup){ toast("この工事番号は別の案件で使われています"); return; }
-    const id=gid("p"), now=new Date().toISOString();
+    const now=new Date().toISOString(), dlv=$("#x-dlv").value||"";
+    const extras=[...(p.extras||[]),{what,at:now,prevDelivered:p.deliveredAt||"",prevDelivery:p.delivery||"",delivery:dlv}];   // 前回の納品日などは、ここに残す
     b.disabled=true;
     try{
-      await saveProject(id,{client:base.client||"",spec:`追加工事　${what}`,k:r.k,delivery:$("#x-dlv").value||"",parentId:base.id,createdAt:now,updatedAt:now});
-      sheet.onclick=null; closeSheet(); toast("追加工事を立てました。続けて発注を足せます");
-      openGrp.clear(); grpF.clear(); openGrp.add(id); setFilter("all"); showView("list");
-      setTimeout(()=>openAdd(id),350);
+      await saveProject(p.id,{...strip(p),deliveredAt:"",delivery:dlv,extras,pinTop:now,updatedAt:now});
+      sheet.onclick=null; closeSheet(); toast("納品済みから戻しました。続けて発注を足せます");
+      openGrp.clear(); grpF.clear(); openGrp.add(p.id); setFilter("all"); showView("list"); scrollBox().scrollTo(0,0);
+      setTimeout(()=>openAdd(p.id),350);
     }catch{ toast("保存できませんでした"); b.disabled=false; }
   };
 }
@@ -2847,7 +2850,7 @@ function renameSheet(title,label,value,save){
 // 一覧の案件：帯を長押しして上下に動かすと順番が変わる（案件に order を持たせる）。動かさずに離すと名前の変更
 reorderable($("#list"),{item:".grp:not(.dlvd)",handle:".grp-h",skip:t=>!!t.closest("button:not(.who),[data-kedit],[data-dedit],[data-dlvgo],[data-spec],input"),canDrag:()=>canWrite&&filter==="all"&&!inWork(),
   onHold:el=>{ renamePj(el.dataset.key); },
-  onDrop:async els=>{ const now=new Date().toISOString(), jobs=[]; els.forEach((el,i)=>{ const p=projects.find(x=>x.id===el.dataset.key); if(p&&p.order!==i){ p.order=i; jobs.push(saveProject(p.id,{...strip(p),order:i,updatedAt:now})); } });
+  onDrop:async els=>{ const now=new Date().toISOString(), jobs=[]; els.forEach((el,i)=>{ const p=projects.find(x=>x.id===el.dataset.key); if(p&&(p.order!==i||p.pinTop)){ p.order=i; const {pinTop,...rest}=strip(p); delete p.pinTop; jobs.push(saveProject(p.id,{...rest,order:i,updatedAt:now})); } });
     try{ await Promise.all(jobs); if(jobs.length) toast("並びを変えました"); }catch{ toast("並びを保存できませんでした"); } } });
 function renamePj(key){ const p=projects.find(x=>x.id===key); if(!p){ toast("この案件は名前を変えられません"); return; }
   renameSheet("案件の名前を変える","だれ・どこ向け",p.client||"",async v=>{ if(p.specId&&bridge.renameSpec) bridge.renameSpec(p.specId,v); await saveProject(p.id,{...strip(p),client:v,updatedAt:new Date().toISOString()}); }); }
@@ -2867,7 +2870,7 @@ function editDelivery(key){ const p=projects.find(x=>x.id===key); if(!p||!canWri
   sheet.onclick=ev=>{ if(ev.target.closest("[data-ok]")) save($("#dvIn").value); else if(ev.target.closest("[data-none]")) save(""); else if(ev.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
 }
 // 納品済みにする・日付を直す・取り消す。仕様書から来た案件でも、印はボードの案件に持たせる（仕様書側はこれを読む）。
-async function setDelivered(key,v){ const p=projects.find(x=>x.id===key); if(!p) return false; await saveProject(p.id,{...strip(p),deliveredAt:v,updatedAt:new Date().toISOString()}); if(v){ openGrp.delete(key); grpF.delete(key); } return true; }
+async function setDelivered(key,v){ const p=projects.find(x=>x.id===key); if(!p) return false; const {pinTop,...rest}=strip(p); await saveProject(p.id,{...(v?rest:strip(p)),deliveredAt:v,updatedAt:new Date().toISOString()}); if(v){ openGrp.delete(key); grpF.delete(key); } return true; }
 function openDelivered(key){ const p=projects.find(x=>x.id===key); if(!p||!canWrite) return;
   const t=todayStr(), was=p.deliveredAt||"", left=orders.filter(o=>o.projectId===key&&STATUSES.indexOf(o.status)<ARR).length;
   openSheet(`<h2>${was?"納品済み":"納品済みにする"}</h2><div class="lead">${esc([p.k,p.client].filter(Boolean).join("　"))}</div>
@@ -3619,7 +3622,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 12:40</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 13:00</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
