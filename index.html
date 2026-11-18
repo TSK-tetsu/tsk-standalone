@@ -632,7 +632,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/18 13:50', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/18 14:00', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1523,7 +1523,7 @@ details.done[open]>summary::before{content:"▾"}
 :host(.mode-d) .side .towall{margin-top:18px}
 :host(.mode-d) .side button{white-space:nowrap}
 :host(.mode-d) .side{border-right:0}
-:host(.mode-d) .content{border-left:1px solid var(--line);min-height:calc(100vh - var(--toph,66px));flex:1;min-width:0}
+:host(.mode-d) .content{min-height:calc(100vh - var(--toph,66px));flex:1;min-width:0}
 @media (min-width:1600px){ :host(.mode-d) .body,:host(.mode-d) .top .in{max-width:1560px} }
 /* 工事番号を大きく（離れていても読める） */
 .grp .grp-h .k{font-size:21px;padding:5px 14px;border-radius:10px;letter-spacing:.06em;min-height:40px;display:inline-flex;align-items:center;line-height:1}
@@ -3681,7 +3681,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 13:50</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 14:00</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
