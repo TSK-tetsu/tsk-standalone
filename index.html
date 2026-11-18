@@ -612,7 +612,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/13 01:20', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/18 12:10', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1486,6 +1486,19 @@ details.done[open]>summary::before{content:"▾"}
 .wl-foot{display:flex;align-items:center;gap:1vw;color:#7F92AE;font-size:1.4vh;font-weight:700}
 .wl-foot span:last-child{margin-left:auto}
 .side .towall{margin-top:14px;border:2px dashed var(--line) !important}
+/* 左のメニュー（PC表示）：大きく・間隔を広く。一覧をスクロールしても画面に残す */
+:host(.mode-d) .side{width:280px;flex:0 0 280px;gap:12px;padding:24px 16px;position:sticky;top:var(--toph,66px);align-self:flex-start;max-height:calc(100vh - var(--toph,66px));overflow-y:auto;box-sizing:border-box}
+:host(.mode-d) .side button{min-height:66px;padding:14px 18px;gap:14px;border-radius:14px;font-size:19px;font-weight:800;color:var(--ink)}
+:host(.mode-d) .side button svg{width:28px;height:28px;flex:0 0 28px}
+:host(.mode-d) .side button:not(.b-gold):not([aria-current="page"]):hover{background:var(--well)}
+:host(.mode-d) .side .b-gold{min-height:64px;margin:0 0 14px;font-size:19px;justify-content:center;background:var(--gold);color:var(--navy)}
+:host(.mode-d) .side button[aria-current="page"]{background:var(--card);color:var(--ink);box-shadow:inset 5px 0 0 var(--gold),var(--shadow)}
+:host(.mode-d) .side .badge{font-size:15px;min-width:28px;height:28px;line-height:28px;padding:0 7px}
+:host(.mode-d) .side .towall{margin-top:18px}
+:host(.mode-d) .side button{white-space:nowrap}
+:host(.mode-d) .side{border-right:0}
+:host(.mode-d) .content{border-left:1px solid var(--line);min-height:calc(100vh - var(--toph,66px));flex:1;min-width:0}
+@media (min-width:1600px){ :host(.mode-d) .body,:host(.mode-d) .top .in{max-width:1560px} }
 </style><div class="bd-body">
 <section class="wall" id="wall" hidden aria-label="掲示画面">
   <header class="wl-top">
@@ -2573,6 +2586,7 @@ const api={ sync:syncSpec, unlink:unlinkSpec, stats:statsOf, showProject:id=>sho
   deliveredAt:id=>dlvAt("sp_"+id), canWrite:()=>canWrite, showWall:()=>showWall(),
   setDelivered:(id,v)=>{ chain=chain.then(async()=>{ await whenReady(); if(!canWrite) return; await setDelivered("sp_"+id,v); }).catch(err=>console.error(err)); return chain; } };
 
+{ const tp=$(".top"); if(tp&&window.ResizeObserver) new ResizeObserver(()=>host.style.setProperty("--toph",tp.offsetHeight+"px")).observe(tp); }   // 左メニューを上の帯のすぐ下に留める
 /* ---------- 掲示画面（事務所のタッチモニター用） ----------
    横長の1画面に「納品予定」「要確認の発注」「タスク」を並べ、離れていても読める大きさで出す。
    掲示板モード（?kiosk=1 で開いた端末）は、開いたときと、3分さわらなかったときにこの画面へ戻る。ほかの端末は左の「掲示画面」から開ける。 */
@@ -3564,7 +3578,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/13 01:20</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 12:10</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
