@@ -60,6 +60,8 @@
   .titleRow { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
   .tag { padding: 3px 12px; border: 1.5px solid var(--band-gold); border-radius: 14px; color: var(--band-gold); font-size: 15px; font-weight: 700; }
   #boardHost[hidden] { display: none; }
+  .big.work { border-style: dashed; }
+  .big.work span small { display: block; margin-top: 2px; font-size: 13px; font-weight: 700; color: var(--sub); font-family: "Noto Sans JP", "Hiragino Sans", system-ui, sans-serif; }
   /* 共通の上の帯（PC幅）：仕様書モードでも発注・納期ボードでも同じ帯を出す。中身の幅は今の枠に合わせる */
   #tskBand { position: sticky; top: 0; z-index: 15; font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif; }
   #tskBand[hidden] { display: none; }
@@ -632,7 +634,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/18 15:10', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/18 15:40', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -2004,7 +2006,7 @@ function supBlocks(g,force){ const m=new Map(); g.forEach(o=>{ const s=o.supplie
     return `<div class="sup-row"><button type="button" class="sup-h ${shut?"shut":""}" aria-expanded="${!shut}" data-sup="${esc(id)}"><span class="chev">${shut?"▶":"▼"}</span><b>${esc(s)}</b>${l.length}件${shut?`<span class="mini">${mini}</span>`:""}</button>${canWrite?`<button type="button" class="sup-all" data-supall="${esc(id)}" aria-label="${esc(s)} の発注をまとめて変更">一括<br>変更</button>`:""}</div>${shut?"":`<div class="grid ${cardMode==="tile"?"tiles":""}">${ls.map(card).join("")}${popFor(ls)}</div>`}`; }).join(""); }
 // 案件を開いたとき、仕入先は畳んだ状態で並ぶ。見出しを押すと開く（開いたものを覚えておく）。絞り込み中は全部開く。
 const openSup=new Set();
-function baseHtml(L){ if(!L.spec) return ""; let units=0; const rest=[]; String(L.spec).split("　").filter(Boolean).forEach(t=>{ const m=t.match(/^×(\d+)$/); if(m) units=+m[1]; else rest.push(t); }); if(!units&&L.specId) units=1;
+function baseHtml(L){ if(!L.spec) return ""; let units=0; const rest=[]; String(L.spec).split("　").filter(Boolean).forEach(t=>{ const m=t.match(/^×(\d+)$/); if(m) units=+m[1]; else rest.push(t); }); if(!units&&L.specId&&!/^工事・修理/.test(L.spec)) units=1;   // 工事・修理の案件には台数を出さない
   return `<i class="brk"></i><span class="base"><b>${esc(rest[0]||"")}</b>${rest.length>1?`<small>${esc(rest.slice(1).join("　"))}</small>`:""}</span>${units?`<span class="units"><b>${units}</b>台</span>`:""}<i class="brk"></i>`; }
 // 開いた案件の先頭に置く操作（以前は「案件」画面にあったもの）
 function gAct(key){ const xb=`<button type="button" class="b b-sm b-ghost xlsb" data-gact="xlsx">購入品の表（Excel）</button>`; if(!canWrite) return `<div class="gact">${xb}</div>`; const p=projects.find(x=>x.id===key); return `<div class="gact">${p&&p.deliveredAt?`<button type="button" class="b b-sm b-gold" data-gact="extra">＋ 追加工事を立てる</button>`:""}<button type="button" class="b b-sm ${p&&p.deliveredAt?"b-ghost":"b-gold"}" data-gact="addto">＋ この案件に発注を足す</button>${p&&!p.specId?`<button type="button" class="b b-sm b-ghost" data-gact="editpj">案件を編集</button>`:""}${p?`<button type="button" class="b b-sm b-ghost dlvb" data-gact="dlv">${p.deliveredAt?"納品済みを取り消す・日付を直す":"✓ 納品済みにする"}</button>`:""}${xb}${p?`<button type="button" class="b b-sm b-red delpj" data-gact="delpj">案件を削除</button>`:""}</div>`; }
@@ -3145,9 +3147,11 @@ return api;
   ];   // built-in; machines added in the app live in data.models
   var CONFIGS = [
     { id: 'dealer', name: 'ディーラー向け' }, { id: 'pc', name: 'PC機' },
-    { id: 'ps', name: 'PS機' }, { id: 'dev', name: '開発用' }
+    { id: 'ps', name: 'PS機' }, { id: 'dev', name: '開発用' },
+    { id: 'work', name: '工事・修理' }   // 工事・修理の手配書だけが使う（構成の選択には出さない）
   ];
   var GROUPS = [
+    { id: 'work', name: '工事の内容' },   // 工事・修理の手配書だけに出す
     { id: 'frame', name: 'フレーム' },
     { id: 'body', name: '本体の付属パーツ' },
     { id: 'ctrl', name: 'コントローラー' },
@@ -3168,6 +3172,11 @@ return api;
     { k: 'pc', g: 'elec', label: 'PC', items: ['ハイスペックPC', 'ガレリア'] },
     { k: 'touch', g: 'elec', label: 'タッチパネル', items: ['あり'] },
     { k: 'game', g: 'elec', label: 'ゲーム機・ソフト', items: ['PS5（ディスクドライブ搭載）', 'PS5 デジタル版＋ディスクドライブ', 'グランツーリスモ7', 'Assetto Corsa'] },
+    // 工事・修理：対象の機械・作業・作業費は発注にしない（noOrder）。部品・材料だけがボードの発注になる
+    { k: 'wtarget', g: 'work', label: '対象の機械', items: ['GTrig', 'GTrig PRO', 'GTPOD', 'TE2', 'Transcube', 'Transcube Pro', 'TSK PROsim', 'F1R', 'F1R Signature'], noOrder: true },
+    { k: 'wtask', g: 'work', label: '作業', items: ['シートレール交換', 'シート交換', 'モーション調整・修理', 'ハンコン交換', 'ペダル交換', 'モニター交換', 'PC入替・修理', '点検'], noOrder: true },
+    { k: 'wparts', g: 'work', label: '部品・材料', items: [] },
+    { k: 'wlabor', g: 'work', label: '作業費・出張費', items: ['作業費', '出張費', '技術料'], noOrder: true, once: true },
     { k: 'shipping', g: 'etc', label: '送料', items: ['宅急便（着払い）', '輸送費', '輸送・搬入設置費'], once: true },
     { k: 'other', g: 'etc', label: 'その他', items: [] }
   ];
@@ -3187,14 +3196,18 @@ return api;
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function byId(list, id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; return null; }
   var TBDM = { id: 'tbd', name: '未定' };   // 機種がまだ決まっていない手配書。選ぶ一覧のいちばん下に出し、マスター（金額）には出さない
+  var WORKM = { id: 'work', name: '工事・修理' };   // 納入済みの機械の工事・修理（シートレール交換など）。機種・構成は選ばず、部品の欄は「工事の内容」と「送料・その他」だけ
+  function isWork(id) { return id === WORKM.id; }
+  function groupsFor(mid) { return isWork(mid) ? GROUPS.filter(function (g) { return g.id === 'work' || g.id === 'etc'; }) : GROUPS.filter(function (g) { return g.id !== 'work'; }); }
+  function workSummary(r) { var v = (r && r.values) || {}; return ((v.wtask || []).map(function (l) { return l.name; }).filter(function (n) { return RESERVED.indexOf(n) < 0; }).join('・')); }
   function realModels() { return MODELS.concat(data.models); }
   function allModels() { return realModels().concat([TBDM]); }
-  function findModel(id) { return byId(MODELS, id) || byId(data.models, id) || (id === TBDM.id ? TBDM : null); }
+  function findModel(id) { return byId(MODELS, id) || byId(data.models, id) || (id === TBDM.id ? TBDM : null) || (id === WORKM.id ? WORKM : null); }
   // The machine on screen. A record whose added machine is not loaded (yet) still opens, under the name it was saved with.
   function curModel() { if (!ui.model) return null; var m = findModel(ui.model); if (m) return m; var r = record(); return { id: ui.model, name: (r && r.modelName) || '機種' }; }
   function modelLabel(r) { var m = findModel(r.model); return m ? m.name : (r.modelName || '機種'); }
   function frameName(m) { return m.id === TBDM.id ? '機種未定 フレーム本体' : m.name + ' フレーム本体'; }
-  function quoteTitleOf(m) { return m.id === TBDM.id ? 'TSKSIM シミュレーターの御見積' : 'TSKSIM ' + m.name + ' の御見積'; }
+  function quoteTitleOf(m) { if (isWork(m.id)) return 'TSKSIM 工事・修理の御見積'; return m.id === TBDM.id ? 'TSKSIM シミュレーターの御見積' : 'TSKSIM ' + m.name + ' の御見積'; }
   function isFrameBody(f, n) { return f.k === 'frame' && allModels().some(function (m) { return frameName(m) === n; }); }
   function cleanModels(v) {
     var out = [], seen = {};
@@ -3242,7 +3255,7 @@ return api;
   function memoText() { var r = record(); return r ? r.memo || '' : ''; }
   function showPrice() { var r = record(); return r ? r.showPrice !== false : ui.draftShow !== false; }
   function switchHtml() { var on = showPrice(); return '<button type="button" class="switch" role="switch" aria-checked="' + on + '" data-act="togglePrice"><span>金額を表示</span><em>' + (on ? 'する' : 'しない') + '</em><i></i></button>'; }
-  function defaultName() { var m = curModel(); return m && m.id !== TBDM.id ? m.name + ' ' : ''; }
+  function defaultName() { var m = curModel(); return m && m.id !== TBDM.id && !isWork(m.id) ? m.name + ' ' : ''; }
   function nameInBox() { return record() ? specName() : (ui.draftName != null ? ui.draftName : defaultName()); }
   function newId() { return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function ensureRecord() {
@@ -3255,7 +3268,7 @@ return api;
     if (!body || typeof body !== 'object') return null;
     var model = body.model, config = body.config;
     if (typeof model !== 'string' || typeof config !== 'string') { var cut = String(id).lastIndexOf('_'); model = String(id).slice(0, cut); config = String(id).slice(cut + 1); }
-    if ((!byId(MODELS, model) && model !== TBDM.id && !/^m[a-z0-9]{4,24}$/.test(model)) || !byId(CONFIGS, config)) return null;
+    if ((!byId(MODELS, model) && model !== TBDM.id && model !== WORKM.id && !/^m[a-z0-9]{4,24}$/.test(model)) || !byId(CONFIGS, config)) return null;
     return { model: model, modelName: typeof body.modelName === 'string' ? body.modelName.trim().slice(0, 30) : '', config: config, name: typeof body.name === 'string' ? body.name.trim().slice(0, 60) : '', showPrice: body.showPrice !== false, units: cleanUnits(body.units != null ? body.units : (body.quote && body.quote.units)), job: cleanJob(body.job), board: body.board === true, delivery: cleanDay(body.delivery), vendors: cleanVendors(body.vendors), memo: typeof body.memo === 'string' ? body.memo.slice(0, 300) : '', quote: cleanQuote(body.quote), values: cleanValues(body.values), updatedAt: typeof body.updatedAt === 'number' ? body.updatedAt : 0 };
   }
   function cleanList(v) { return Array.isArray(v) ? v.filter(function (x) { return typeof x === 'string' && x.trim(); }).map(function (x) { return x.trim().slice(0, 60); }) : []; }
@@ -3633,8 +3646,8 @@ return api;
   function guessField(name, cur) {
     var n = nrm(name), i, k;
     if (!n) return null;
-    for (i = 0; i < FIELDS.length; i++) { k = FIELDS[i].k; if ((cur[k] || []).some(function (l) { return nrm(l.name) === n; })) return { k: k, by: 'spec' }; }
-    for (i = 0; i < FIELDS.length; i++) { var f = FIELDS[i], pool = (f.items || []).concat(data.custom[f.k] || [], Object.keys(data.prices[f.k] || {})); if (pool.some(function (x) { return nrm(x) === n; })) return { k: f.k, by: 'list' }; }
+    for (i = 0; i < FIELDS.length; i++) { if ((FIELDS[i].g === 'work') !== isWork(ui.model)) continue; k = FIELDS[i].k; if ((cur[k] || []).some(function (l) { return nrm(l.name) === n; })) return { k: k, by: 'spec' }; }
+    for (i = 0; i < FIELDS.length; i++) { if ((FIELDS[i].g === 'work') !== isWork(ui.model)) continue; var f = FIELDS[i], pool = (f.items || []).concat(data.custom[f.k] || [], Object.keys(data.prices[f.k] || {})); if (pool.some(function (x) { return nrm(x) === n; })) return { k: f.k, by: 'list' }; }
     for (i = 0; i < RGUESS.length; i++) if (RGUESS[i][1].test(name)) return { k: RGUESS[i][0], by: 'word' };
     return null;
   }
@@ -3830,8 +3843,8 @@ return api;
   }
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
-      '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 15:10</div><div class="spacer"></div>';
+      '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 15:40</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -3842,14 +3855,14 @@ return api;
     var live = ids.filter(function (id) { return !dlvOf(id); }), done = ids.filter(dlvOf).sort(function (x, y) { return dlvOf(y) < dlvOf(x) ? -1 : dlvOf(y) > dlvOf(x) ? 1 : 0; });
     function item(id) {
       var r = data.specs[id], m = { name: modelLabel(r) }, c = byId(CONFIGS, r.config), dv = dlvOf(id);
-      return '<div class="sw' + (ui.swipeId === id ? ' open' : '') + '" data-sw="' + esc(id) + '">' + (store.readOnly ? '' : '<button type="button" class="swdel" data-act="delSaved" data-id="' + esc(id) + '">' + (ui.confirmDelId === id ? '本当に削除' : '削除') + '</button>') + '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><em class="stt ' + (dv ? 'd' : r.board ? 'o' : 'q') + '">' + (dv ? '納品済み' : r.board ? '受注決定' : '見積もり段階') + '</em><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + '　' + esc(c.name) + (dv ? '　' + dayShort(dv) + ' 納品' : r.delivery ? '　納品 ' + dayShort(r.delivery) : '') + '</span></span>' + CHEV + '</button></div>'; }
+      return '<div class="sw' + (ui.swipeId === id ? ' open' : '') + '" data-sw="' + esc(id) + '">' + (store.readOnly ? '' : '<button type="button" class="swdel" data-act="delSaved" data-id="' + esc(id) + '">' + (ui.confirmDelId === id ? '本当に削除' : '削除') + '</button>') + '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><em class="stt ' + (dv ? 'd' : r.board ? 'o' : 'q') + '">' + (dv ? '納品済み' : r.board ? '受注決定' : '見積もり段階') + '</em><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + (isWork(r.model) ? (workSummary(r) ? '　' + esc(workSummary(r)) : '') : '　' + esc(c.name)) + (dv ? '　' + dayShort(dv) + ' 納品' : r.delivery ? '　納品 ' + dayShort(r.delivery) : '') + '</span></span>' + CHEV + '</button></div>'; }
     return '<div class="sec">保存した仕様書</div>' + (live.length ? '<div class="list">' + live.map(item).join('') + '</div>' : '<p class="dlvNone">進行中の仕様書はありません。</p>') +
       (done.length ? '<button type="button" class="dlvFold' + (ui.showDelivered ? ' open' : '') + '" data-act="toggleDelivered" aria-expanded="' + !!ui.showDelivered + '"><span class="chev">' + (ui.showDelivered ? '▼' : '▶') + '</span><b>納品済み</b><span class="n">' + done.length + '件</span><small>' + (ui.showDelivered ? '押すとたたみます' : '押すと開いて見返せます') + '</small></button>' + (ui.showDelivered ? '<div class="list dlvList">' + done.map(item).join('') + '</div>' : '') : '');
   }
   function screenConfigs() {
     var m = curModel();
     return top({ back: ['toModels', '機種を選び直す'], step: 2, title: esc(m.name), lead: 'どの構成ですか' }) +
-      '<div class="stack">' + CONFIGS.map(function (c) { return '<button type="button" class="big tall" data-act="config" data-id="' + c.id + '"><span>' + esc(c.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div><div class="spacer"></div>';
+      '<div class="stack">' + CONFIGS.filter(function (c) { return c.id !== 'work'; }).map(function (c) { return '<button type="button" class="big tall" data-act="config" data-id="' + c.id + '"><span>' + esc(c.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div><div class="spacer"></div>';
   }
   function screenSpec() {
     var m = curModel(), c = byId(CONFIGS, ui.config), v = values(), filled = 0, sp = showPrice(), u = units();
@@ -3861,16 +3874,17 @@ return api;
         return '<button type="button" class="row" data-act="edit" data-id="' + f.k + '" data-i="' + i + '"><span class="k">' + (i === 0 ? f.label : '') + '</span><span class="v"><span>' + esc(l.name) + '</span>' + (l.note ? '<span class="nt">備考：' + esc(l.note) + '</span>' : '') + (sp && l.price != null ? '<span class="p">' + yen(l.price) + '</span>' : '') + '</span>' + CHEV + '</button>';
       }).join('') + (store.readOnly || lines.length >= MAXL ? '' : '<button type="button" class="more" data-act="edit" data-id="' + f.k + '" data-i="-1">' + PLUS + 'もう1つ追加</button>');
     }).join(''); }
-    var rows = GROUPS.map(function (g) { var gt = sp ? groupTotal(v, g.id, u) : 0; var vn = vendorOf(g.id); return '<section class="gsec"><div class="grp"><span>' + g.name + '</span>' + (gt ? '<small>' + yen(gt) + '</small>' : '') + '</div><div class="list">' +
+    var wk = isWork(ui.model);
+    var rows = groupsFor(ui.model).map(function (g) { var gt = sp ? groupTotal(v, g.id, u) : 0; var vn = vendorOf(g.id); return '<section class="gsec"><div class="grp"><span>' + g.name + '</span>' + (gt ? '<small>' + yen(gt) + '</small>' : '') + '</div><div class="list">' +
       '<button type="button" class="row vend" data-act="vendor" data-id="' + g.id + '"><span class="k">発注先</span><span class="v">' + (vn ? '<span>' + esc(vn) + '</span>' : '') + '</span>' + (store.readOnly ? '' : CHEV) + '</button>' + rowsOf(fieldsOf(g.id)) + '</div></section>'; }).join('');
-    return top({ back: ui.fromBoard && board ? ['backToBoard', '発注・納期に戻る'] : ['toModels', '最初の画面に戻る'], step: 3, title: esc(m.name), tag: esc(c.name), titleAct: store.readOnly ? null : 'changeModel' }) +
+    return top({ back: ui.fromBoard && board ? ['backToBoard', '発注・納期に戻る'] : ['toModels', '最初の画面に戻る'], step: 3, title: esc(m.name), tag: wk ? null : esc(c.name), titleAct: store.readOnly || wk ? null : 'changeModel' }) +
       noticeHtml() +
       '<div class="topgrid"><div class="nameBox"><label for="specName">名前（だれ・どこ向け）</label><textarea id="specName" class="grow" rows="1" maxlength="60" autocomplete="off" placeholder="例：○○店 向け"' + (store.readOnly ? ' readonly' : '') + '>' + esc(nameInBox()) + '</textarea></div>' +
       '<div class="dateBox"><label for="specJob">工事番号</label><input id="specJob" type="text" maxlength="30" autocomplete="off" inputmode="text" autocapitalize="characters" placeholder="例：K260115" value="' + esc(jobNo()) + '"' + (store.readOnly ? ' readonly' : '') + '></div><div class="jobMsg" id="jobMsg">' + esc(jobNote(jobNo())) + '</div>' +
-      '<div class="unitsBox"><span class="lb">台数</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsDown" aria-label="台数を減らす"' + (u <= 1 ? ' disabled' : '') + '>−</button>') + '<span class="n">' + u + '台</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsUp" aria-label="台数を増やす"' + (u >= 99 ? ' disabled' : '') + '>＋</button>') + '</div>' +
-      '<div class="dateBox"><label for="specDate">納品日</label><input id="specDate" type="date" value="' + esc(deliveryDay()) + '"' + (store.readOnly ? ' disabled' : '') + '>' + (store.readOnly ? '' : '<button type="button" class="clr' + (deliveryDay() ? '' : ' on') + '" data-act="clearDay" aria-pressed="' + !deliveryDay() + '">未定</button>') + '</div></div>' +
+      (wk ? '' : '<div class="unitsBox"><span class="lb">台数</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsDown" aria-label="台数を減らす"' + (u <= 1 ? ' disabled' : '') + '>−</button>') + '<span class="n">' + u + '台</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsUp" aria-label="台数を増やす"' + (u >= 99 ? ' disabled' : '') + '>＋</button>') + '</div>') +
+      '<div class="dateBox"><label for="specDate">' + (wk ? '作業日' : '納品日') + '</label><input id="specDate" type="date" value="' + esc(deliveryDay()) + '"' + (store.readOnly ? ' disabled' : '') + '>' + (store.readOnly ? '' : '<button type="button" class="clr' + (deliveryDay() ? '' : ' on') + '" data-act="clearDay" aria-pressed="' + !deliveryDay() + '">未定</button>') + '</div></div>' +
       (store.readOnly ? '' : '<div class="stack" style="margin-top:10px">' + switchHtml() + '</div>') +
-      '<div class="groups">' + rows + '</div><div class="note">' + FIELDS.length + '項目中 ' + filled + '項目 入力済み</div>' +
+      '<div class="groups">' + rows + '</div><div class="note">' + FIELDS.filter(function (f) { return groupsFor(ui.model).some(function (g) { return g.id === f.g; }); }).length + '項目中 ' + filled + '項目 入力済み</div>' +
       (!memoText().trim() && !ui.memoOpen ? (store.readOnly ? '' : '<div class="stack" style="margin-top:12px"><button type="button" class="btn soft" data-act="openMemo">＋ 全体の備考を書く</button></div>') :
       '<div class="memoBox"><label for="specMemo">全体の備考（任意）</label><small>品ごとの備考は、それぞれの品を押して入れます。ここは全体に関わることだけ。</small><textarea id="specMemo" maxlength="300" placeholder="例：納品時の注意など"' + (store.readOnly ? ' readonly' : '') + '>' + esc(memoText()) + '</textarea></div>') +
       linkBox() +
@@ -4086,13 +4100,13 @@ return api;
     return true;
   }
   function specPagesInto(stage, z) {
-    var m = curModel(), c = byId(CONFIGS, ui.config), v = values(), sp = showPrice(), u = units();
-    var head = '<div class="top"><div class="jobno' + (jobNo() ? '' : ' none') + '"><small>工事番号</small><b>' + (jobNo() ? esc(jobNo()) : '未定') + '</b></div><div class="rt"><div class="ttl"><b>' + esc(m.name) + '</b><i>' + esc(c.name) + '</i></div><div class="meta"><span class="brand">TSK シミュレーター仕様書</span>　社内用　' + today() + ' 時点</div></div></div>' +
+    var m = curModel(), c = byId(CONFIGS, ui.config), v = values(), sp = showPrice(), u = units(), wk = isWork(m.id);
+    var head = '<div class="top"><div class="jobno' + (jobNo() ? '' : ' none') + '"><small>工事番号</small><b>' + (jobNo() ? esc(jobNo()) : '未定') + '</b></div><div class="rt"><div class="ttl"><b>' + esc(m.name) + '</b>' + (wk ? '' : '<i>' + esc(c.name) + '</i>') + '</div><div class="meta"><span class="brand">' + (wk ? 'TSK 工事・修理 手配書' : 'TSK シミュレーター仕様書') + '</span>　社内用　' + today() + ' 時点</div></div></div>' +
       '<div class="for"><div class="th">向け先</div><div class="td' + (specName() ? '' : ' blank') + '">' + esc(specName()) + '</div>' + '</div>' +
-      '<div class="for key"><div class="th">納品日</div><div class="td">' + (deliveryDay() ? dayLong(deliveryDay()) : '未定') + '</div><div class="th">台数</div><div class="td n">' + u + '台</div></div>';
-    var cont = '<div class="cont"><span>TSK シミュレーター仕様書　' + esc(m.name) + '　' + esc(c.name) + '</span><span>' + esc(specName()) + '</span></div>';
+      '<div class="for key"><div class="th">' + (wk ? '作業日' : '納品日') + '</div><div class="td">' + (deliveryDay() ? dayLong(deliveryDay()) : '未定') + '</div>' + (wk ? '' : '<div class="th">台数</div><div class="td n">' + u + '台</div>') + '</div>';
+    var cont = '<div class="cont"><span>' + (wk ? 'TSK 工事・修理 手配書' : 'TSK シミュレーター仕様書　' + esc(m.name) + '　' + esc(c.name)) + '</span><span>' + esc(specName()) + '</span></div>';
     var blocks = [];
-    GROUPS.forEach(function (g) {
+    groupsFor(m.id).forEach(function (g) {
       var gt = sp ? groupTotal(v, g.id, u) : 0;
       blocks.push({ keep: true, h: '<div class="gh"><span>' + g.name + '</span>' + (vendorList(g.id).length ? '<em>発注先　' + esc(vendorList(g.id).join(' ／ ')) + '</em>' : '') + (gt ? '<b>小計 ' + yen(gt) + '</b>' : '') + '</div>' });   // a group title never ends a page
       fieldsOf(g.id).forEach(function (f) {
@@ -4364,6 +4378,7 @@ return api;
     var r = data.specs[id]; if (!r) return null;
     var c = byId(CONFIGS, r.config), u = cleanUnits(r.units), lines = [], ck = checkJob(r.job || '');
     FIELDS.forEach(function (f) {
+      if (f.noOrder) return;   // 工事の対象・作業・作業費は発注にしない
       var ls = (r.values && r.values[f.k]) || [], vend = splitVendors((r.vendors || {})[f.g]).join('、'), seen = {};
       if (f.g === 'frame' && !vend) return;
       if (ls.some(function (l) { return l.name === STOCK || l.name === SUPPLIED; })) return;
@@ -4373,7 +4388,7 @@ return api;
         lines.push({ key: f.k + '|' + l.name + '|' + seen[l.name], part: f.label, name: l.name, note: l.note || '', vendor: vend });
       });
     });
-    return { id: id, client: r.name || '', spec: modelLabel(r) + '　' + (c ? c.name : '') + (u > 1 ? '　×' + u : ''), k: ck.ok ? ck.k : '', delivery: r.delivery || '', units: u, lines: lines };
+    return { id: id, client: r.name || '', spec: isWork(r.model) ? '工事・修理' + (workSummary(r) ? '　' + workSummary(r) : '') : modelLabel(r) + '　' + (c ? c.name : '') + (u > 1 ? '　×' + u : ''), k: ck.ok ? ck.k : '', delivery: r.delivery || '', units: u, lines: lines };
   }
   function queueBoardSync(id) {
     if (!board || store.readOnly) return;
@@ -4497,7 +4512,7 @@ return api;
   }
   function fileStem() {
     var m = curModel(), c = byId(CONFIGS, ui.config), no = ui.printMode === 'quote' ? quote().no.replace(/[\\/:*?"<>|\s]/g, '') : '';
-    return (ui.printMode === 'quote' ? 'TSK見積書_' + (no ? no + '_' : '') : 'TSK仕様書_' + (jobNo() ? jobNo().replace(/[\\/:*?"<>|\s]/g, '') + '_' : '')) + (specName() ? specName().replace(/[\\/:*?"<>|]/g, '') + '_' : '') + m.name + '_' + c.name;
+    return (ui.printMode === 'quote' ? 'TSK見積書_' + (no ? no + '_' : '') : 'TSK仕様書_' + (jobNo() ? jobNo().replace(/[\\/:*?"<>|\s]/g, '') + '_' : '')) + (specName() ? specName().replace(/[\\/:*?"<>|]/g, '') + '_' : '') + m.name + (isWork(m.id) ? '' : '_' + c.name);
   }
   // Lay the sheet out on A4 pages off-screen, photograph each page, and put one photograph on each PDF page.
   function buildPdf() {
@@ -4572,6 +4587,7 @@ return api;
     else if (act === 'saveModel') saveModel();
     else if (act === 'removeModel') removeModel();
     else if (act === 'model') go({ screen: 'configs', model: id, config: null, specId: null, draftName: null });
+    else if (act === 'workNew') go({ screen: 'spec', model: WORKM.id, config: 'work', specId: null, draftName: null, draftShow: true, printMode: 'spec' });
     else if (act === 'toModels') go({ screen: 'models', model: null, config: null, specId: null });
     else if (act === 'openSaved') { var r = data.specs[id]; if (r) { go({ screen: 'spec', model: r.model, config: r.config, specId: id, printMode: 'spec' }); if (r.board) queueBoardSync(id); } }
     else if (act === 'delete') { if (ui.confirmDelete) removeSpec(); else go({ confirmDelete: true }); }
