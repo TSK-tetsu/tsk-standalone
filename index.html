@@ -60,6 +60,26 @@
   .titleRow { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
   .tag { padding: 3px 12px; border: 1.5px solid var(--band-gold); border-radius: 14px; color: var(--band-gold); font-size: 15px; font-weight: 700; }
   #boardHost[hidden] { display: none; }
+  /* 共通の上の帯（PC幅）：仕様書モードでも発注・納期ボードでも同じ帯を出す。中身の幅は今の枠に合わせる */
+  #tskBand { position: sticky; top: 0; z-index: 15; font-family: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif; }
+  #tskBand[hidden] { display: none; }
+  #tskBand .in { max-width: var(--framew, 1040px); margin: 0 auto; min-height: 64px; box-sizing: border-box; display: flex; align-items: center; gap: 14px; padding: 10px 20px; background: #0B1F3A; border-bottom: 3px solid #D4AF37; }
+  #tskBand .tb-brand { font-size: 20px; font-weight: 900; letter-spacing: .1em; color: #D4AF37; }
+  #tskBand .tb-tabs, #tskBand .tb-sw { display: flex; border: 2px solid #D4AF37; border-radius: 12px; overflow: hidden; }
+  #tskBand button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  #tskBand .tb-tabs button { border: 0; background: transparent; color: #F1E3A6; font-size: 17px; font-weight: 800; padding: 8px 20px; min-height: 44px; }
+  #tskBand .tb-tabs button[aria-pressed="true"] { background: #D4AF37; color: #0B1F3A; }
+  #tskBand .tb-board { display: flex; align-items: center; gap: 10px; }
+  #tskBand .tb-board[hidden] { display: none; }
+  #tskBand .tb-sw button { border: 0; background: transparent; color: #F1E3A6; font-size: 14px; font-weight: 800; padding: 6px 12px; min-height: 36px; }
+  #tskBand .tb-sw button[aria-pressed="true"] { background: #D4AF37; color: #0B1F3A; }
+  #tskBand .tb-snd { width: 42px; height: 40px; border: 2px solid #D4AF37; border-radius: 10px; background: transparent; color: #F1E3A6; display: inline-flex; align-items: center; justify-content: center; }
+  #tskBand .tb-snd svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  #tskBand .tb-snd.off { opacity: .55; }
+  #tskBand .tb-count { margin-left: auto; text-align: right; font-size: 14px; font-weight: 700; line-height: 1.3; color: #F1E3A6; white-space: nowrap; }
+  #tskBand .tb-count b { color: #FF8A80 !important; }
+  body.unified .bar { top: var(--bandh, 64px); }
+  @media print { #tskBand { display: none !important; } }
   .boardBtn { margin: 16px 16px 0; padding: 14px 16px 14px 20px; min-height: 68px; border: none; border-radius: 14px; background: var(--band); color: #FFFFFF; text-align: left; display: flex; align-items: center; gap: 12px; box-shadow: inset 0 -3px 0 var(--band-gold); }
   .boardBtn .t { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   .boardBtn .t b { font-size: 19px; font-weight: 700; }
@@ -612,7 +632,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/18 13:00', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/18 13:30', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -702,6 +722,12 @@
   if (document.body) loop(); else document.addEventListener('DOMContentLoaded', loop);
 })();
 </script>
+<header id="tskBand" hidden><div class="in">
+  <span class="tb-brand">TSK</span>
+  <div class="tb-tabs" role="group" aria-label="画面"><button type="button" data-go="spec">仕様書</button><button type="button" data-go="board">発注・納期ボード</button></div>
+  <div class="tb-board" hidden><div class="tb-sw" role="group" aria-label="表示切替"><button type="button" data-lay="m">スマホ</button><button type="button" data-lay="d">PC</button></div><button type="button" class="tb-snd" data-snd="1" aria-label="効果音" title="効果音のオン／オフ"><svg viewBox="0 0 24 24"></svg></button></div>
+  <div class="tb-count" id="tbCount"></div>
+</div></header>
 <div id="app"></div>
 <div id="boardHost" hidden></div>
 <template id="boardTpl"><style>
@@ -1510,6 +1536,14 @@ details.done[open]>summary::before{content:"▾"}
 .grp .grp-h .xadd{border:2px solid var(--gold);background:var(--navy);color:var(--gold);border-radius:10px;padding:6px 14px;min-height:40px;font:inherit;font-size:15px;font-weight:900;white-space:nowrap;cursor:pointer}
 .grp .grp-h .xadd:active{transform:translateY(1px)}
 .xk{font-size:13px;color:var(--muted);margin-top:6px}
+:host(.unified.mode-d) .top{display:none}
+:host(.unified.mode-d) .bd-body{background:var(--outer,#D3DAE4)}
+:host(.unified.mode-d) .bd-body>.app{max-width:var(--framew,1480px);margin:0 auto;background:var(--bg);border-left:1px solid var(--line);border-right:1px solid var(--line);box-sizing:border-box}
+:host(.unified.mode-d) .body{max-width:none}
+:host(.unified.mode-d) .side{top:var(--bandh,64px);max-height:calc(100vh - var(--bandh,64px))}
+:host(.unified.mode-d) .content{min-height:calc(100vh - var(--bandh,64px))}
+@media (prefers-color-scheme: dark){ :host(:not([data-theme="light"])){ --outer:#060E1A } }
+:host([data-theme="dark"]){ --outer:#060E1A }
 .grp .grp-h .ghint{flex:0 0 100%;order:99;margin-top:2px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.18);text-align:center;font-size:13px;font-weight:800;color:var(--gold-soft);letter-spacing:.04em;opacity:.9}
 :host(.mode-d) .grp .grp-h .ghint{font-size:14px}
 .grp.dlvd .grp-h .ghint{color:#C9D2E0}
@@ -2626,7 +2660,7 @@ function unlinkSpec(id){ chain=chain.then(async()=>{ await whenReady(); if(!canW
   if(allOrders.some(o=>o.projectId===pid&&!(o.specKey&&(o.status===STATUSES[0]||o.hidden)))){ const n={...strip(p)}; delete n.specId; await saveProject(pid,n); } else await deleteProject(pid);
 }).catch(err=>console.error(err)); return chain; }
 function statsOf(specId){ const g=specId?orders.filter(o=>o.projectId==="sp_"+specId):orders.filter(o=>!oDlv(o)); return {n:g.length,open:g.filter(o=>STATUSES.indexOf(o.status)<ARR).length,todo:g.filter(o=>o.status===STATUSES[0]).length,in:g.filter(o=>STATUSES.indexOf(o.status)>=ARR).length,late:g.filter(isLate).length,soon:g.filter(dueSoon).length}; }
-const api={ sync:syncSpec, unlink:unlinkSpec, stats:statsOf, showProject:id=>showGroup("sp_"+id), showHome:()=>showView("list"), onChange:f=>listeners.push(f), close:closeSheet, checkK,
+const api={ layout:()=>(html.classList.contains("mode-d")?"d":"m"), setLayout:m=>{ forced=m; applyMode(); }, toggleSound:()=>$("#sndBtn").click(), soundOn:()=>!!snd.on, head:()=>$("#headCount").innerHTML, sync:syncSpec, unlink:unlinkSpec, stats:statsOf, showProject:id=>showGroup("sp_"+id), showHome:()=>showView("list"), onChange:f=>listeners.push(f), close:closeSheet, checkK,
   deliveredAt:id=>dlvAt("sp_"+id), canWrite:()=>canWrite, showWall:()=>showWall(),
   setDelivered:(id,v)=>{ chain=chain.then(async()=>{ await whenReady(); if(!canWrite) return; await setDelivered("sp_"+id,v); }).catch(err=>console.error(err)); return chain; } };
 
@@ -3622,7 +3656,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 13:00</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 13:30</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -4179,6 +4213,7 @@ return api;
     try { localStorage.setItem('tsk-mode', mode); } catch (e) {}
     window.scrollTo(0, 0);
     if (mode === 'spec') render();
+    updateBand();
   }
   function openSpecFromBoard(id) {
     var r = data.specs[id];
@@ -4443,6 +4478,39 @@ return api;
 
   render();
   connect();
+  // ---- 共通の上の帯（幅900px以上）：「仕様書」「発注・納期ボード」の切り替えを、どちらの画面にも同じ形で出す
+  var band = document.getElementById('tskBand');
+  function updateBand() {
+    var wide = window.innerWidth >= 900 && !!board;
+    band.hidden = !wide; document.body.classList.toggle('unified', wide);
+    if (boardHost) boardHost.classList.toggle('unified', wide);
+    if (!wide) return;
+    var de = document.documentElement;
+    de.style.setProperty('--framew', mode === 'board' ? '1480px' : '1040px');
+    de.style.setProperty('--bandh', band.offsetHeight + 'px');
+    band.querySelectorAll('[data-go]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-go') === mode)); });
+    band.querySelector('.tb-board').hidden = mode !== 'board';
+    var lay = board.layout ? board.layout() : 'd';
+    band.querySelectorAll('[data-lay]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-lay') === lay)); });
+    var on = board.soundOn ? board.soundOn() : true, sb = band.querySelector('.tb-snd');
+    sb.classList.toggle('off', !on);
+    sb.querySelector('svg').innerHTML = on ? '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6"/>' : '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/>';
+    document.getElementById('tbCount').innerHTML = board.head ? board.head() : '';
+  }
+  band.addEventListener('click', function (ev) {
+    var g = ev.target.closest('[data-go]'), l = ev.target.closest('[data-lay]'), sn = ev.target.closest('[data-snd]');
+    if (g) {
+      var to = g.getAttribute('data-go'); if (to === mode) return;
+      if (to === 'spec') { if (board) board.close(); setMode('spec'); }
+      else { if (ui.screen === 'spec') { commitName(); commitMemo(); commitDay(); commitJob(); } if (ui.screen === 'quote') commitQuote(); setMode('board'); }
+      return;
+    }
+    if (l && board.setLayout) { board.setLayout(l.getAttribute('data-lay')); updateBand(); return; }
+    if (sn && board.toggleSound) { board.toggleSound(); updateBand(); }
+  });
+  window.addEventListener('resize', updateBand);
+  if (board) board.onChange(function () { setTimeout(updateBand, 0); });
+  updateBand();
   if (board) setMode('board');   // アプリを開いたら、まず発注・納期ボード（仕様書へは左上の「仕様書」から）
   // 掲示板モードの端末：仕様書の画面のまま3分さわらなければ、ボードの掲示画面に戻す（入力の途中なら10分待つ）
   (function () {
