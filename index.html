@@ -632,7 +632,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/18 14:55', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/18 15:10', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1605,6 +1605,14 @@ details.done[open]>summary::before{content:"▾"}
 .ln-card .tag.today,.ln-card .tag.soon{background:#F2C14E;color:#0B1F3A}
 .ln-empty{color:var(--muted);font-size:13px;font-weight:700;padding:8px 6px}
 .grp .gact .delpj{margin-left:auto}
+/* 案件を押したら全画面に展開（PC表示・幅1200px以上）：その案件だけを、右の欄も使って大きく出す */
+.focusbar{display:none}
+:host(.focusing) .focusbar{display:flex;align-items:center;gap:16px;position:sticky;top:var(--bandh,64px);z-index:5;background:var(--bg);padding:12px 0 14px;margin:-8px 0 4px}
+:host(.focusing) .focusbar .b{flex:0 0 auto;min-height:52px;padding:0 24px;font-size:18px}
+:host(.focusing) .focusbar .ft{font-size:15px;font-weight:800;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:host(.focusing) #stats,:host(.focusing) .tkstrip,:host(.focusing) #filters,:host(.focusing) #list>.cardsw,:host(.focusing) #list>.legend,:host(.focusing) #list .grp:not(.focus),:host(.focusing) #list .dlvsec-h,:host(.focusing) .rail{display:none !important}
+:host(.focusing) #list .dlvsec{border:0;margin:0;padding:0}
+:host(.focusing) #list .grp.focus{grid-column:1 / -1;margin-top:0}
 /* 案件を開いたとき・ほかの画面から案件へ飛んだとき、見出しが上の帯に隠れないように */
 .grp{scroll-margin-top:80px}
 :host(.unified.mode-d) .grp{scroll-margin-top:calc(var(--bandh,64px) + 14px)}
@@ -1653,6 +1661,7 @@ details.done[open]>summary::before{content:"▾"}
       <div class="ro" id="ro">閲覧のみの権限です。入力・変更はできません。</div>
 
       <section class="view active" id="view-list">
+        <div class="focusbar" id="focusBar"><button type="button" class="b b-gold" id="focusBack">◀ 一覧に戻る</button><span class="ft" id="focusTtl"></span></div>
         <div class="stats" id="stats">
           <button class="stat" data-f="all" aria-pressed="true"><div class="v" id="st-all">0</div><div class="l">すべて</div></button>
           <button class="stat late" data-f="soon"><div class="v" id="st-soon">0</div><div class="l">要確認</div></button>
@@ -1919,7 +1928,19 @@ $("#stats").addEventListener("click",e=>{ const c=e.target.closest(".stat"); if(
 function filtered(){ return orders.filter(o=>{ if(filter==="soon") return dueSoon(o); if(filter==="late") return isLate(o); if(filter==="week") return inThisWeek(o.due)&&!oDlv(o); if(filter==="open") return STATUSES.indexOf(o.status)<ARR&&!oDlv(o); if(filter==="done") return STATUSES.indexOf(o.status)>=ARR; return true; }); }
 
 /* ---------- list ---------- */
-function renderList(){
+// 全画面に展開：PC表示で幅が広いとき、押した案件だけを出す（focusKey）。「一覧に戻る」で元の位置へ。
+let focusKey=null, focusY=0, focusSup=[];
+function isWide(){ return html.classList.contains("mode-d")&&window.innerWidth>=1200; }
+function openFocusSup(k){ focusSup=[]; orders.filter(o=>pjKey(o)===k).forEach(o=>{ const id=k+"|"+(o.supplier||"仕入先 未定"); if(!openSup.has(id)){ openSup.add(id); focusSup.push(id); } }); }
+function applyFocus(){
+  const g=focusKey&&isWide()?bandEl(focusKey):null; if(focusKey&&!g&&!isWide()) focusKey=null;
+  host.classList.toggle("focusing",!!g);
+  root.querySelectorAll("#list .grp").forEach(x=>x.classList.toggle("focus",!!g&&x===g));
+  if(g){ const L=pjLabel(orders.find(o=>pjKey(o)===focusKey)||{projectId:focusKey}); $("#focusTtl").textContent=`${L.k?L.k+"　":""}${L.who||""}`; }
+}
+function closeFocus(){ const k=focusKey; if(!k) return; focusKey=null; focusSup.forEach(id=>openSup.delete(id)); focusSup=[]; openGrp.delete(k); grpF.delete(k); renderList(); scrollBox().scrollTo(0,focusY); }
+function renderList(){ renderList0(); applyFocus(); }
+function renderList0(){
   const typing=root.activeElement; if(typing&&typing.classList&&(typing.classList.contains("pricein")||typing.classList.contains("duein"))&&$("#list").contains(typing)){ listPending=true; return; } listPending=false;
   const el=$("#list"); const rows=filtered();
   const late=orders.filter(isLate).length, act=orders.filter(o=>!oDlv(o));   // 件数は、納品済みの案件を除いて数える
@@ -2039,7 +2060,9 @@ $("#list").addEventListener("click",async e=>{
   const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="xlsx") exportProject(gk); else if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(ga.dataset.gact==="dlv") openDelivered(gk); else if(ga.dataset.gact==="extra") openExtra(gk); else if(ga.dataset.gact==="delpj") openDeletePj(gk); else if(gp) openEditPj(gp); return; }
   const sa=e.target.closest("[data-supall]"); if(sa){ openSupAll(sa.dataset.supall); return; }
   const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)){ const gr=sh.closest(".sup-row").nextElementSibling; await foldOut(gr&&gr.classList.contains("grid")?[...gr.children]:[]); openSup.delete(k); renderList(); } else { openSup.add(k); renderList(); const nh=[...root.querySelectorAll(".sup-h")].find(x=>x.dataset.sup===k); const g2=nh&&nh.closest(".sup-row").nextElementSibling; foldIn(g2&&g2.classList.contains("grid")?[...g2.children]:[]); } return; }
-  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); const y0=bandY(k); openGrp.delete(k); grpF.delete(k); renderList(); holdBand(k,y0); flipBand(k,y0); } else { const y0=bandY(k); openGrp.add(k); renderList(); bandEl(k)?.scrollIntoView({block:"start"}); flipBand(k,y0); foldIn(grpParts(bandEl(k))); } return; }
+  const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(isWide()&&focusKey===k){ closeFocus(); return; }
+    if(isWide()&&!openGrp.has(k)&&!grpF.has(k)){ focusY=scrollPos(); focusKey=k; openFocusSup(k); openGrp.add(k); renderList(); scrollBox().scrollTo(0,0); foldIn(grpParts(bandEl(k))); return; }
+    if(openGrp.has(k)||grpF.has(k)){ await foldOut(grpParts(gh.parentElement)); const y0=bandY(k); openGrp.delete(k); grpF.delete(k); renderList(); holdBand(k,y0); flipBand(k,y0); } else { const y0=bandY(k); openGrp.add(k); renderList(); bandEl(k)?.scrollIntoView({block:"start"}); flipBand(k,y0); foldIn(grpParts(bandEl(k))); } return; }
   const pc=e.target.closest(".planclr"); if(pc){ const op=orders.find(x=>x.id===pc.dataset.id); if(op&&op.planDate){ const ps=STATUSES.indexOf(op.status); try{ await saveOrder(op.id,{...strip(op),planDate:"",status:ps===PLAN?STATUSES[0]:op.status,updatedAt:new Date().toISOString()}); toast("発注予定日を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const dc=e.target.closest(".dueclr"); if(dc){ const od=orders.find(x=>x.id===dc.dataset.id); if(od&&od.due){ try{ await saveOrder(od.id,{...strip(od),due:"",updatedAt:new Date().toISOString()}); toast("納期を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const cm=e.target.closest("[data-cm]"); if(cm){ cardMode=cm.dataset.cm==="tile"?"tile":"full"; selId=null; try{ localStorage.setItem("tsk_cards2",cardMode); }catch{} renderList(); return; }
@@ -2171,7 +2194,7 @@ $("#cal").addEventListener("click",e=>{
   const lab=e.target.closest("td.lab"); if(lab) showGroup(lab.dataset.key);
 });
 
-function showGroup(key){ if(dlvAt(key)) showDlv=true; openGrp.clear(); grpF.clear(); openGrp.add(key); setFilter("all"); showView("list"); const el=[...root.querySelectorAll(".grp")].find(s=>s.dataset.key===key); el?.scrollIntoView({block:"start"}); }
+function showGroup(key){ if(dlvAt(key)) showDlv=true; openGrp.clear(); grpF.clear(); openGrp.add(key); if(isWide()){ if(!focusKey) focusY=0; focusSup.forEach(id=>openSup.delete(id)); focusKey=key; openFocusSup(key); } setFilter("all"); showView("list"); const el=[...root.querySelectorAll(".grp")].find(s=>s.dataset.key===key); el?.scrollIntoView({block:"start"}); }
 
 /* ---------- sheet infra ---------- */
 const scrim=$("#scrim"), sheet=$("#sheet");
@@ -2762,6 +2785,11 @@ const api={ layout:()=>(html.classList.contains("mode-d")?"d":"m"), setLayout:m=
   setDelivered:(id,v)=>{ chain=chain.then(async()=>{ await whenReady(); if(!canWrite) return; await setDelivered("sp_"+id,v); }).catch(err=>console.error(err)); return chain; } };
 
 { const tp=$(".top"); if(tp&&window.ResizeObserver) new ResizeObserver(()=>host.style.setProperty("--toph",tp.offsetHeight+"px")).observe(tp); }   // 左メニューを上の帯のすぐ下に留める
+$("#focusBack").addEventListener("click",closeFocus);
+root.querySelectorAll('.side [data-view="list"]').forEach(b=>b.addEventListener("click",()=>{ if(focusKey) closeFocus(); }));
+window.addEventListener("keydown",e=>{ if(e.key==="Escape"&&focusKey&&!scrim.classList.contains("open")) closeFocus(); });
+window.addEventListener("resize",()=>{ if(focusKey) applyFocus(); });
+
 /* ---------- タッチキーボード対策 ----------
    指（またはペン）で入力欄を押したら、キーボードが下半分を覆う前提で、入力画面を上に寄せる。
    入力画面の外の入力欄は、画面の上の方までスクロールして見えるようにする。マウスで押したときは今まで通り。 */
@@ -3803,7 +3831,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 14:55</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 15:10</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
