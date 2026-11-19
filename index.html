@@ -675,7 +675,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 18:45', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 19:40', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1749,6 +1749,32 @@ details.done[open]>summary::before{content:"▾"}
 @media (prefers-color-scheme: dark){ :host(:not([data-theme="light"])){ --v-red:#FF9A91; --v-redfill:#D93B30; --v-amber:#F2C14E; --v-amber-bg:#3A3010; --v-ok:#7FD6A6; --v-bar:#8FB8FF; } }
 :host([data-theme="dark"]){ --v-red:#FF9A91; --v-redfill:#D93B30; --v-amber:#F2C14E; --v-amber-bg:#3A3010; --v-ok:#7FD6A6; --v-bar:#8FB8FF; }
 .rowx,.rowhead{display:none}
+:host(.mode-d) .onlym{display:none !important}
+:host(.mode-d) #itF{display:flex !important}
+.ithead{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+.ithead input{flex:1 1 260px;min-height:50px;border:2px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:0 14px;font-size:17px}
+.itnote{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 10px;font-weight:700}
+.itnote:empty{display:none}
+.ithd{display:none}
+.itrow{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;width:100%;text-align:left;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:12px 14px;margin:0 0 8px;font:inherit;cursor:pointer}
+.itrow:active{background:var(--well)}
+.itrow .no{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.itrow .nm{font-size:17px;font-weight:700}
+.itrow .pl{grid-column:1;justify-self:start;font-size:14px;font-weight:700;border-radius:6px;padding:1px 9px;background:var(--well)}
+.itrow .pl.w{background:var(--v-amber-bg);color:var(--v-amber)}
+.itrow .pl.o{background:var(--navy-3);color:#fff}
+.itrow .us,.itrow .by{font-size:15px;color:var(--muted)}
+.itrow .us{grid-column:2}.itrow .by{grid-column:1 / -1}
+.itlog{margin:0 0 12px;font-size:14px;color:var(--muted)}.itlog b{display:block;color:var(--ink)}
+.card.tile .hn{font-style:normal;margin-left:8px;color:var(--muted);font-weight:400}
+@media (min-width:1200px){
+  :host(.mode-d) .ithd,:host(.mode-d) .itrow{display:grid;grid-template-columns:150px minmax(0,1.2fr) 190px minmax(0,1fr) minmax(0,1.1fr);column-gap:16px;align-items:center}
+  :host(.mode-d) .ithd{padding:0 16px 6px;font-size:15px;font-weight:700;color:var(--muted)}
+  :host(.mode-d) .itrow{min-height:64px;padding:8px 16px}
+  :host(.mode-d) .itrow .no{font-size:22px}
+  :host(.mode-d) .itrow .nm{font-size:19px}
+  :host(.mode-d) .itrow .pl,:host(.mode-d) .itrow .us,:host(.mode-d) .itrow .by{grid-column:auto;font-size:16px}
+}
 .rowx .c-m u.pre{margin:0 8px 0 0 !important;background:transparent !important;border:1.5px dashed var(--v-bar) !important;color:var(--v-bar) !important}
 .grp .grp-h .xtag.pre{background:transparent !important;border:1.5px dashed currentColor !important}
 .rowx .c-d b.asap{display:inline-block;font-size:24px !important;font-weight:700 !important;letter-spacing:.04em;line-height:1.25 !important;background:var(--v-amber-bg);color:var(--v-amber);border-radius:8px;padding:4px 10px}
@@ -1891,6 +1917,7 @@ details.done[open]>summary::before{content:"▾"}
       <button data-view="cal"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>スケジュール</button>
       <button data-view="memo"><svg viewBox="0 0 24 24"><path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>タスク・議事録<span class="badge" id="badgeTaskSide" hidden>0</span></button>
       <button data-view="ledger"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>月末台帳</button>
+      <button data-view="items"><svg viewBox="0 0 24 24"><path d="M4 8h16v12H4z"/><path d="M4 8l2-4h12l2 4M9 13h6"/></svg>品番台帳</button>
       <button class="towall" id="toWall" type="button"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>掲示画面</button>
     </aside>
 
@@ -1941,7 +1968,16 @@ details.done[open]>summary::before{content:"▾"}
         <div id="mtgs"></div>
       </section>
 
+      <section class="view" id="view-items">
+        <div class="secttl" style="margin-top:0">品番台帳<span class="n" id="itN">0件</span></div>
+        <div class="lead" style="color:var(--muted);font-size:15px;margin:-2px 0 10px">会社で買った品に品番を付けて、今どこにあるか・どの案件に使ったか・いつどこからいくらで買ったかを追えます。行を押すと、場所を書き換えられます。</div>
+        <div class="ithead"><input id="itQ" type="search" placeholder="品番・品名・案件・仕入先でさがす"><button class="b b-gold" type="button" data-it="add">＋ 会社の品を登録</button><button class="b b-ghost" type="button" data-it="print">ラベルを印刷</button></div>
+        <div class="chips" id="itF"><button class="chip" data-if="all" type="button">すべて</button><button class="chip" data-if="in" type="button">社内にある</button><button class="chip" data-if="out" type="button">客先・貸出中</button><button class="chip" data-if="wait" type="button">未入荷</button><button class="chip" data-if="own" type="button">会社の品（案件なし）</button></div>
+        <div class="itnote" id="itNote"></div>
+        <div id="itList"></div>
+      </section>
       <section class="view" id="view-ledger">
+        <button class="b b-sm b-ghost onlym" type="button" data-view="items" style="margin:0 0 10px">品番台帳を開く ›</button>
         <div class="lhead">
           <label for="month" style="font-weight:700">対象月</label>
           <input type="month" id="month">
@@ -1982,9 +2018,9 @@ const STATUSES=["未発注","発注予定日決定","発注済","納期確認済
 const SCOL=["#7C8798","#7A4FD0","#C97A12","#2F6FD0","#2E9E68","#1C3A6B"];
 const $=s=>root.querySelector(s);
 const todayStr=()=>new Date().toLocaleDateString("sv-SE");
-let orders=[], allOrders=[], projects=[], tasks=[], meetings=[];
+let orders=[], allOrders=[], projects=[], tasks=[], meetings=[], stockItems=[];
 let ordersReady=false, projectsReady=false; const waiting=[]; const listeners=[];
-function setOrders(list){ allOrders=list; orders=list.filter(o=>!o.hidden); }   // hidden = 仕様書から来た発注をボードで外したもの（再作成させないための印）
+function setOrders(list){ allOrders=list; orders=list.filter(o=>!o.hidden&&!o.own); stockItems=list.filter(o=>o.own&&!o.hidden); }   // hidden = 仕様書から来た発注をボードで外したもの（再作成させないための印）
 let sample=null, showDone=false;
 let taskSort="due"; try{ const v=localStorage.getItem("tsk_tasksort"); if(v==="name"||v==="manual") taskSort=v; }catch{}
 let settings={}; const dragEnders=[];   // 並び替えの「持ち上げ」を外から解除するための関数たち（reorderable が足す）   // 共有の設定（settings/board）：taskGroups＝相手の並び   // タスクの相手の並び：日程順／名前順（端末ごとに覚える）
@@ -2150,6 +2186,7 @@ function showView(v){
   root.querySelectorAll(".view").forEach(e=>e.classList.toggle("active",e.id==="view-"+v));
   root.querySelectorAll("[data-view]").forEach(b=>{ if(b.dataset.view===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
   if(v==="ledger") renderLedger();
+  if(v==="items") renderItems();
   if(v==="lane") renderLane();
   if(v==="cal") renderCal();
   syncFocus();
@@ -2282,7 +2319,7 @@ function placePop(){ root.querySelectorAll("#list .tpop").forEach(p=>{ const g=p
   p.style.top=(t.offsetTop+t.offsetHeight+11)+"px"; p.style.left=left+"px"; p.style.width=w+"px"; p.style.setProperty("--nx",(mid-left)+"px"); }); }
 function tile(o){ const si=Math.max(0,STATUSES.indexOf(o.status)), late=isLate(o);
   const when=si>=ARR?(o.stock?"在庫充当":si===DONE?"検収済み":"入荷済み"):(si<ORD&&o.planDate?`発注予定 ${fmtD(o.planDate)}`:o.due?`納期 ${fmtD(o.due)}`:"納期 未定");
-  return `<article class="card tile s${si} ${late?"late":""} ${si===DONE?"fin":""} ${selId===o.id?"on":""}" data-id="${o.id}" role="button" tabindex="0" aria-label="${esc(o.item)} ${esc(o.status)}。押すと広がります"><div class="ts"><b class="tq">×${o.qty||1}</b><span>${late?"遅延":esc(o.status)}</span></div><div class="item">${esc(o.item)}</div><div class="td ${si<ARR&&!o.due&&!(si<ORD&&o.planDate)?"none":""}">${when}</div></article>`; }
+  return `<article class="card tile s${si} ${late?"late":""} ${si===DONE?"fin":""} ${selId===o.id?"on":""}" data-id="${o.id}" role="button" tabindex="0" aria-label="${esc(o.item)} ${esc(o.status)}。押すと広がります"><div class="ts"><b class="tq">×${o.qty||1}</b><span>${late?"遅延":esc(o.status)}</span></div><div class="item">${esc(o.item)}</div><div class="td ${si<ARR&&!o.due&&!(si<ORD&&o.planDate)?"none":""}">${when}${o.hno?`<i class="hn">${esc(o.hno)}</i>`:""}</div></article>`; }
 function cardFull(o){
   const si=STATUSES.indexOf(o.status); const late=isLate(o); const next=si<DONE?STATUSES[si<ORD?ORD:si+1]:null;
   if(si===DONE) return `<article class="card s5 mini ${cardMode==="tile"?"sel":""}" data-id="${o.id}"><div class="item">${esc(o.item)} ×${o.qty||1}</div><span class="pill s5">${esc(o.status)}</span><div class="act">${canWrite?`<button class="b b-sm b-ghost back" data-act="prev" aria-label="${esc(STATUSES[ARR])}に戻す">戻す</button>`:""}<button class="b b-sm b-ghost" data-act="open">詳細</button></div></article>`;
@@ -2634,6 +2671,81 @@ function openEditPj(p){
 
 /* ---------- ledger ---------- */
 function ledgerRows(){ const m=$("#month").value, mode=$("#lmode").value; return orders.filter(o=>{ if(mode==="all"||!m) return true; const d=mode==="order"?o.orderDate:o.due; return d&&d.startsWith(m); }).sort((a,b)=>{ const la=pjLabel(a), lb=pjLabel(b); return la.who.localeCompare(lb.who)||(la.k||"～").localeCompare(lb.k||"～")||(a.due||"9999").localeCompare(b.due||"9999"); }); }
+/* ---------- 品番台帳：会社で買った品に品番（H＋年度2桁-連番4桁）を付けて、今どこ・どの案件に使ったか・いつどこからいくらで買ったかを追う ---------- */
+// 案件の発注は、発注そのものに品番（hno）を持たせる。案件と関係なく買った品は items に入れる。台帳はその両方を並べる
+const hnoBoot=Date.now(); let hnoBusy=false, itF="all", itQ="";
+const PLACES=["社内","倉庫","工場","事務所","客先","貸出中","廃棄"];
+function hnoNext(n){ const pre="H"+String(fy()).padStart(2,"0")+"-"; let max=0; [...allOrders,...stockItems].forEach(x=>{ const m=/^H(\d{2})-(\d{4,})$/.exec(String(x.hno||"")); if(m&&"H"+m[1]+"-"===pre) max=Math.max(max,+m[2]); }); return Array.from({length:n},(_,i)=>pre+String(max+1+i).padStart(4,"0")); }
+function ordPlace(o){ if(o.place) return o.place; if(oDlv(o)) return "客先（納品済み）"; return STATUSES.indexOf(o.status)>=ARR?"社内":"未入荷"; }   // 書いていなければ、発注の状態から出す
+async function numberOrders(manual){ if(!canWrite||hnoBusy) return 0;
+  const ls=orders.filter(o=>!o.hno).sort((a,b)=>String(a.createdAt||"").localeCompare(String(b.createdAt||""))); if(!ls.length) return 0;
+  hnoBusy=true; const nums=hnoNext(ls.length), now=new Date().toISOString(); let n=0;
+  try{ for(let i=0;i<ls.length;i++){ await saveOrder(ls[i].id,{...strip(ls[i]),hno:nums[i],updatedAt:now}); n++; } if(manual) toast(`${n}件に品番を付けました`); }catch(err){ console.error(err); if(manual) toast("品番を付けられませんでした"); }
+  hnoBusy=false; return n; }
+// 新しい発注への自動の品番付けは、掲示用のPC（24時間動いている1台）だけが行う（同じ番号が重ならないように）。ほかの端末は台帳の「まとめて品番を付ける」から
+setInterval(()=>{ try{ if(KIOSK&&canWrite&&Date.now()-hnoBoot>120000&&orders.some(o=>!o.hno)) numberOrders(false); }catch(err){} },120000);
+function hRows(){
+  const pr=v=>typeof v==="number"&&isFinite(v)?v:null;
+  const a=orders.filter(o=>o.hno).map(o=>{ const P=pjLabel(o); return {t:"o",id:o.id,hno:o.hno,name:o.item||"（品名なし）",qty:+o.qty||1,place:ordPlace(o),use:[P.k,P.who].filter(Boolean).join(" "),sup:o.supplier||"",price:pr(o.price),date:o.arrivedAt||o.orderDate||"",dl:o.arrivedAt?"入荷":o.orderDate?"発注":""}; });
+  const b=stockItems.map(x=>({t:"i",id:x.id,hno:x.hno||"",name:x.name||"（品名なし）",qty:+x.qty||1,place:x.place||"社内",use:x.use||"",sup:x.supplier||"",price:pr(x.price),date:x.bought||"",dl:x.bought?"購入":""}));
+  return [...a,...b].sort((p,q)=>String(q.hno).localeCompare(String(p.hno)));
+}
+function hMatch(r){ const p=r.place;
+  if(itF==="in"&&!/^(社内|倉庫|工場|事務所)/.test(p)) return false; if(itF==="out"&&!/^(客先|貸出)/.test(p)) return false; if(itF==="wait"&&p!=="未入荷") return false; if(itF==="own"&&r.t!=="i") return false;
+  return !itQ||[r.hno,r.name,r.use,r.sup,r.place].join(" ").toLowerCase().includes(itQ.toLowerCase()); }
+function renderItems(){
+  const all=hRows(), rows=all.filter(hMatch), non=orders.filter(o=>!o.hno).length;
+  $("#itF").querySelectorAll("[data-if]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.if===itF));
+  $("#itNote").innerHTML=non&&canWrite?`<span>品番のない発注が ${non}件あります。</span><button type="button" class="b b-sm b-gold" data-it="number">まとめて品番を付ける</button>`:"";
+  $("#itN").textContent=`${rows.length}件`;
+  $("#itList").innerHTML=rows.length?`<div class="ithd" aria-hidden="true"><span>品番</span><span>品名</span><span>今どこ</span><span>使った案件・使い先</span><span>購入</span></div>`+rows.map(r=>`<button type="button" class="itrow" data-it="open" data-t="${r.t}" data-id="${esc(r.id)}"><b class="no">${esc(r.hno)}</b><span class="nm">${esc(r.name)}${r.qty>1?` ×${r.qty}`:""}</span><span class="pl ${r.place==="未入荷"?"w":/^(客先|貸出)/.test(r.place)?"o":""}">${esc(r.place)}</span><span class="us">${esc(r.use||(r.t==="i"?"（会社の品）":""))}</span><span class="by">${r.date?`${esc(r.date.replace(/-/g,"/"))} ${r.dl}　`:""}${esc(r.sup)}${r.price!=null?`　¥${(r.price*r.qty).toLocaleString("ja-JP")}`:""}</span></button>`).join("")
+    :`<div class="empty" style="padding:24px"><b>${all.length?"当てはまる品はありません":"まだ品番の付いた品はありません"}</b>${all.length?"":"「まとめて品番を付ける」か「＋ 会社の品を登録」から始められます。"}</div>`;
+}
+function openItem(t,id){
+  const o=t==="o"?orders.find(v=>v.id===id):null, x=t==="i"&&id?stockItems.find(v=>v.id===id):null; if((t==="o"&&!o)||(t==="i"&&id&&!x)) return;
+  const isNew=t==="i"&&!x, P=o?pjLabel(o):null, cur=o?(o.place||""):(x?x.place||"":"社内"), log=((o||x||{}).plog)||[], ro=!canWrite;
+  openSheet(`<h2>${o||x?esc((o||x).hno||"")+"　":""}${esc(o?o.item||"":x?x.name||"":"会社の品を登録")}</h2>
+    ${o?`<div class="lead">${esc([P.k,P.who].filter(Boolean).join(" "))}${P.spec?`　${esc(P.spec)}`:""}<br>${esc(o.supplier||"仕入先 未定")}${o.orderDate?`　発注 ${esc(o.orderDate)}`:""}${o.arrivedAt?`　入荷 ${esc(o.arrivedAt)}`:""}${typeof o.price==="number"?`　¥${(o.price*(+o.qty||1)).toLocaleString("ja-JP")}`:""}　状態：${esc(o.status)}</div>`
+      :`<div class="f"><label for="it-name">品名</label><input id="it-name" value="${esc(x?x.name||"":"")}" placeholder="例：75インチモニター、DD+ ホイールベース"></div>
+        <div class="f"><label for="it-qty">数量</label><input id="it-qty" type="number" min="1" inputmode="numeric" value="${x?+x.qty||1:1}"></div>
+        <div class="f"><label for="it-sup">買った所</label><input id="it-sup" value="${esc(x?x.supplier||"":"")}" placeholder="例：コジマ"></div>
+        <div class="f"><label for="it-price">金額（1つあたり・税抜）</label><input id="it-price" type="number" inputmode="numeric" value="${x&&typeof x.price==="number"?x.price:""}"></div>
+        <div class="f"><label for="it-bought">買った日</label><input id="it-bought" type="date" value="${esc(x?x.bought||"":todayStr())}"></div>
+        <div class="f"><label for="it-use">使った案件・使い先</label><input id="it-use" list="useList" value="${esc(x?x.use||"":"")}" placeholder="例：D260123 トヨタカローラ埼玉／社内デモ機"><datalist id="useList">${projects.slice(0,80).map(p=>`<option value="${esc([p.k,p.client].filter(Boolean).join(" "))}">`).join("")}</datalist></div>`}
+    <div class="f"><label for="it-place">今どこにあるか${o?"（空にすると、発注の状態から自動で出します）":""}</label><input id="it-place" list="plList" value="${esc(cur)}" placeholder="例：倉庫 棚B-2、貸出中（○○様）"><datalist id="plList">${PLACES.map(p=>`<option value="${p}">`).join("")}</datalist></div>
+    <div class="f"><label for="it-note">メモ</label><input id="it-note" value="${esc((o?o.hnote:x?x.note:"")||"")}"></div>
+    ${log.length?`<div class="itlog"><b>場所の記録</b>${log.slice(-6).reverse().map(l=>`<div>${esc(String(l.at||"").slice(0,10))}　${esc(l.to||"")}</div>`).join("")}</div>`:""}
+    <div class="btns"><button class="b b-ghost" data-i="close">${ro?"閉じる":"やめる"}</button>${x&&!ro?`<button class="b b-red" data-i="del">消す</button>`:""}${o?`<button class="b b-ghost" data-i="go">発注を開く</button>`:""}${ro?"":`<button class="b b-gold" data-i="save" style="flex:1">${isNew?"登録して品番を付ける":"保存"}</button>`}</div>`);
+  sheetLock=true; sheet.classList.add("wide");
+  sheet.onclick=async e=>{ const b=e.target.closest("button[data-i]"); if(!b) return; const a=b.dataset.i;
+    if(a==="close"){ sheet.onclick=null; closeSheet(); return; }
+    if(a==="go"){ sheet.onclick=null; closeSheet(); showGroup(pjKey(o)); return; }
+    if(a==="del"){ if(b.dataset.sure!=="1"){ b.dataset.sure="1"; b.textContent="もう一度押すと消します（元に戻せません）"; return; } b.disabled=true; try{ await deleteItem(x.id); toast("消しました"); }catch(err){ toast("消せませんでした"); } sheet.onclick=null; closeSheet(); return; }
+    const place=$("#it-place").value.trim(), note=$("#it-note").value.trim(), now=new Date().toISOString(); b.disabled=true;
+    try{
+      if(o){ const plog=place!==(o.place||"")?[...(o.plog||[]),{at:now,to:place||"（自動）"}].slice(-20):o.plog; await saveOrder(o.id,{...strip(o),place,hnote:note,...(plog?{plog}:{}),updatedAt:now}); }
+      else{ const name=$("#it-name").value.trim(); if(!name){ toast("品名を入れてください"); b.disabled=false; return; }
+        const pv=$("#it-price").value.trim(), base=x?strip(x):{hno:hnoNext(1)[0],createdAt:now}, pl=place||"社内";
+        const plog=!x||pl!==(x.place||"")?[...((x&&x.plog)||[]),{at:now,to:pl}].slice(-20):(x.plog||[]);
+        await saveItem(x?x.id:gid("i"),{...base,name,qty:Math.max(1,+$("#it-qty").value||1),supplier:$("#it-sup").value.trim(),price:pv===""?null:+pv,bought:$("#it-bought").value||"",use:$("#it-use").value.trim(),place:pl,note,plog,updatedAt:now});
+        if(!x) toast(`品番 ${base.hno} を付けました`); }
+      sheet.onclick=null; closeSheet();
+    }catch(err){ console.error(err); toast("保存できませんでした"); b.disabled=false; }
+  };
+}
+// ラベル：A4縦に3列×8段（24枚）。品番を大きく、品名と使い先を小さく。切って貼る
+function printLabels(rows){
+  if(!rows.length){ toast("印刷する品がありません"); return; }
+  const cells=rows.slice(0,240).map(r=>`<div class="lb"><b>${esc(r.hno)}</b><span>${esc(r.name)}${r.qty>1?` ×${r.qty}`:""}</span><small>${esc(r.use||"")}</small></div>`).join("");
+  const html=`<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>品番ラベル</title><style>@page{size:A4 portrait;margin:10mm}*{box-sizing:border-box}body{margin:0;font-family:"BIZ UDPGothic","BIZ UDPゴシック","Yu Gothic UI","Meiryo",sans-serif;color:#000}.g{display:grid;grid-template-columns:repeat(3,1fr)}.lb{height:34.5mm;border:.3mm dashed #999;padding:3mm 4mm;overflow:hidden;break-inside:avoid;display:flex;flex-direction:column;justify-content:center}.lb b{font-size:20pt;letter-spacing:.03em;line-height:1.1}.lb span{font-size:10.5pt;font-weight:700;line-height:1.25;margin-top:1mm;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.lb small{font-size:8.5pt;margin-top:.5mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}</style></head><body><div class="g">${cells}</div></body></html>`;
+  const f=document.createElement("iframe"); f.setAttribute("aria-hidden","true"); f.style.cssText="position:fixed;left:-3000px;top:0;width:210mm;height:297mm;border:0;visibility:hidden";
+  f.onload=()=>setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(err){ console.error(err); toast("印刷できませんでした"); } setTimeout(()=>f.remove(),60000); },300);
+  document.body.appendChild(f); f.srcdoc=html;
+}
+$("#view-items").addEventListener("click",e=>{ const f=e.target.closest("[data-if]"); if(f){ itF=f.dataset.if; renderItems(); return; }
+  const b=e.target.closest("[data-it]"); if(!b) return; const a=b.dataset.it;
+  if(a==="add"){ if(canWrite) openItem("i",null); else toast("閲覧のみの権限です"); } else if(a==="print") printLabels(hRows().filter(hMatch)); else if(a==="number"){ b.disabled=true; numberOrders(true).then(()=>renderItems()); } else if(a==="open") openItem(b.dataset.t,b.dataset.id); });
+$("#itQ").addEventListener("input",e=>{ itQ=e.target.value.trim(); renderItems(); });
 function renderLedger(){
   const rows=ledgerRows(), t=$("#ltable");
   const head=`<thead><tr><th>宛先</th><th>仕様</th><th>工事番号</th><th>品名</th><th>仕入先</th><th>発注日</th><th>納期予定</th><th>状態</th><th>遅延</th></tr></thead>`;
@@ -2999,9 +3111,11 @@ async function deleteProject(id){ if(db) await db.collection("projects").doc(id)
 async function saveTask(id,data){ if(db) await db.collection("tasks").doc(id).set(data); else { const i=tasks.findIndex(t=>t.id===id); if(i>=0) tasks[i]={id,...data}; else tasks.push({id,...data}); onData(); } }
 async function deleteTask(id){ if(db) await db.collection("tasks").doc(id).delete(); else { tasks=tasks.filter(t=>t.id!==id); onData(); } }
 async function saveSettings(data){ if(db) await db.collection("settings").doc("board").set(data); else { settings=data; onData(); } }
+async function saveItem(id,data){ return saveOrder(id,{...data,own:true}); }   // 会社の品（案件なし）
+async function deleteItem(id){ return deleteOrder(id); }
 async function saveMeeting(id,data){ if(db) await db.collection("meetings").doc(id).set(data); else { const i=meetings.findIndex(m=>m.id===id); if(i>=0) meetings[i]={id,...data}; else meetings.push({id,...data}); onData(); } }
 async function saveProject(id,data){ if(db) await db.collection("projects").doc(id).set(data); else { const i=projects.findIndex(p=>p.id===id); if(i>=0) projects[i]={id,...data}; else projects.push({id,...data}); onData(); } }
-function onData(){ renderList(); renderPj(); renderTasks(); if($("#view-ledger").classList.contains("active")) renderLedger(); if($("#view-cal").classList.contains("active")) renderCal(); listeners.forEach(f=>{ try{ f(); }catch{} }); }
+function onData(){ renderList(); renderPj(); renderTasks(); if($("#view-items").classList.contains("active")&&!scrim.classList.contains("open")) renderItems(); if($("#view-ledger").classList.contains("active")) renderLedger(); if($("#view-cal").classList.contains("active")) renderCal(); listeners.forEach(f=>{ try{ f(); }catch{} }); }
 function markReady(){ if(!(ordersReady&&projectsReady)) return; while(waiting.length) waiting.shift()(); }
 
 /* ---------- 仕様書アプリとの連携 ---------- */
@@ -4334,7 +4448,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 18:45<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 19:40<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -5013,12 +5127,12 @@ return api;
       if (dv) return '<div class="linkBox on done"><b><em class="stt d">納品済み</em>　' + dayShort(dv) + ' に納品</b><div class="st">' + (st.n ? '発注 ' + st.n + '件　入荷済 ' + st.in : '発注した品はありません') + '</div>' +
         (dlvRO() ? '' : '<div class="dlvDay"><label for="specDlv">納品した日</label><input id="specDlv" type="date" value="' + esc(dv) + '"></div>') +
         '<p>一覧では、いちばん下の「納品済み」にまとめてあります。発注の記録は残っています。</p><button type="button" class="btn line" data-act="openBoard">発注・納期を見る</button>' +
-        (dlvRO() ? '' : '<button type="button" class="undo" data-act="undeliver">納品済みを取り消す</button>') + '</div>';
+        (dlvRO() ? '' : '<button type="button" class="undo" data-act="undeliver">納品済みを取り消す</button>') + (store.readOnly ? '' : '<button type="button" class="btn line" data-act="dupSpec" style="margin-top:10px">この仕様書を写して、新しい仕様書を作る（同じ内容の追加注文など）</button>') + '</div>';
       return '<div class="linkBox on"><b>' + (r.pre ? '<em class="stt q">受注前（先行）</em>' : '<em class="stt o">受注決定</em>') + '　発注・納期ボードに載っています</b>' + (r.pre && !store.readOnly ? '<button type="button" class="btn fill" data-act="linkBoard" style="margin:6px 0 4px">受注決定にする</button>' : '') + '<b style="display:none"></b><div class="st">' + (st.n ? '発注 ' + st.n + '件　未発注 ' + st.todo + '・入荷済 ' + st.in + (st.late ? '　<i>遅延 ' + st.late + '</i>' : '') : '発注する品はまだありません') + '</div><p>品・発注先・納品日・工事番号を直すと、ボードも一緒に変わります。</p><button type="button" class="btn line" data-act="openBoard">発注・納期を見る</button>' +
         (dlvRO() ? '' : '<button type="button" class="btn line dlvBtn" data-act="deliver">✓ 納品済みにする</button>') +
-        (store.readOnly ? '' : '<button type="button" class="undo" data-act="unlinkBoard">' + (ui.confirmUnlink ? 'もう一度押すと見積もり段階に戻します（ボードから外れます。発注済みの品は残ります）' : '見積もり段階に戻す') + '</button>') + '</div>';
+        (store.readOnly ? '' : '<button type="button" class="undo" data-act="unlinkBoard">' + (ui.confirmUnlink ? 'もう一度押すと見積もり段階に戻します（ボードから外れます。発注済みの品は残ります）' : '見積もり段階に戻す') + '</button>') + (store.readOnly ? '' : '<button type="button" class="btn line" data-act="dupSpec" style="margin-top:10px">この仕様書を写して、新しい仕様書を作る（同じ内容の追加注文など）</button>') + '</div>';
     }
-    return '<div class="linkBox"><b><em class="stt q">見積もり段階</em></b><p>受注が決まったら押してください。受注決定にすると、この仕様書の品が発注・納期ボードに並びます（在庫品・支給品・未定の品は並びません）。</p><button type="button" class="btn fill" data-act="linkBoard">受注決定にする</button><p style="margin-top:12px">受注はまだでも、先に動き始めるときは、こちらを押してください。「受注前」の印を付けて、ボードの一覧に並べます。</p><button type="button" class="btn line" data-act="linkPre">受注前だが、先に動く（ボードに載せる）</button></div>';
+    return '<div class="linkBox"><b><em class="stt q">見積もり段階</em></b><p>受注が決まったら押してください。受注決定にすると、この仕様書の品が発注・納期ボードに並びます（在庫品・支給品・未定の品は並びません）。</p><button type="button" class="btn fill" data-act="linkBoard">受注決定にする</button><p style="margin-top:12px">受注はまだでも、先に動き始めるときは、こちらを押してください。「受注前」の印を付けて、ボードの一覧に並べます。</p><button type="button" class="btn line" data-act="linkPre">受注前だが、先に動く（ボードに載せる）</button>' + (r && !store.readOnly ? '<button type="button" class="btn line" data-act="dupSpec" style="margin-top:10px">この仕様書を写して、新しい仕様書を作る（同じ内容の追加注文など）</button>' : '') + '</div>';
   }
   function showJobMsg(text, err) { var el = document.getElementById('jobMsg'); if (el) { el.textContent = text || ''; el.className = 'jobMsg' + (err ? ' err' : ''); } }
   function jobNote(v) {
@@ -5157,6 +5271,7 @@ return api;
     else if (act === 'saveModel') saveModel();
     else if (act === 'removeModel') removeModel();
     else if (act === 'model') go({ screen: 'configs', model: id, config: null, specId: null, draftName: null });
+    else if (act === 'dupSpec') { if (!store.readOnly && record()) { var sr = record(), did = newId(), cp = cleanRecord(did, JSON.parse(JSON.stringify(outRecord(sr)))); if (cp) { cp.board = false; cp.pre = false; cp.job = ''; cp.delivery = ''; cp.dlvMonth = false; cp.dlvAsap = false; cp.name = ((sr.name || '') + '（追加）').slice(0, 60); if (cp.quote) { delete cp.quote.no; delete cp.quote.date; delete cp.quote.delivery; } cp.updatedAt = Date.now(); data.specs[did] = cp; go({ screen: 'spec', model: cp.model, config: cp.config, specId: did, printMode: 'spec' }); saveSpec(); window.scrollTo(0, 0); } } }
     else if (act === 'fromDoc') openFromDoc();
     else if (act === 'workNew') go({ screen: 'spec', model: WORKM.id, config: 'work', specId: null, draftName: null, draftShow: true, printMode: 'spec' });
     else if (act === 'toModels') go({ screen: 'models', model: null, config: null, specId: null });
