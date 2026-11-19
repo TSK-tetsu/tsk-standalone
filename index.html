@@ -634,7 +634,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 11:40', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 12:30', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1474,6 +1474,24 @@ details.done[open]>summary::before{content:"▾"}
 /* 打ち合わせ内容（4列目）：書いた文をそのまま大きめに。長いときはゆっくり自動でスクロール */
 .wl-mt .wl-h .wl-edit{margin-left:auto;border:2px solid #D4AF37;background:transparent;color:#F1E3A6 !important;border-radius:1vh;padding:.3vh .8vw;font-size:1.5vh !important;font-weight:900 !important}
 .wl-mt .wl-h small{margin-left:.6vw}
+.wl-mt .wl-h #wlMtEdit{margin-left:.4vw}
+.wl-tabs{display:flex;gap:.5vw;margin:0 0 1vh}
+.wl-tabs button{flex:1;border:2px solid #1C3253;background:#0A1830;color:#9FB0C9 !important;border-radius:1vh;padding:.6vh .4vw;font-size:1.7vh !important;font-weight:900 !important;white-space:nowrap}
+.wl-tabs button[aria-pressed="true"]{background:#D4AF37;border-color:#D4AF37;color:#081527 !important}
+.wl-mtbody .kp{display:grid;grid-template-columns:repeat(3,1fr);gap:.5vw;margin:0 0 1vh}
+.wl-mtbody .kp div{background:#132B4F;border-radius:.8vh;padding:.6vh .4vw;text-align:center}
+.wl-mtbody .kp b{display:block;font-size:2.8vh;line-height:1.1;color:#F2EEE3}
+.wl-mtbody .kp b.hot{color:#FF8A80 !important}.wl-mtbody .kp b.warn{color:#F2C14E !important}
+.wl-mtbody .kp span{font-size:1.25vh;color:#9FB0C9;font-weight:800;white-space:nowrap}
+.wl-mtbody .wk-make{display:block;margin:1.5vh auto 0;border:2px solid #D4AF37;background:#D4AF37;color:#081527 !important;border-radius:1vh;padding:1vh 1.4vw;font-size:1.8vh !important;font-weight:900 !important}
+.mtv{max-height:58vh;overflow-y:auto;margin:6px 0 12px;font-size:15px;line-height:1.6}
+.mtv .h{margin:12px 0 4px;padding:3px 10px;border-left:5px solid #D4AF37;background:rgba(212,175,55,.14);border-radius:6px;font-weight:900}
+.mtv .h:first-child{margin-top:0}.mtv .li{padding-left:1em;text-indent:-1em}.mtv .li::before{content:"・";color:#B08A1E}
+.mtv .ar{padding-left:1em;color:#9A6B00;font-weight:800}.mtv p{margin:3px 0}
+.mtv .kp{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.mtv .kp div{border:1px solid rgba(212,175,55,.5);border-radius:8px;padding:5px;text-align:center}
+.mtv .kp b{display:block;font-size:22px;line-height:1.15}.mtv .kp b.hot{color:#D93025}.mtv .kp b.warn{color:#B07800}.mtv .kp span{font-size:12px;color:var(--muted);font-weight:700}
+.mtg[data-mid]{cursor:pointer}.mtg.wk{border-left:5px solid #D4AF37}
 .wl-mtbody{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;padding-right:.3vw;font-size:1.75vh;line-height:1.5;font-weight:600;color:#E8EDF5}
 .wl-mtbody::-webkit-scrollbar{display:none}
 .wl-mtbody .h{margin:1.2vh 0 .4vh;padding:.3vh .6vw;border-left:.4vw solid #D4AF37;background:#132B4F;border-radius:.6vh;font-size:1.95vh;font-weight:900;color:#F2EEE3}
@@ -1656,7 +1674,7 @@ details.done[open]>summary::before{content:"▾"}
     <div class="wl-col"><div class="wl-h">納品予定<span class="n" id="wlPjN">0</span><small>納期の近い順</small></div><div class="wl-list" id="wlPj"></div><button class="wl-more" id="wlPjMore" type="button" hidden></button></div>
     <div class="wl-col"><div class="wl-h">要確認の発注<span class="n" id="wlOrdN">0</span><small>遅延・3日以内に納期</small></div><div class="wl-list" id="wlOrd"></div><button class="wl-more" id="wlOrdMore" type="button" hidden></button></div>
     <div class="wl-col"><div class="wl-h">タスク<span class="n" id="wlTkN">0</span><small>期限の近い順</small></div><div class="wl-list" id="wlTk"></div><button class="wl-more" id="wlTkMore" type="button" hidden></button></div>
-    <div class="wl-col wl-mt"><div class="wl-h"><span id="wlMtTtl">打ち合わせ</span><small id="wlMtDate"></small><button class="wl-edit" id="wlMtEdit" type="button">書き換える</button></div><div class="wl-mtbody" id="wlMt"></div></div>
+    <div class="wl-col wl-mt"><div class="wl-tabs" id="wlMtTabs"><button type="button" data-mt="week">今週のまとめ</button><button type="button" data-mt="mtg">打ち合わせ</button></div><div class="wl-h"><span id="wlMtTtl">打ち合わせ</span><small id="wlMtDate"></small><button class="wl-edit" id="wlMtPrint" type="button">印刷</button><button class="wl-edit" id="wlMtEdit" type="button">書き換える</button></div><div class="wl-mtbody" id="wlMt"></div></div>
   </div>
   <footer class="wl-foot"><span>押すと、その案件やタスクを開きます。</span><span id="wlSync"></span></footer>
 </section>
@@ -1721,7 +1739,7 @@ details.done[open]>summary::before{content:"▾"}
           <textarea id="m-text" placeholder="例：埼玉中央向けジュニア4台、モニターはXRJを流用。足りない分のアームをSPKに2本頼む。川内さん、納品日を先方に確認。tora、LINE通知の件を金曜までに。"></textarea>
           <div class="tools"><button class="b b-ghost mic" id="mic" type="button">🎤 音声で入力</button><button class="b b-gold" id="ai" type="button">AIで整理する</button></div>
         </details>
-        <div class="secttl">議事録<span class="n" id="mtgN">0</span></div>
+        <div class="secttl">議事録<span class="n" id="mtgN">0</span><button class="chip" id="wkMake" type="button" style="margin-left:auto;min-height:34px;padding:4px 12px;font-size:13px">今週のまとめ</button></div>
         <div id="mtgs"></div>
       </section>
 
@@ -2588,7 +2606,7 @@ function renderTasks(){
   $("#tasks").innerHTML = gs.length? gs.map(g=>`<section class="tkg" data-who="${esc(g.w)}"><div class="tkg-h"><b>${esc(g.w)}</b><span class="n">${g.ls.filter(t=>!t.done).length}</span>${canWrite?`<button class="b b-sm b-ghost" type="button" data-tadd="${esc(g.w)}" aria-label="${esc(g.w)} にタスクを足す">＋</button>`:""}</div>${g.ls.map(row).join("")}</section>`).join("")
     : `<div class="empty" style="padding:24px"><b>抱えているタスクはありません</b>「＋ タスクを足す」か、打ち合わせのメモから足せます。</div>`;
   $("#mtgN").textContent=meetings.length;
-  $("#mtgs").innerHTML = meetings.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||"").localeCompare(a.createdAt||"")).map(m=>`<div class="mtg"><div class="h"><b>${esc(m.title||"打ち合わせ")}</b><span>${m.date||""}　やること${m.taskCount||0}・注文${m.orderCount||0}</span></div><p>${esc(m.summary||"")}</p></div>`).join("")||`<div class="empty" style="padding:20px">まだ議事録はありません</div>`;
+  $("#mtgs").innerHTML = meetings.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||"").localeCompare(a.createdAt||"")).map(m=>`<div class="mtg ${m.kind==="weekly"?"wk":""}" data-mid="${esc(m.id)}"><div class="h"><b>${esc(m.title||"打ち合わせ")}</b><span>${m.kind==="weekly"?"自動のまとめ　押すと全文・印刷":`${m.date||""}　やること${m.taskCount||0}・注文${m.orderCount||0}`}</span></div><p>${esc(m.summary||"")}</p></div>`).join("")||`<div class="empty" style="padding:20px">まだ議事録はありません</div>`;
 }
 // 相手（会社・人・案件）ごとにまとめ、画面の並び（日程順／名前順／自分の順）で返す
 function taskGroupsOf(rows){
@@ -2921,7 +2939,7 @@ function renderWall(){
   requestAnimationFrame(()=>{ fitList("#wlPj","#wlPjMore","一覧"); fitList("#wlOrd","#wlOrdMore","要確認の一覧"); fitList("#wlTk","#wlTkMore","タスクの画面"); });
 }
 // 掲示する打ち合わせ内容：議事録（meetings）のうち board:true のいちばん新しいもの。掲示画面の「書き換える」で直す
-function wallMeeting(){ return meetings.filter(m=>m.board).sort((a,b)=>String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||"")))[0]||null; }
+function wallMeeting(){ return meetings.filter(m=>m.board&&m.kind!=="weekly").sort((a,b)=>String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||"")))[0]||null; }
 function mtHtml(text){
   return String(text||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
     if(/^(○|◯|●|■|◆|#+\s*)/.test(l)) return `<div class="h">${esc(l.replace(/^(○|◯|●|■|◆|#+)\s*/,""))}</div>`;
@@ -2930,15 +2948,35 @@ function mtHtml(text){
     return `<p>${esc(l)}</p>`;
   }).join("");
 }
-let mtShown="";
+let mtShown="", mtTab="";
 function renderWallMeeting(){
-  const m=wallMeeting(), box=$("#wlMt");
-  $("#wlMtTtl").textContent=m?(m.title||"打ち合わせ"):"打ち合わせ";
-  $("#wlMtDate").textContent=m&&m.date?fmtDW(m.date):"";
-  $("#wlMtEdit").hidden=!canWrite;
-  const html=m&&m.text?mtHtml(m.text):`<div class="wl-empty"><i>✎</i>「書き換える」から、打ち合わせの内容を書いておけます</div>`;
+  const m=wallMeeting(), w=weeklyNow(), box=$("#wlMt");
+  if(!mtTab) mtTab=w?"week":"mtg";
+  $("#wlMtTabs").querySelectorAll("[data-mt]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mt===mtTab));
+  let html;
+  if(mtTab==="week"){
+    $("#wlMtTtl").textContent=w?"今週のまとめ":"今週のまとめ";
+    $("#wlMtDate").textContent=w?`${fmtD(w.date)}〜${fmtD(addDays(w.date,6))}`:"";
+    $("#wlMtEdit").hidden=!canWrite; $("#wlMtEdit").textContent="作り直す";
+    $("#wlMtPrint").hidden=!w;
+    html=w?wkHtml(w):`<div class="wl-empty"><i>☰</i>今週のまとめは、月曜の朝8時に自動で作られます${canWrite?`<button class="wk-make" type="button" data-wkmake="1">今すぐまとめる</button>`:""}</div>`;
+  } else {
+    $("#wlMtTtl").textContent=m?(m.title||"打ち合わせ"):"打ち合わせ";
+    $("#wlMtDate").textContent=m&&m.date?fmtDW(m.date):"";
+    $("#wlMtEdit").hidden=!canWrite; $("#wlMtEdit").textContent="書き換える";
+    $("#wlMtPrint").hidden=!(m&&m.text);
+    html=m&&m.text?mtHtml(m.text):`<div class="wl-empty"><i>✎</i>「書き換える」から、打ち合わせの内容を書いておけます</div>`;
+  }
   if(html!==mtShown){ mtShown=html; box.innerHTML=html; box.scrollTop=0; }
 }
+// 掲示画面の右の欄：「今週のまとめ」と「打ち合わせ」をタブで切り替え。さわっていなければ40秒ごとに自動で切り替える
+let mtTabAt=Date.now();
+function setMtTab(t){ mtTab=t; mtTabAt=Date.now(); mtPause=0; renderWallMeeting(); }
+$("#wlMtTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-mt]"); if(!b) return; e.stopPropagation(); mtHold=Date.now()+120000; setMtTab(b.dataset.mt); });
+$("#wlMt").addEventListener("click",e=>{ if(e.target.closest("[data-wkmake]")){ e.stopPropagation(); makeWeekly(true); } });
+$("#wlMtPrint").addEventListener("click",e=>{ e.stopPropagation(); const r=mtTab==="week"?weeklyNow():wallMeeting(); if(r) printRecord(r); });
+setInterval(()=>{ if(!wallOn||Date.now()<mtHold||Date.now()-mtTabAt<40000) return; const b=$("#wlMt"); if(b.scrollHeight>b.clientHeight+2&&b.scrollTop+b.clientHeight<b.scrollHeight-2) return;   // 長い内容は最後まで流してから
+  if(weeklyNow()&&wallMeeting()) setMtTab(mtTab==="week"?"mtg":"week"); },5000);
 // 長い内容は、ゆっくり下へ流して、いちばん下で少し止まってから上に戻る。指でさわったら1分止める
 let mtHold=0, mtPause=0;
 $("#wlMt").addEventListener("pointerdown",()=>{ mtHold=Date.now()+60000; },{passive:true});
@@ -2969,7 +3007,117 @@ function openWallMeeting(){
     }catch(err){ console.error(err); toast("保存できませんでした"); b.disabled=false; }
   };
 }
-$("#wlMtEdit").addEventListener("click",e=>{ e.stopPropagation(); openWallMeeting(); });
+$("#wlMtEdit").addEventListener("click",e=>{ e.stopPropagation(); if(mtTab==="week") makeWeekly(true); else openWallMeeting(); });
+// ===== 週次まとめ：毎週月曜の朝8時に、社内の仕事の状況を1枚にまとめる（掲示画面の「今週のまとめ」に出て、印刷もできる） =====
+// 記録は議事録（meetings）に kind:"weekly"、id は「w_その週の月曜」。同じ週は何回作っても1件に上書きされる
+function weekMon(d){ const t=new Date((d||todayStr())+"T00:00:00"); t.setDate(t.getDate()-((t.getDay()+6)%7)); return t.toLocaleDateString("sv-SE"); }
+function weekId(mon){ return "w_"+mon.replace(/-/g,""); }
+function weeklyNow(){ return meetings.filter(m=>m.kind==="weekly").sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")))[0]||null; }
+function buildWeekly(){
+  const today=todayStr(), mon=weekMon(today), sun=addDays(mon,6), nMon=addDays(mon,7), nSun=addDays(mon,13), lMon=addDays(mon,-7), lSun=addDays(mon,-1);
+  const inR=(d,a,b)=>!!d&&d>=a&&d<=b, byDue=(a,b)=>(a.due||"9999").localeCompare(b.due||"9999");
+  const pjs=wallProjects(), dlv=pjs.filter(x=>x.isDlv&&x.date);
+  const over=dlv.filter(x=>x.date<today), thisW=dlv.filter(x=>inR(x.date,today,sun)), nextW=dlv.filter(x=>inR(x.date,nMon,nSun));
+  const nodate=pjs.filter(x=>!x.isDlv);
+  const late=orders.filter(isLate).sort(byDue);
+  const arrW=orders.filter(o=>!isLate(o)&&!oDlv(o)&&STATUSES.indexOf(o.status)<ARR&&inR(o.due,today,sun)).sort(byDue);
+  const todoPj=pjs.filter(x=>x.todo>0);
+  const doneL=projects.filter(p=>inR(p.deliveredAt,lMon,lSun)).sort((a,b)=>a.deliveredAt.localeCompare(b.deliveredAt));
+  const arrL=orders.filter(o=>inR(o.arrivedAt,lMon,lSun));
+  const open=tasks.filter(t=>!t.done), tLate=open.filter(t=>t.due&&t.due<today).sort(byDue), tWeek=open.filter(t=>inR(t.due,today,sun)).sort(byDue);
+  const mt=wallMeeting()||meetings.filter(m=>m.kind!=="weekly").sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")))[0];
+  const pjL=x=>{ let t=`・${x.date?fmtDW(x.date):"日付未定"}　${[x.L.k||"番号未定",x.L.who].filter(Boolean).join(" ")}`; if(x.L.spec) t+=`　${x.L.spec}`;
+    const st=[]; if(x.n) st.push(`入荷 ${x.in}/${x.n}`); if(x.todo) st.push(`未発注 ${x.todo}`); if(x.late) st.push(`遅延 ${x.late}`); return st.length?`${t}（${st.join("・")}）`:t; };
+  const oL=o=>{ const P=pjLabel(o), n=o.due?dayDiff(o.due):0; return `・${o.due?fmtD(o.due):"納期未定"}　${o.item||"（品名なし）"}${o.qty>1?` ×${o.qty}`:""}　${o.supplier||"仕入先 未定"}　${[P.k,P.who].filter(Boolean).join(" ")}${n<0?`（${-n}日超過）`:""}`; };
+  const tL=t=>{ const w=taskWho(t); return `・${t.due?fmtD(t.due):""}　${w?w+"：":""}${t.title||""}${t.assignee?`（担当 ${t.assignee}）`:""}`; };
+  const sec=(h,ls,fn,empty,max=14)=>{ if(!ls.length) return empty?[`○ ${h}`,`・${empty}`]:[]; const out=[`○ ${h}`,...ls.slice(0,max).map(fn)]; if(ls.length>max) out.push(`→ ほか ${ls.length-max}件（ボードで確認）`); return out; };
+  const L=[
+    ...sec(`今週の納品予定（${fmtD(today)}〜${fmtD(sun)}）`,thisW,pjL,"今週の納品予定はありません"),
+    ...sec("納品日を過ぎている案件",over,pjL),
+    ...sec("遅れている発注",late,oL,"遅れている発注はありません"),
+    ...sec(`今週入荷予定の発注（${fmtD(sun)}まで）`,arrW,oL),
+    ...sec("未発注が残っている案件",todoPj,pjL),
+    ...sec(`来週の納品予定（${fmtD(nMon)}〜${fmtD(nSun)}）`,nextW,pjL),
+    ...sec("期限を過ぎたタスク",tLate,tL),
+    ...sec("今週が期限のタスク",tWeek,tL),
+    ...sec(`先週納品した案件（${fmtD(lMon)}〜${fmtD(lSun)}）`,doneL,p=>`・${fmtDW(p.deliveredAt)}　${[p.k||"番号未定",p.client].filter(Boolean).join(" ")}${p.spec?`　${p.spec}`:""}`),
+  ];
+  if(nodate.length) L.push("○ 納品日が決まっていない案件",`・${nodate.length}件（${nodate.slice(0,6).map(x=>[x.L.k,x.L.who].filter(Boolean).join(" ")).join("、")}${nodate.length>6?" ほか":""}）`);
+  if(mt) L.push("○ 最近の打ち合わせ",`→ ${mt.date?fmtDW(mt.date)+"　":""}${mt.title||"打ち合わせ"}${mt.board?"（掲示画面の「打ち合わせ」に全文）":""}`);
+  const stats={thisW:thisW.length,over:over.length,late:late.length,todo:todoPj.length,tLate:tLate.length,doneL:doneL.length,arrL:arrL.length,pending:pjs.length,tasks:open.length,nextW:nextW.length};
+  return {mon,sun,text:L.join("\n"),stats};
+}
+function wkKp(){ return [["thisW","今週の納品",""],["over","納品日超過","hot"],["late","発注の遅れ","hot"],["todo","未発注の案件","warn"],["tLate","期限超過タスク","hot"],["doneL","先週の納品",""]]; }
+function wkHtml(w){ const st=w.stats||{};
+  return `<div class="kp">${wkKp().map(([k,l,c])=>`<div><b class="${st[k]?c:""}">${st[k]??"—"}</b><span>${l}</span></div>`).join("")}</div>${mtHtml(w.text)}<p style="margin-top:1.2vh;color:#9FB0C9;font-size:1.4vh">作成 ${w.madeAt?new Date(w.madeAt).toLocaleString("ja-JP",{month:"numeric",day:"numeric",weekday:"short",hour:"numeric",minute:"2-digit"}):""}　納品待ち ${st.pending??"—"}件・タスク ${st.tasks??"—"}件・先週の入荷 ${st.arrL??"—"}件</p>`; }
+async function makeWeekly(manual){
+  if(!canWrite) return;
+  const b=buildWeekly(), id=weekId(b.mon), old=meetings.find(m=>m.id===id), now=new Date().toISOString(), st=b.stats;
+  try{
+    await saveMeeting(id,{kind:"weekly",title:`週次まとめ ${fmtD(b.mon)}〜${fmtD(b.sun)}`,date:b.mon,text:b.text,stats:st,
+      summary:`今週の納品 ${st.thisW}件・納品日超過 ${st.over}件・発注の遅れ ${st.late}件・期限超過タスク ${st.tLate}件・先週の納品 ${st.doneL}件`,
+      board:false,taskCount:0,orderCount:0,madeAt:now,auto:!manual,createdAt:old?.createdAt||now,updatedAt:now});
+    if(manual) toast("今週のまとめを作りました");
+    if(wallOn){ mtTab="week"; mtTabAt=Date.now(); renderWallMeeting(); }
+  }catch(err){ console.error(err); if(manual) toast("まとめを保存できませんでした"); }
+}
+// 自動：月曜の8時を過ぎて、その週のまとめがまだなければ作る（書き込みできる端末のどれか1台が作れば、ほかは作らない）
+let wkBusy=false; const wkBoot=Date.now();
+function autoWeekly(){
+  if(!canWrite||wkBusy||Date.now()-wkBoot<90000) return;            // 起動直後はデータが届くのを待つ
+  const mon=weekMon(); if(todayStr()===mon&&new Date().getHours()<8) return;
+  if(meetings.some(m=>m.id===weekId(mon))) return;
+  if(!orders.length&&!projects.length) return;
+  wkBusy=true; makeWeekly(false).finally(()=>{ wkBusy=false; });
+}
+setInterval(autoWeekly,60000);
+// 印刷：A4横。週次まとめは上に数字の箱、本文は2段組み
+function printRecord(r){
+  const isW=r.kind==="weekly", st=r.stats||{}, now=new Date();
+  const kp=isW?`<div class="kp">${wkKp().map(([k,l,c])=>`<div><b class="${st[k]?c:""}">${st[k]??"—"}</b><span>${l}</span></div>`).join("")}</div>`:"";
+  const sub=isW?`${fmtDW(r.date)}〜${fmtDW(addDays(r.date,6))}`:(r.date?fmtDW(r.date):"");
+  const html=`<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>${esc(r.title||"")}</title><style>
+@page{size:A4 landscape;margin:10mm 12mm}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Yu Gothic UI","Yu Gothic","Meiryo","Hiragino Sans",sans-serif;color:#111;font-size:9.5pt;line-height:1.45;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+header{display:flex;align-items:flex-end;gap:14px;border-bottom:2.5pt solid #0B1F3A;padding-bottom:5px;margin-bottom:8px}
+.brand{font-weight:900;font-size:21pt;letter-spacing:.08em;color:#0B1F3A;line-height:1}
+.brand small{display:block;font-size:7pt;letter-spacing:.22em;color:#9A7B1F;margin-top:2px}
+h1{margin:0;font-size:15pt;line-height:1.2}h1 small{display:block;font-size:9.5pt;color:#555;font-weight:700}
+.meta{margin-left:auto;text-align:right;font-size:8.5pt;color:#555}
+.kp{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:8px}
+.kp div{border:1pt solid #C9B66B;border-radius:5px;padding:3px 6px;text-align:center;background:#FBF8EE}
+.kp b{display:block;font-size:17pt;line-height:1.15}.kp b.hot{color:#C62828}.kp b.warn{color:#A86A00}
+.kp span{font-size:8pt;color:#555;font-weight:700}
+.body{columns:2;column-gap:9mm;column-rule:.5pt solid #ddd}
+.h{break-after:avoid;font-weight:900;font-size:11pt;margin:7px 0 3px;padding:2px 7px;border-left:4pt solid #D4AF37;background:#F3EEDC}
+.h:first-child{margin-top:0}
+.li{padding-left:1em;text-indent:-1em;margin:1px 0;break-inside:avoid}.li::before{content:"・";color:#9A7B1F}
+.ar{padding-left:1em;color:#7A5B00;font-weight:700;break-inside:avoid}
+p{margin:2px 0}
+</style></head><body><header><div class="brand">TSK<small>社内共有</small></div><h1>${esc(isW?"週次まとめ　社内の仕事の状況":(r.title||"打ち合わせ"))}<small>${esc(sub)}</small></h1><div class="meta">TSK株式会社<br>印刷 ${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}</div></header>${kp}<div class="body">${mtHtml(r.text)}</div></body></html>`;
+  const f=document.createElement("iframe"); f.setAttribute("aria-hidden","true");
+  f.style.cssText="position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+  f.onload=()=>setTimeout(()=>{ try{ f.contentWindow.focus(); f.contentWindow.print(); }catch(err){ console.error(err); toast("印刷できませんでした"); } setTimeout(()=>f.remove(),60000); },250);
+  document.body.appendChild(f); f.srcdoc=html;
+}
+// 議事録の一覧：押すと全文を表示。印刷・掲示画面に出す・（週次まとめは）作り直す
+function openMtgView(id){
+  const m=meetings.find(x=>x.id===id); if(!m) return;
+  const isW=m.kind==="weekly", cur=isW&&m.id===weekId(weekMon());
+  openSheet(`<h2>${esc(m.title||"打ち合わせ")}</h2><div class="lead">${esc(isW?`${fmtDW(m.date)}〜${fmtDW(addDays(m.date,6))}`:(m.date?fmtDW(m.date):""))}</div>
+    <div class="mtv">${m.text?(isW?wkHtml(m):mtHtml(m.text)):`<p>${esc(m.summary||"（本文なし）")}</p>`}</div>
+    <div class="btns"><button class="b b-ghost" data-v="close">閉じる</button>${m.text?`<button class="b b-ghost" data-v="print">印刷</button>`:""}${canWrite&&cur?`<button class="b b-gold" data-v="remake">今の状況で作り直す</button>`:""}${canWrite&&!isW&&m.text?`<button class="b b-gold" data-v="board">掲示画面に出す</button>`:""}</div>`);
+  sheet.onclick=async e=>{ const b=e.target.closest("button[data-v]"); if(!b) return; const v=b.dataset.v;
+    if(v==="close"){ sheet.onclick=null; closeSheet(); return; }
+    if(v==="print"){ printRecord(m); return; }
+    b.disabled=true;
+    if(v==="remake"){ await makeWeekly(true); sheet.onclick=null; closeSheet(); openMtgView(id); return; }
+    if(v==="board"){ try{ await saveMeeting(m.id,{...strip(m),board:true,updatedAt:new Date().toISOString()}); toast("掲示画面に出しました"); sheet.onclick=null; closeSheet(); }catch(err){ console.error(err); toast("保存できませんでした"); b.disabled=false; } }
+  };
+}
+$("#mtgs").addEventListener("click",e=>{ const d=e.target.closest(".mtg[data-mid]"); if(d) openMtgView(d.dataset.mid); });
+$("#wkMake").addEventListener("click",()=>{ const w=meetings.find(m=>m.id===weekId(weekMon())); if(w) openMtgView(w.id); else makeWeekly(true).then(()=>{ const n=meetings.find(m=>m.id===weekId(weekMon())); if(n) openMtgView(n.id); }); });
 function showWall(){ if(scrim.classList.contains("open")) closeSheet(); wallOn=true; wall.hidden=false; renderWall(); }
 function hideWall(){ wallOn=false; wall.hidden=true; wallAct=Date.now(); }
 wall.addEventListener("click",e=>{
@@ -3915,7 +4063,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 11:40</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 12:30</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
