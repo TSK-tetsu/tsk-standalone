@@ -634,7 +634,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 12:30', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 13:20', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1533,6 +1533,14 @@ details.done[open]>summary::before{content:"▾"}
 .wl-tag.late{background:#E5483D;color:#fff}
 .wl-tag.today{background:#F2C14E;color:#081527}
 .wl-tag.soon{background:#8A6A1E;color:#FFF3CF}
+/* ぱっと見で分かるように：色が付くのは「遅れ・今日・3日以内」だけ。ほかは文字を控えめに */
+.wl-tag:not(.late):not(.today):not(.soon){background:transparent;color:#8193AE;padding:0}
+.wl-row .ttl{font-size:2.15vh !important}
+.wl-row .sub{color:#8193AE !important;font-size:1.5vh !important}
+.wl-row .sub em.r{font-style:normal;margin-left:.6vw;background:#E5483D;color:#fff;border-radius:.6vh;padding:0 .5vw;font-weight:900}
+.wl-row .dt b.none{color:#8193AE}
+.wl-kpi:not(.hot):not(.warn){opacity:.55}
+.wl-kpi{min-width:9vw !important}
 .wl-pj .bar{grid-column:1 / span 2;display:flex;align-items:center;gap:.8vw;font-size:1.5vh;font-weight:800;color:#C9D4E5}
 .wl-pj .bar .track{flex:1;height:.9vh;border-radius:999px;background:#0A1A33;overflow:hidden}
 .wl-pj .bar .track i{display:block;height:100%;background:linear-gradient(90deg,#3E7BE0,#5FC48A);border-radius:999px}
@@ -1661,6 +1669,24 @@ details.done[open]>summary::before{content:"▾"}
 .scrim.kb .sheet{max-height:min(52vh,560px) !important;overflow-y:auto;animation:none}
 .grp .grp-h .ghint{flex:0 0 100%;order:99;margin-top:2px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.18);text-align:center;font-size:13px;font-weight:800;color:var(--gold-soft);letter-spacing:.04em;opacity:.9}
 :host(.mode-d) .grp .grp-h .ghint{font-size:14px}
+/* PCの一覧はシンプルに：上の数字・カードの形・色の説明は出さない（絞り込みは右の欄から）。たたんだ札は「番号・宛先・仕様・納品日・ひとことの状況」だけ。押すと全部出る */
+:host(.mode-d) #view-list .stats,:host(.mode-d) #list>.cardsw,:host(.mode-d) #list>.legend{display:none !important}
+.qs{display:none}
+:host(.mode-d) #list .grp:not(.open) :is(.gsum,.ghint,.meta,.units,.tosp,.xadd,.dlvgo,.brk){display:none !important}
+:host(.mode-d) #list .grp:not(.open) :is(.kbtn,.dlvbtn){pointer-events:none}
+:host(.mode-d) #list .grp:not(.open) .grp-h{padding:14px 18px 14px;row-gap:8px}
+:host(.mode-d) #list .grp:not(.open) .grp-h .base{flex:0 0 100%}
+:host(.mode-d) #list .grp:not(.open) .grp-h .base b{font-size:21px}
+:host(.mode-d) #list .grp:not(.open) .grp-h .base small{font-size:13px}
+:host(.mode-d) #list .grp:not(.open) .grp-h .who{font-size:18px}
+:host(.mode-d) #list .grp:not(.open) .qs{display:flex;align-items:center;gap:12px;margin-left:auto;font-size:14px;font-weight:800;color:#C9D2E0}
+:host(.mode-d) .qs em{font-style:normal;white-space:nowrap}.qs em b{font-size:17px;color:#fff}
+:host(.mode-d) .qs em.y{color:#F2C14E}:host(.mode-d) .qs em.r{color:#fff;background:var(--red);border-radius:6px;padding:1px 8px}
+:host(.mode-d) .qs .trk{width:90px;height:7px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden}.qs .trk i{display:block;height:100%;background:linear-gradient(90deg,#4FC3F7,#5BD18B)}
+:host(.mode-d) #list .grp:not(.open){margin-bottom:0}
+.fbar{display:flex;align-items:center;gap:14px;margin:0 0 12px;padding:10px 14px;border-radius:12px;background:rgba(212,175,55,.14);border:1px solid rgba(212,175,55,.5);font-weight:900;font-size:16px}
+.fbar[hidden]{display:none}.fbar .b{margin-left:auto}
+:host(:not(.mode-d)) .fbar{display:none}
 .grp.dlvd .grp-h .ghint{color:#C9D2E0}
 </style><div class="bd-body">
 <section class="wall" id="wall" hidden aria-label="掲示画面">
@@ -1709,6 +1735,7 @@ details.done[open]>summary::before{content:"▾"}
           <button class="stat" data-f="week"><div class="v" id="st-week">0</div><div class="l">今週納期</div></button>
           <button class="stat" data-f="open"><div class="v" id="st-open">0</div><div class="l">未入荷</div></button>
         </div>
+        <div class="fbar" id="fbar" hidden><span id="fbarT"></span><button type="button" class="b b-sm b-gold" id="fbarAll">すべての案件に戻す</button></div>
         <button class="tkstrip" id="tkStrip" type="button" hidden><span class="ico">✓</span><span class="tx"><span><b id="tkStripN">0</b><span id="tkStripT">件のタスク</span><em id="tkStripL" hidden></em></span><small id="tkStripNext"></small></span><i>›</i></button>
         <div class="chips" id="filters">
           <button class="chip" data-f="all" aria-pressed="true">すべて</button>
@@ -1965,6 +1992,7 @@ $("#fab").addEventListener("click",()=>openAdd()); $("#sideAdd").addEventListene
 function setFilter(f){ filter=f; root.querySelectorAll("#filters .chip,#stats .stat").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f===f)); renderList(); }
 $("#filters").addEventListener("click",e=>{ const c=e.target.closest(".chip"); if(c) setFilter(c.dataset.f); });
 $("#stats").addEventListener("click",e=>{ const c=e.target.closest(".stat"); if(c) setFilter(c.dataset.f); });
+$("#fbarAll").addEventListener("click",()=>setFilter("all"));
 function filtered(){ return orders.filter(o=>{ if(filter==="soon") return dueSoon(o); if(filter==="late") return isLate(o); if(filter==="week") return inThisWeek(o.due)&&!oDlv(o); if(filter==="open") return STATUSES.indexOf(o.status)<ARR&&!oDlv(o); if(filter==="done") return STATUSES.indexOf(o.status)>=ARR; return true; }); }
 
 /* ---------- list ---------- */
@@ -1991,6 +2019,7 @@ function renderList0(){
   (b=>{ b.textContent=late; b.hidden=!late; })($("#chipLate")); (b=>{ b.textContent=soon; b.hidden=!soon; })($("#chipSoon"));
   let lb=$("#lineBtn"); if(!lb){ lb=document.createElement("button"); lb.id="lineBtn"; lb.className="b b-ghost"; lb.style.cssText="width:100%;margin:0 0 10px"; lb.textContent="📋 要確認をLINE用にコピー"; lb.addEventListener("click",async()=>{ const t=lineText(); if(!t){ toast("要確認の発注はありません"); return; } try{ await navigator.clipboard.writeText(t); snd.ok(); toast("コピーしました。LINEに貼り付けてください"); }catch{ openSheet(`<h2>LINE用テキスト</h2><div class="lead">長押しで全選択→コピーしてください</div><div class="linebox">${esc(t)}</div><div class="btns"><button class="b b-gold" data-cl="1">閉じる</button></div>`); sheet.onclick=e=>{ if(e.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } }; } }); el.before(lb); }
   lb.hidden= filter!=="soon" || !soon;
+  { const fb=$("#fbar"); fb.hidden=filter==="all"; $("#fbarT").textContent=({soon:"要確認の発注",late:"遅延している発注",week:"今週が納期の発注",open:"未入荷の発注"})[filter]?`${({soon:"要確認の発注",late:"遅延している発注",week:"今週が納期の発注",open:"未入荷の発注"})[filter]}だけを表示中`:""; }
   if(!rows.length&&!(filter==="all"&&projects.length)){
     el.innerHTML=`<div class="empty"><b>${orders.length?"該当する発注はありません":"最初の発注を登録しましょう"}</b>${orders.length?"":"「誰向け・何の仕様か」→「品名・仕入先」→「納期」の3ステップです。"}${canWrite&&!orders.length?`<br><button class="b b-gold" id="emptyAdd">＋ 発注を追加</button>`:""}</div>`;
     $("#emptyAdd")?.addEventListener("click",()=>openAdd()); syncFocus(); return;
@@ -2006,7 +2035,7 @@ function renderList0(){
   const sec=key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]||{projectId:key}); const lateN=g.filter(isLate).length, dv=dlvAt(key);
-    return `<section class="grp ${gOpen(key)?"open":""} ${dv?"dlvd":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${xTag(key)}${baseHtml(L)}${dv&&canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="xadd" data-xadd="1">＋ 追加工事</button>`:""}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="${dv?"納品した日を変更":"納品日を変更"}">${dlvHtml(L.delivery,dv)}</span>${canWrite&&!dv&&L.delivery&&L.delivery<=todayStr()&&projects.some(x=>x.id===key)?`<button type="button" class="dlvgo" data-dlvgo="1">✓ 納品済みにする</button>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span><span class="ghint">${gOpen(key)?"▲ タップしてたたむ":"▼ タップして詳細を表示"}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
+    return `<section class="grp ${gOpen(key)?"open":""} ${dv?"dlvd":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${xTag(key)}${baseHtml(L)}${dv&&canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="xadd" data-xadd="1">＋ 追加工事</button>`:""}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="${dv?"納品した日を変更":"納品日を変更"}">${dlvHtml(L.delivery,dv)}</span>${canWrite&&!dv&&L.delivery&&L.delivery<=todayStr()&&projects.some(x=>x.id===key)?`<button type="button" class="dlvgo" data-dlvgo="1">✓ 納品済みにする</button>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span>${qsHtml(g,dv)}<span class="ghint">${gOpen(key)?"▲ タップしてたたむ":"▼ タップして詳細を表示"}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
   };
   // 納品済みの案件は、いちばん下にたたんでまとめる（納品した日の新しい順）。押せば開いて見返せる。
   const ak=keys.filter(k=>!dlvAt(k)), dk=keys.filter(k=>dlvAt(k)).sort((a,b)=>dlvAt(b).localeCompare(dlvAt(a)));
@@ -2038,6 +2067,9 @@ function gMatch(f,o){ return f==="late"?isLate(o):f==="nodue"?(!o.due&&STATUSES.
 function gLabel(f){ return f==="late"?"遅延":f==="nodue"?"納期未定":STATUSES[+f.slice(1)]; }
 function gOpen(key){ return filter!=="all"||openGrp.has(key)||grpF.has(key); }
 function gSum(g,key){ const cur=grpF.get(key)||""; const chip=(f,cls,style,label,n)=>`<button type="button" class="st ${cls} ${cur===f?"on":cur?"dim":""}" data-gf="${f}" aria-pressed="${cur===f}" ${style?`style="background:${style}"`:""}>${label}<b>${n}</b></button>`; if(!g.length) return `<div class="gsum"><span class="st none">発注はまだありません</span></div>`; const late=g.filter(isLate).length, nodue=g.filter(o=>!o.due&&STATUSES.indexOf(o.status)<ARR).length; return `<div class="gsum"><div class="bar">${STATUSES.map((s,i)=>{ const n=g.filter(o=>o.status===s).length; return n?`<i style="width:${n/g.length*100}%;background:${SCOL[i]}"></i>`:""; }).join("")}</div>${STATUSES.map((s,i)=>{ const n=g.filter(o=>o.status===s).length; return n?chip("s"+i,"",SCOL[i],s,n):""; }).join("")}${late?chip("late","late","","遅延",late):""}${nodue?chip("nodue","none","","納期未定",nodue):""}${(pn=>pn?`<span class="gtot">仕入れ <b>${yenB(g.reduce((a,o)=>a+(hasPrice(o)?o.price*(+o.qty||1):0),0))}</b><small>${pn===g.length?"全件に金額あり":`${g.length}件中 ${pn}件に金額`}</small></span>`:"")(g.filter(hasPrice).length)}${cur?`<span class="gfnote">「${gLabel(cur)}」だけ表示中。もう一度押すと全部に戻ります</span>`:""}</div>`; }
+// PCの一覧（たたんだ札）に出す、ひとことの状況：入荷の進み・未発注・遅延だけ
+function qsHtml(g,dv){ if(dv) return ""; if(!g.length) return `<span class="qs"><em>発注なし</em></span>`; const n=g.length, a=g.filter(o=>STATUSES.indexOf(o.status)>=ARR).length, todo=g.filter(o=>o.status===STATUSES[0]).length, late=g.filter(isLate).length;
+  return `<span class="qs"><span class="trk"><i style="width:${Math.round(a/n*100)}%"></i></span><em>入荷 <b>${a}/${n}</b></em>${todo?`<em class="y">未発注 ${todo}</em>`:""}${late?`<em class="r">遅延 ${late}</em>`:""}</span>`; }
 function grpBody(key,g){ const f=grpF.get(key); return f?supBlocks(g.filter(o=>gMatch(f,o)),true):supBlocks(g); }
 function supBlocks(g,force){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>{ const id=pjKey(l[0])+"|"+s, shut=!force&&filter==="all"&&!openSup.has(id), ls=[...l].sort((a,b)=>(a.status===STATUSES[DONE])-(b.status===STATUSES[DONE]));
     const mini=STATUSES.map((st,i)=>{ const n=l.filter(o=>o.status===st).length; return n?`<span class="st" style="background:${SCOL[i]}">${st}<b>${n}</b></span>`:""; }).join("");
@@ -2916,24 +2948,21 @@ function renderWall(){
   const pjs=wallProjects(), soon=orders.filter(dueSoon).sort((a,b)=>a.due.localeCompare(b.due)), open=tasks.filter(t=>!t.done).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
   const lateN=orders.filter(isLate).length, tkLate=open.filter(t=>t.due&&t.due<today).length, wkN=pjs.filter(x=>x.isDlv&&inThisWeek(x.date)).length;
   const kpi=(v,l,c)=>`<div class="wl-kpi ${v?c:""}"><b>${v}</b><span>${l}</span></div>`;
-  $("#wlKpis").innerHTML=kpi(lateN,"発注の遅延","hot")+kpi(soon.length,"要確認","warn")+kpi(wkN,"今週の納品","warn")+kpi(tkLate,"タスク期限超過","hot");
+  $("#wlKpis").innerHTML=kpi(wkN,"今週の納品","warn")+kpi(lateN,"発注の遅れ","hot")+kpi(tkLate,"期限切れタスク","hot");
   $("#wlPjN").textContent=pjs.length; $("#wlOrdN").textContent=soon.length; $("#wlTkN").textContent=open.length;
   $("#wlPj").innerHTML=pjs.length?pjs.map(x=>{
-    const tg=x.date?dayTag(x.date):null, cls=tg&&tg.c==="late"?"late":tg&&(tg.c==="today"||tg.c==="soon")?"soon":"", pct=x.n?Math.round(x.in/x.n*100):0;
-    return `<button class="wl-pj ${cls}" data-pj="${esc(x.k)}" type="button">
-      <div class="who"><span class="wl-k ${x.L.k?"":"none"}">${esc(x.L.k||"番号未定")}</span><span>${esc(x.L.who||"案件未設定")}</span></div>
-      <div class="spec">${esc(x.L.spec||"")}</div>
-      <div class="when"><span class="lb">${x.isDlv?"納品":"次の入荷"}</span><b>${x.date?fmtDW(x.date):"未定"}</b>${tg?`<br><span class="wl-tag ${tg.c}">${tg.t}</span>`:""}</div>
-      <div class="bar">${x.n?`<span class="track"><i style="width:${pct}%"></i></span><em>入荷 ${x.in}/${x.n}</em>`:`<em>発注なし</em>`}${x.todo?`<em class="y">未発注 ${x.todo}</em>`:""}${x.late?`<em class="r">遅延 ${x.late}</em>`:""}</div>
-    </button>`; }).join(""):`<div class="wl-empty"><i>✓</i>納品待ちの案件はありません</div>`;
+    const tg=x.date?dayTag(x.date):null, bad=tg&&tg.c==="late";
+    return `<button class="wl-row ${bad?"late":""}" data-pj="${esc(x.k)}" type="button"><div class="dt">${x.date?`<b>${fmtD(x.date)}</b><span class="wl-tag ${tg.c}">${tg.t}</span>`:`<b class="none">未定</b>`}</div>
+      <div class="ttl">${esc(x.L.who||"案件未設定")}</div>
+      <div class="sub">${esc(x.L.k||"番号未定")}${x.isDlv?"":"　次の入荷"}${x.late?`<em class="r">遅れ ${x.late}</em>`:""}</div></button>`; }).join(""):`<div class="wl-empty"><i>✓</i>納品待ちの案件はありません</div>`;
   $("#wlOrd").innerHTML=soon.length?soon.map(o=>{ const P=pjLabel(o), tg=dayTag(o.due);
     return `<button class="wl-row ${tg.c==="late"?"late":""}" data-o="${esc(pjKey(o))}" type="button"><div class="dt"><b>${fmtD(o.due)}</b><span class="wl-tag ${tg.c}">${tg.t}</span></div>
       <div class="ttl">${esc(o.item||"（品名なし）")}${o.qty>1?` ×${esc(o.qty)}`:""}</div>
-      <div class="sub"><span class="st">${esc(o.status)}</span>${esc(o.supplier||"仕入先 未定")}　${esc(P.k||"")} ${esc(P.who||"")}</div></button>`; }).join(""):`<div class="wl-empty"><i>✓</i>遅れ・要確認の発注はありません</div>`;
+      <div class="sub">${esc(o.supplier||"仕入先 未定")}　${esc(P.who||P.k||"")}</div></button>`; }).join(""):`<div class="wl-empty"><i>✓</i>遅れ・要確認の発注はありません</div>`;
   $("#wlTk").innerHTML=open.length?open.map(t=>{ const tg=t.due?dayTag(t.due):null, who=taskWho(t);
     return `<button class="wl-row ${tg&&tg.c==="late"?"late":""}" data-tk="1" type="button"><div class="dt">${t.due?`<b>${fmtD(t.due)}</b><span class="wl-tag ${tg.c}">${tg.t}</span>`:`<b class="none">期限なし</b>`}</div>
       <div class="ttl">${esc(t.title||"")}</div>
-      <div class="sub">${esc(who||"相手なし")}${t.assignee?`　担当：${esc(t.assignee)}`:""}</div></button>`; }).join(""):`<div class="wl-empty"><i>✓</i>抱えているタスクはありません</div>`;
+      <div class="sub">${esc(who||"")}</div></button>`; }).join(""):`<div class="wl-empty"><i>✓</i>抱えているタスクはありません</div>`;
   renderWallMeeting();
   $("#wlSync").textContent=lastChange?`最後の変更 ${lastChange.getHours()}:${String(lastChange.getMinutes()).padStart(2,"0")}`:"";
   requestAnimationFrame(()=>{ fitList("#wlPj","#wlPjMore","一覧"); fitList("#wlOrd","#wlOrdMore","要確認の一覧"); fitList("#wlTk","#wlTkMore","タスクの画面"); });
@@ -2959,7 +2988,7 @@ function renderWallMeeting(){
     $("#wlMtDate").textContent=w?`${fmtD(w.date)}〜${fmtD(addDays(w.date,6))}`:"";
     $("#wlMtEdit").hidden=!canWrite; $("#wlMtEdit").textContent="作り直す";
     $("#wlMtPrint").hidden=!w;
-    html=w?wkHtml(w):`<div class="wl-empty"><i>☰</i>今週のまとめは、月曜の朝8時に自動で作られます${canWrite?`<button class="wk-make" type="button" data-wkmake="1">今すぐまとめる</button>`:""}</div>`;
+    html=w?wkHtml(w,true):`<div class="wl-empty"><i>☰</i>今週のまとめは、月曜の朝8時に自動で作られます${canWrite?`<button class="wk-make" type="button" data-wkmake="1">今すぐまとめる</button>`:""}</div>`;
   } else {
     $("#wlMtTtl").textContent=m?(m.title||"打ち合わせ"):"打ち合わせ";
     $("#wlMtDate").textContent=m&&m.date?fmtDW(m.date):"";
@@ -3048,8 +3077,8 @@ function buildWeekly(){
   return {mon,sun,text:L.join("\n"),stats};
 }
 function wkKp(){ return [["thisW","今週の納品",""],["over","納品日超過","hot"],["late","発注の遅れ","hot"],["todo","未発注の案件","warn"],["tLate","期限超過タスク","hot"],["doneL","先週の納品",""]]; }
-function wkHtml(w){ const st=w.stats||{};
-  return `<div class="kp">${wkKp().map(([k,l,c])=>`<div><b class="${st[k]?c:""}">${st[k]??"—"}</b><span>${l}</span></div>`).join("")}</div>${mtHtml(w.text)}<p style="margin-top:1.2vh;color:#9FB0C9;font-size:1.4vh">作成 ${w.madeAt?new Date(w.madeAt).toLocaleString("ja-JP",{month:"numeric",day:"numeric",weekday:"short",hour:"numeric",minute:"2-digit"}):""}　納品待ち ${st.pending??"—"}件・タスク ${st.tasks??"—"}件・先週の入荷 ${st.arrL??"—"}件</p>`; }
+function wkHtml(w,noKp){ const st=w.stats||{};
+  return `${noKp?"":`<div class="kp">${wkKp().map(([k,l,c])=>`<div><b class="${st[k]?c:""}">${st[k]??"—"}</b><span>${l}</span></div>`).join("")}</div>`}${mtHtml(w.text)}<p style="margin-top:1.2vh;color:#9FB0C9;font-size:1.4vh">作成 ${w.madeAt?new Date(w.madeAt).toLocaleString("ja-JP",{month:"numeric",day:"numeric",weekday:"short",hour:"numeric",minute:"2-digit"}):""}　納品待ち ${st.pending??"—"}件・タスク ${st.tasks??"—"}件・先週の入荷 ${st.arrL??"—"}件</p>`; }
 async function makeWeekly(manual){
   if(!canWrite) return;
   const b=buildWeekly(), id=weekId(b.mon), old=meetings.find(m=>m.id===id), now=new Date().toISOString(), st=b.stats;
@@ -4063,7 +4092,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 12:30</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 13:20</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
