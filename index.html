@@ -63,25 +63,32 @@
   .big.work { border-style: dashed; }
   .big.work span small { display: block; margin-top: 2px; font-size: 13px; font-weight: 700; color: var(--sub); font-family: "Noto Sans JP", "Hiragino Sans", system-ui, sans-serif; }
   /* 共通の上の帯（PC幅）：仕様書モードでも発注・納期ボードでも同じ帯を出す。中身の幅は今の枠に合わせる */
-  #tskBand { position: sticky; top: 0; z-index: 15; font-family: "BIZ UDPGothic", "BIZ UDPゴシック", "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif; }
+  #tskBand { position: sticky; top: 0; z-index: 15; font-family: "BIZ UDPGothic", "BIZ UDPゴシック", "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif; --u: min(1vh, .5625vw); }
   #tskBand[hidden] { display: none; }
-  #tskBand .in { max-width: var(--framew, 1040px); margin: 0 auto; min-height: 64px; box-sizing: border-box; display: flex; align-items: center; gap: 14px; padding: 10px 20px; background: #0B1F3A; border-bottom: 3px solid #D4AF37; }
-  #tskBand .tb-brand { font-size: 20px; font-weight: 900; letter-spacing: .1em; color: #D4AF37; }
-  #tskBand .tb-tabs, #tskBand .tb-sw { display: flex; border: 2px solid #D4AF37; border-radius: 12px; overflow: hidden; }
+  /* 太さは掲示板（掲示画面）の上のバーと同じ：高さ 9vh・金の線 .5vh。中の部品は画面の大きさに合わせて大きくする（小さい画面では今までの大きさのまま） */
+  #tskBand .in { max-width: var(--framew, 1040px); margin: 0 auto; min-height: 9vh; box-sizing: border-box; display: flex; align-items: center; gap: max(14px, calc(1.3 * var(--u))); padding: 4px max(20px, 1.6vw); background: #0B1F3A; border-bottom: max(3px, .5vh) solid #D4AF37; }
+  #tskBand.full .in { max-width: none; padding: 4px 1.6vw; }
+  #tskBand .tb-brand { font-size: max(20px, calc(3.4 * var(--u))); font-weight: 700; letter-spacing: .08em; line-height: 1; color: #E7C65A; }
+  #tskBand .tb-tabs, #tskBand .tb-sw { display: flex; flex: 0 0 auto; border: 2px solid #D4AF37; border-radius: max(12px, calc(1.1 * var(--u))); overflow: hidden; }
   #tskBand button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-  #tskBand .tb-tabs button { border: 0; background: transparent; color: #F1E3A6; font-size: 17px; font-weight: 800; padding: 8px 20px; min-height: 44px; }
+  #tskBand .tb-tabs button { border: 0; background: transparent; color: #F1E3A6; font-size: max(17px, calc(2.1 * var(--u))); font-weight: 800; padding: 8px max(20px, calc(2 * var(--u))); min-height: max(44px, calc(5.6 * var(--u))); white-space: nowrap; }
   #tskBand .tb-tabs button[aria-pressed="true"] { background: #D4AF37; color: #0B1F3A; }
-  #tskBand .tb-board { display: flex; align-items: center; gap: 10px; }
+  #tskBand .tb-board { display: flex; align-items: center; gap: max(10px, calc(1 * var(--u))); }
   #tskBand .tb-board[hidden] { display: none; }
-  #tskBand .tb-sw button { border: 0; background: transparent; color: #F1E3A6; font-size: 14px; font-weight: 800; padding: 6px 12px; min-height: 36px; }
+  #tskBand .tb-sw button { border: 0; background: transparent; color: #F1E3A6; font-size: max(14px, calc(1.7 * var(--u))); font-weight: 800; padding: 6px max(12px, calc(1.3 * var(--u))); min-height: max(36px, calc(4.6 * var(--u))); white-space: nowrap; }
   #tskBand .tb-sw button[aria-pressed="true"] { background: #D4AF37; color: #0B1F3A; }
-  #tskBand .tb-snd { width: 42px; height: 40px; border: 2px solid #D4AF37; border-radius: 10px; background: transparent; color: #F1E3A6; display: inline-flex; align-items: center; justify-content: center; }
-  #tskBand .tb-snd svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  #tskBand .tb-snd { flex: 0 0 auto; width: max(42px, calc(5 * var(--u))); height: max(40px, calc(5 * var(--u))); border: 2px solid #D4AF37; border-radius: max(10px, calc(1 * var(--u))); background: transparent; color: #F1E3A6; display: inline-flex; align-items: center; justify-content: center; }
+  #tskBand .tb-snd svg { width: max(20px, calc(2.4 * var(--u))); height: max(20px, calc(2.4 * var(--u))); fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   #tskBand .tb-snd.off { opacity: .55; }
-  #tskBand .tb-count { margin-left: auto; text-align: right; font-size: 14px; font-weight: 700; line-height: 1.3; color: #F1E3A6; white-space: nowrap; }
+  #tskBand .tb-count { margin-left: auto; text-align: right; font-size: max(14px, calc(1.7 * var(--u))); font-weight: 700; line-height: 1.3; color: #F1E3A6; white-space: nowrap; }
+  /* 「掲示板を開く」：掲示板の「ボードを開く」とまったく同じ大きさ・同じ場所（右端）。同じ所を押して行き来できる */
+  #tskBand .tb-wall { flex: 0 0 auto; height: 6vh; min-width: calc(2.8vw + 16vh); padding: 0 1.4vw; border: 0; border-radius: 1.2vh; background: #D4AF37; color: #0B1F3A; font-size: 2.3vh; font-weight: 700; line-height: 1.35; white-space: nowrap; box-shadow: 0 .5vh 0 #A8861D; }
+  #tskBand .tb-wall:active { transform: translateY(.3vh); box-shadow: 0 .2vh 0 #A8861D; }
+  #tskBand .tb-wall[hidden] { display: none; }
   #tskBand .tb-count b { color: #FF8A80 !important; }
-  #tskBand .tb-upd { height: 40px; padding: 0 14px; border: 2px solid #D4AF37; border-radius: 10px; background: transparent; color: #F1E3A6; font-size: 14px; font-weight: 800; white-space: nowrap; }
-  #tskBand .tb-upd small { margin-left: 6px; font-size: 11px; font-weight: 700; opacity: .75; }
+  #tskBand .tb-upd { flex: 0 0 auto; height: max(40px, calc(5 * var(--u))); padding: 0 max(14px, calc(1.4 * var(--u))); border: 2px solid #D4AF37; border-radius: max(10px, calc(1 * var(--u))); background: transparent; color: #F1E3A6; font-size: max(14px, calc(1.7 * var(--u))); font-weight: 800; white-space: nowrap; }
+  #tskBand .tb-upd small { margin-left: 6px; font-size: max(11px, calc(1.3 * var(--u))); font-weight: 700; opacity: .75; }
+  @media (max-width: 1150px) { #tskBand.on-board .tb-brand, #tskBand.on-board .tb-upd small { display: none; } }
   #tskBand .tb-upd.new { background: #D4AF37; color: #0B1F3A; animation: updPulse 1.6s ease-in-out infinite; }
   @keyframes updPulse { 50% { box-shadow: 0 0 0 6px rgba(212,175,55,.25); } }
   .verUpd { margin-left: 8px; padding: 6px 12px; border: 1.5px solid var(--edge, #A7B2C2); border-radius: 8px; background: var(--card, #fff); color: var(--ink, #0B1F3A); font-size: 13px; font-weight: 700; }
@@ -715,7 +722,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 22:45', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 23:05', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -839,6 +846,7 @@
   <button type="button" class="tb-upd" id="tbUpd" data-upd="1" title="新しい版を読み込む">↻ 更新</button>
   <div class="tb-sw" role="group" aria-label="画面の色"><button type="button" data-th="light">明るい</button><button type="button" data-th="dark">暗い</button></div>
   <div class="tb-count" id="tbCount"></div>
+  <button type="button" class="tb-wall" data-wall="1" hidden>掲示板を開く ›</button>
 </div></header>
 <div id="app"></div>
 <div id="boardHost" hidden></div>
@@ -1097,6 +1105,7 @@ tfoot td{font-weight:700;background:var(--well)}
 .top .brand{white-space:nowrap}
 @media (max-width:420px){ .top .brand{font-size:17px} .top .sub{font-size:11px;max-width:96px} }
 :host(.framed) .frame-exit{display:inline-flex;position:fixed;top:16px;right:20px;z-index:50}
+:host(.unified.framed) .frame-exit{top:calc(var(--bandh,64px) + 12px)}   /* 上の帯の「掲示板を開く」に重ならないよう、帯の下に出す */
 .frame-exit{display:none}
 /* memo / tasks */
 .sndbtn{border:1px solid var(--gold);background:transparent;color:var(--gold-soft);border-radius:10px;width:36px;height:32px;display:inline-flex;align-items:center;justify-content:center;margin-left:8px}
@@ -1574,12 +1583,13 @@ details.done[open]>summary::before{content:"▾"}
 .wl-clock{display:flex;align-items:baseline;gap:1.2vw;white-space:nowrap}
 .wl-clock .d{font-size:3.2vh;font-weight:700}
 .wl-clock .t{font-size:5.2vh;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
-.wl-kpis{display:flex;gap:.8vw;margin-left:auto}
+.wl-kpis{display:flex;gap:.8vw;margin-left:auto;flex:0 1 auto;min-width:0;overflow:hidden}   /* 横幅が足りない画面では札のほうを切る（「ボードを開く」を画面の外に押し出さない） */
+.wl-brand,.wl-clock,.wl-open{flex:0 0 auto}
 .wl-kpi{display:flex;align-items:center;gap:.6vw;padding:.8vh 1.2vw;border-radius:1.2vh;font-size:2.4vh;font-weight:700;white-space:nowrap;border:2px solid rgba(255,255,255,.35);color:#fff}
 .wl-kpi b{font-size:3.4vh;line-height:1}
 .wl-kpi.hot{background:#C62828;border-color:#C62828}
 .wl-kpi.ok{border-color:#7FD6A6;color:#B5EFD0}
-.wl-open{height:6vh;padding:0 1.4vw;border-radius:1.2vh;border:0;background:#D4AF37;color:#0B1F3A !important;font-size:2.3vh !important;font-weight:700 !important;white-space:nowrap;box-shadow:0 .5vh 0 #A8861D}
+.wl-open{height:6vh;min-width:calc(2.8vw + 16vh);padding:0 1.4vw;border-radius:1.2vh;border:0;background:#D4AF37;color:#0B1F3A !important;font-size:2.3vh !important;font-weight:700 !important;white-space:nowrap;box-shadow:0 .5vh 0 #A8861D}
 .wl-open:active{transform:translateY(.3vh);box-shadow:0 .2vh 0 #A8861D}
 .wl-cols{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,58fr) minmax(0,42fr);gap:1.2vw;padding:1.6vh 1.2vw 0}
 .wl-side{min-height:0;display:flex;flex-direction:column;gap:1.4vh}
@@ -3283,7 +3293,7 @@ function unlinkSpec(id){ chain=chain.then(async()=>{ await whenReady(); if(!canW
 }).catch(err=>console.error(err)); return chain; }
 function statsOf(specId){ const g=specId?orders.filter(o=>o.projectId==="sp_"+specId):orders.filter(o=>!oDlv(o)); return {n:g.length,open:g.filter(o=>STATUSES.indexOf(o.status)<ARR).length,todo:g.filter(o=>o.status===STATUSES[0]).length,in:g.filter(o=>STATUSES.indexOf(o.status)>=ARR).length,late:g.filter(isLate).length,soon:g.filter(dueSoon).length}; }
 const api={ layout:()=>(html.classList.contains("mode-d")?"d":"m"), setLayout:m=>{ forced=m; applyMode(); }, toggleSound:()=>$("#sndBtn").click(), soundOn:()=>!!snd.on, head:()=>$("#headCount").innerHTML, sync:syncSpec, unlink:unlinkSpec, stats:statsOf, showProject:id=>showGroup("sp_"+id), showHome:()=>showView("list"), onChange:f=>listeners.push(f), close:closeSheet, checkK,
-  deliveredAt:id=>dlvAt("sp_"+id), canWrite:()=>canWrite, showWall:()=>showWall(),
+  deliveredAt:id=>dlvAt("sp_"+id), canWrite:()=>canWrite, showWall:quick=>{ if(quick&&Date.now()-wallSw<400) return; showWall(); },
   nextK:extra=>{ const yy=String(fy()).padStart(2,"0"); let mx=0; [...projects.map(p=>p.k),...(extra||[])].forEach(k=>{ const m=normK(String(k||"")).match(/^[DK](\d{2})(\d{4})/); if(m&&m[1]===yy) mx=Math.max(mx,+m[2]); }); return mx&&mx<9999?"D"+yy+String(mx+1).padStart(4,"0"):""; },   // 今年度の番号がまだ無いときは空
   setDelivered:(id,v)=>{ chain=chain.then(async()=>{ await whenReady(); if(!canWrite) return; await setDelivered("sp_"+id,v); }).catch(err=>console.error(err)); return chain; } };
 
@@ -3658,12 +3668,13 @@ function openMtgView(id){
 }
 $("#mtgs").addEventListener("click",e=>{ const d=e.target.closest(".mtg[data-mid]"); if(d) openMtgView(d.dataset.mid); });
 $("#wkMake").addEventListener("click",()=>{ const w=meetings.find(m=>m.id===weekId(weekMon())); if(w) openMtgView(w.id); else makeWeekly(true).then(()=>{ const n=meetings.find(m=>m.id===weekId(weekMon())); if(n) openMtgView(n.id); }); });
-function showWall(){ if(scrim.classList.contains("open")){ sheetBack=null; closeSheet("wall"); } wallOn=true; wall.hidden=false; wlTop(false); renderWall(); }
-function hideWall(){ wallOn=false; wall.hidden=true; wallAct=Date.now(); }
+let wallSw=0;   // 掲示板を出した／しまった時刻
+function showWall(){ if(scrim.classList.contains("open")){ sheetBack=null; closeSheet("wall"); } wallOn=true; wall.hidden=false; wallSw=Date.now(); wlTop(false); renderWall(); }
+function hideWall(){ wallOn=false; wall.hidden=true; wallAct=wallSw=Date.now(); }
 wall.addEventListener("click",e=>{
   const fd=e.target.closest("[data-fold]"); if(fd){ wlFoldToggle(fd.dataset.fold); return; }   // 見出しを押す：たたむ／開く
   const t=e.target.closest("button"); if(!t) return;
-  if(t.id==="wlOpen"){ hideWall(); showView("list"); return; }
+  if(t.id==="wlOpen"){ if(Date.now()-wallSw<400) return; hideWall(); showView("list"); return; }
   if(t.id==="wlPjMore"){ wlPage("#wlPj"); return; }     // 下の行：1画面ぶん送る（いちばん下では上に戻る）
   if(t.id==="wlOrdMore"){ wlPage("#wlOrd"); return; }
   if(t.id==="wlTkMore"){ wlPage("#wlTk"); return; }
@@ -4629,7 +4640,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 22:45<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 23:05<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -5679,8 +5690,10 @@ return api;
     if (boardHost) boardHost.classList.toggle('unified', wide);
     if (!wide) return;
     var de = document.documentElement;
-    de.style.setProperty('--framew', (mode === 'board' || window.innerWidth >= 1500) ? 'min(1880px, calc(100vw - 32px))' : '1040px');
-    de.style.setProperty('--bandh', band.offsetHeight + 'px');
+    var full = mode === 'board' || window.innerWidth >= 1500;
+    de.style.setProperty('--framew', full ? 'min(1880px, calc(100vw - 32px))' : '1040px');
+    band.classList.toggle('full', full); band.classList.toggle('on-board', mode === 'board');   // full：帯を画面の端から端まで（掲示板の上のバーと同じ）
+    band.querySelector('.tb-wall').hidden = mode !== 'board' || !board.showWall;
     band.querySelectorAll('[data-go]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-go') === mode)); });
     band.querySelector('.tb-board').hidden = mode !== 'board';
     var lay = board.layout ? board.layout() : 'd';
@@ -5689,9 +5702,11 @@ return api;
     sb.classList.toggle('off', !on);
     sb.querySelector('svg').innerHTML = on ? '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6"/>' : '<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/>';
     document.getElementById('tbCount').innerHTML = board.head ? board.head() : '';
+    de.style.setProperty('--bandh', band.offsetHeight + 'px');
   }
   band.addEventListener('click', function (ev) {
     var g = ev.target.closest('[data-go]'), l = ev.target.closest('[data-lay]'), sn = ev.target.closest('[data-snd]');
+    if (ev.target.closest('[data-wall]')) { if (board && board.showWall) board.showWall(true); return; }   // 掲示板（掲示画面）を開く
     if (g) {
       var to = g.getAttribute('data-go'); if (to === mode) return;
       if (to === 'spec') { if (board) board.close(); setMode('spec'); }
