@@ -675,7 +675,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 18:10', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 18:30', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1749,6 +1749,8 @@ details.done[open]>summary::before{content:"▾"}
 @media (prefers-color-scheme: dark){ :host(:not([data-theme="light"])){ --v-red:#FF9A91; --v-redfill:#D93B30; --v-amber:#F2C14E; --v-amber-bg:#3A3010; --v-ok:#7FD6A6; --v-bar:#8FB8FF; } }
 :host([data-theme="dark"]){ --v-red:#FF9A91; --v-redfill:#D93B30; --v-amber:#F2C14E; --v-amber-bg:#3A3010; --v-ok:#7FD6A6; --v-bar:#8FB8FF; }
 .rowx,.rowhead{display:none}
+.rowx .c-m u.pre{margin:0 8px 0 0 !important;background:transparent !important;border:1.5px dashed var(--v-bar) !important;color:var(--v-bar) !important}
+.grp .grp-h .xtag.pre{background:transparent !important;border:1.5px dashed currentColor !important}
 .rowx .c-d b.asap{display:inline-block;font-size:24px !important;font-weight:700 !important;letter-spacing:.04em;line-height:1.25 !important;background:var(--v-amber-bg);color:var(--v-amber);border-radius:8px;padding:4px 10px}
 .grp .grp-h .dlv.asap{background:var(--v-amber-bg) !important;color:var(--v-amber) !important;border:0 !important}
 .wl-row .dt.asap{justify-self:start;letter-spacing:.04em;background:var(--v-amber-bg);color:var(--v-amber) !important;font-weight:700 !important;border-radius:.8vh;padding:.3vh .8vw}
@@ -2132,7 +2134,7 @@ function dlvAt(key){ const p=projects.find(x=>x.id===key); return (p&&p.delivere
 function oDlv(o){ return !!(o.projectId&&dlvAt(o.projectId)); }
 let showDlv=false;   // 一覧のいちばん下の「納品済み」を開いているか
 function pjKey(o){ return o.projectId || (o.k?("k:"+o.k):"none"); }
-function pjLabel(o){ const p=pjOf(o); if(p) return {k:p.k||"",who:p.client||"（宛先未入力）",spec:p.spec||"",delivery:p.delivery||"",specId:p.specId||"",dm:!!p.dlvMonth,asap:!!p.dlvAsap&&!p.delivery}; return {k:o.k||"",who:o.k?"":"案件未設定",spec:"",delivery:"",specId:""}; }
+function pjLabel(o){ const p=pjOf(o); if(p) return {k:p.k||"",who:p.client||"（宛先未入力）",spec:p.spec||"",delivery:p.delivery||"",specId:p.specId||"",dm:!!p.dlvMonth,asap:!!p.dlvAsap&&!p.delivery,pre:!!p.pre}; return {k:o.k||"",who:o.k?"":"案件未設定",spec:"",delivery:"",specId:""}; }
 function fmtDW(d){ if(!d) return ""; const t=new Date(d+"T00:00:00"); return isNaN(t)?"":`${t.getMonth()+1}/${t.getDate()}（${"日月火水木金土"[t.getDay()]}）`; }
 
 // 並び順：納期の近い案件が上。納期＝案件の納品日、無ければ未入荷の発注でいちばん早い納期予定。日付のない案件は下。
@@ -2207,7 +2209,7 @@ function renderList0(){
   const sec=key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]||{projectId:key}); const lateN=g.filter(isLate).length, dv=dlvAt(key);
-    return `<section class="grp ${gOpen(key)?"open":""} ${dv?"dlvd":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${xTag(key)}${baseHtml(L)}${dv&&canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="xadd" data-xadd="1">＋ 追加工事</button>`:""}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="${dv?"納品した日を変更":"納品日を変更"}">${dlvHtml(L.delivery,dv,L.dm,L.asap)}</span>${canWrite&&!dv&&L.delivery&&L.delivery<=todayStr()&&projects.some(x=>x.id===key)?`<button type="button" class="dlvgo" data-dlvgo="1">✓ 納品済みにする</button>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span>${qsHtml(g,dv)}${rowX(key,g,L,dv)}<span class="ghint">${gOpen(key)?"▲ タップしてたたむ":"▼ タップして詳細を表示"}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
+    return `<section class="grp ${gOpen(key)?"open":""} ${dv?"dlvd":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${L.pre&&!dv?`<span class="xtag pre">受注前（先行）</span>`:""}${xTag(key)}${baseHtml(L)}${dv&&canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="xadd" data-xadd="1">＋ 追加工事</button>`:""}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="${dv?"納品した日を変更":"納品日を変更"}">${dlvHtml(L.delivery,dv,L.dm,L.asap)}</span>${canWrite&&!dv&&L.delivery&&L.delivery<=todayStr()&&projects.some(x=>x.id===key)?`<button type="button" class="dlvgo" data-dlvgo="1">✓ 納品済みにする</button>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span>${qsHtml(g,dv)}${rowX(key,g,L,dv)}<span class="ghint">${gOpen(key)?"▲ タップしてたたむ":"▼ タップして詳細を表示"}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
   };
   // 納品済みの案件は、いちばん下にたたんでまとめる（納品した日の新しい順）。押せば開いて見返せる。
   const ak=keys.filter(k=>!dlvAt(k)), dk=keys.filter(k=>dlvAt(k)).sort((a,b)=>dlvAt(b).localeCompare(dlvAt(a)));
@@ -2254,7 +2256,7 @@ function rowX(key,g,L,dv){
   const x=xInfo(key);
   const prog=!n?`<em>発注なし</em>`:a===n?`<em class="ok">✓ 全部入荷</em><em>${n}件</em>`:`<span class="trk"><i style="width:${Math.round(a/n*100)}%"></i></span><em>入荷 <b>${a}</b> / ${n}</em>`;
   const flags=dv?"":(late?`<em class="r">遅延 ${late}</em>`:"")+(todo?`<em class="y">未発注 ${todo}</em>`:"");
-  return `<span class="rowx ${!dv&&(late||dc==="late")?"late":dc==="soon"?"soon":""} ${dv?"done":""}"><span class="c-d ${dc}">${date}</span><span class="c-k ${L.k?"":"none"}">${L.k?esc(L.k):"番号なし"}</span><span class="c-m"><b>${esc(L.who||"")}</b><small>${esc(rest.join("　"))}${units>1?`　${units}台`:""}${x?`<u>${esc(x)}</u>`:""}</small></span><span class="c-p"><span class="pl">${prog}</span>${flags?`<span class="fl">${flags}</span>`:""}</span><span class="c-go">›</span></span>`;
+  return `<span class="rowx ${!dv&&(late||dc==="late")?"late":dc==="soon"?"soon":""} ${dv?"done":""}"><span class="c-d ${dc}">${date}</span><span class="c-k ${L.k?"":"none"}">${L.k?esc(L.k):"番号なし"}</span><span class="c-m"><b>${esc(L.who||"")}</b><small>${L.pre&&!dv?`<u class="pre">受注前</u>`:""}${esc(rest.join("　"))}${units>1?`　${units}台`:""}${x?`<u>${esc(x)}</u>`:""}</small></span><span class="c-p"><span class="pl">${prog}</span>${flags?`<span class="fl">${flags}</span>`:""}</span><span class="c-go">›</span></span>`;
 }
 function grpBody(key,g){ const f=grpF.get(key); return f?supBlocks(g.filter(o=>gMatch(f,o)),true):supBlocks(g); }
 function supBlocks(g,force){ const m=new Map(); g.forEach(o=>{ const s=o.supplier||"仕入先 未定"; if(!m.has(s)) m.set(s,[]); m.get(s).push(o); }); return [...m.entries()].map(([s,l])=>{ const id=pjKey(l[0])+"|"+s, shut=!force&&filter==="all"&&!openSup.has(id), ls=[...l].sort((a,b)=>(a.status===STATUSES[DONE])-(b.status===STATUSES[DONE]));
@@ -3016,7 +3018,7 @@ async function doSync(x){
   await whenReady(); if(!canWrite) return;
   const pid="sp_"+x.id, now=new Date().toISOString();
   const cur=projects.find(p=>p.id===pid);
-  const pj={client:x.client,spec:x.spec,k:x.k,delivery:x.delivery,specId:x.id,dlvMonth:x.dlvMonth?true:"",dlvAsap:x.dlvAsap?true:""};
+  const pj={client:x.client,spec:x.spec,k:x.k,delivery:x.delivery,specId:x.id,dlvMonth:x.dlvMonth?true:"",dlvAsap:x.dlvAsap?true:"",pre:x.pre?true:""};
   if(!cur) await saveProject(pid,{...pj,createdAt:now,updatedAt:now});
   else if(Object.keys(pj).some(f=>(cur[f]||"")!==pj[f])) await saveProject(pid,{...strip(cur),...pj,updatedAt:now});
   const mine=allOrders.filter(o=>o.projectId===pid&&o.specKey); const want=new Map(x.lines.map(l=>[l.key,l]));
@@ -3116,7 +3118,7 @@ function wallProjects(){
   projects.forEach(p=>{ if(!p.deliveredAt&&(p.delivery||p.dlvAsap)&&!m.has(p.id)) m.set(p.id,[]); });
   return [...m.entries()].map(([k,ls])=>{
     const p=projects.find(x=>x.id===k);
-    const L=p?{k:p.k||"",who:p.client||"（宛先未入力）",spec:p.spec||"",delivery:p.delivery||"",dm:!!p.dlvMonth,asap:!!p.dlvAsap&&!p.delivery}:pjLabel(ls[0]);
+    const L=p?{k:p.k||"",who:p.client||"（宛先未入力）",spec:p.spec||"",delivery:p.delivery||"",dm:!!p.dlvMonth,asap:!!p.dlvAsap&&!p.delivery,pre:!!p.pre}:pjLabel(ls[0]);
     const date=pjDate(k);
     return {k,L,date,isDlv:!!L.delivery,n:ls.length,in:ls.filter(o=>STATUSES.indexOf(o.status)>=ARR).length,late:ls.filter(isLate).length,todo:ls.filter(o=>o.status===STATUSES[0]).length};
   }).sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999")||(a.L.k||"～").localeCompare(b.L.k||"～"));
@@ -3144,7 +3146,7 @@ function renderWall(){
   const rm=d=>{ const g=dayTag(d); return `<span class="rm ${g.c}">${g.t}</span>`; };
   $("#wlPjN").textContent=pjs.length;
   $("#wlPj").innerHTML=pjs.length?pjs.map(x=>{ const dl=x.isDlv&&x.date, bad=dl&&x.date<today;
-    return `<button class="wl-row big ${bad?"late":""}" data-pj="${esc(x.k)}" type="button">${dl?`<span class="dt">${x.L.dm?`${+x.date.slice(5,7)}月<i>まで</i>`:`${fmtD(x.date)}<i>${wd(x.date)}</i>`}</span>${rm(x.date)}`:x.L.asap?`<span class="dt none asap">ASAP</span><span class="rm"></span>`:`<span class="dt none">納品日 未定</span><span class="rm"></span>`}<span class="tx"><b>${esc(x.L.who||"案件未設定")}</b><small>${esc(String(x.L.spec||"").replace(/　×1$/,"").replace(/　×(\d+)$/,"　$1台"))}</small></span><span class="no">${esc(x.L.k||"")}${x.late?`<em>発注の遅れ ${x.late}</em>`:""}</span></button>`; }).join(""):`<div class="wl-empty"><i>✓</i>納品待ちの案件はありません</div>`;
+    return `<button class="wl-row big ${bad?"late":""}" data-pj="${esc(x.k)}" type="button">${dl?`<span class="dt">${x.L.dm?`${+x.date.slice(5,7)}月<i>まで</i>`:`${fmtD(x.date)}<i>${wd(x.date)}</i>`}</span>${rm(x.date)}`:x.L.asap?`<span class="dt none asap">ASAP</span><span class="rm"></span>`:`<span class="dt none">納品日 未定</span><span class="rm"></span>`}<span class="tx"><b>${esc(x.L.who||"案件未設定")}</b><small>${x.L.pre?"【受注前】":""}${esc(String(x.L.spec||"").replace(/　×1$/,"").replace(/　×(\d+)$/,"　$1台"))}</small></span><span class="no">${esc(x.L.k||"")}${x.late?`<em>発注の遅れ ${x.late}</em>`:""}</span></button>`; }).join(""):`<div class="wl-empty"><i>✓</i>納品待ちの案件はありません</div>`;
   // 右の上：発注の遅れ・タスクは「あるときだけ」出す。両方あるときは2件ずつ、片方だけなら4件まで
   const N=soon.length&&open.length?2:4, more=(id,n)=>{ const b=$(id); b.hidden=n<=0; b.textContent=n>0?`ほか ${n}件 ― 押すと開きます`:""; };
   $("#wlOrdBox").hidden=!soon.length; $("#wlOrdN").textContent=soon.length; $("#wlOrdN").classList.toggle("hot",lateN>0);
@@ -3757,7 +3759,7 @@ return api;
     var model = body.model, config = body.config;
     if (typeof model !== 'string' || typeof config !== 'string') { var cut = String(id).lastIndexOf('_'); model = String(id).slice(0, cut); config = String(id).slice(cut + 1); }
     if ((!byId(MODELS, model) && model !== TBDM.id && model !== WORKM.id && !/^m[a-z0-9]{4,24}$/.test(model)) || !byId(CONFIGS, config)) return null;
-    return { model: model, modelName: typeof body.modelName === 'string' ? body.modelName.trim().slice(0, 30) : '', config: config, name: typeof body.name === 'string' ? body.name.trim().slice(0, 60) : '', showPrice: body.showPrice !== false, units: cleanUnits(body.units != null ? body.units : (body.quote && body.quote.units)), job: cleanJob(body.job), board: body.board === true, delivery: cleanDay(body.delivery), dlvMonth: body.dlvMonth === true, dlvAsap: body.dlvAsap === true, vendors: cleanVendors(body.vendors), memo: typeof body.memo === 'string' ? body.memo.slice(0, 300) : '', quote: cleanQuote(body.quote), values: cleanValues(body.values), updatedAt: typeof body.updatedAt === 'number' ? body.updatedAt : 0 };
+    return { model: model, modelName: typeof body.modelName === 'string' ? body.modelName.trim().slice(0, 30) : '', config: config, name: typeof body.name === 'string' ? body.name.trim().slice(0, 60) : '', showPrice: body.showPrice !== false, units: cleanUnits(body.units != null ? body.units : (body.quote && body.quote.units)), job: cleanJob(body.job), board: body.board === true, pre: body.pre === true && body.board === true, delivery: cleanDay(body.delivery), dlvMonth: body.dlvMonth === true, dlvAsap: body.dlvAsap === true, vendors: cleanVendors(body.vendors), memo: typeof body.memo === 'string' ? body.memo.slice(0, 300) : '', quote: cleanQuote(body.quote), values: cleanValues(body.values), updatedAt: typeof body.updatedAt === 'number' ? body.updatedAt : 0 };
   }
   function cleanList(v) { return Array.isArray(v) ? v.filter(function (x) { return typeof x === 'string' && x.trim(); }).map(function (x) { return x.trim().slice(0, 60); }) : []; }
   function cleanPriceMap(m) { var o = {}; if (m && typeof m === 'object') Object.keys(m).slice(0, 200).forEach(function (n) { var pr = cleanPrice(m[n]); if (typeof n === 'string' && n.trim() && pr != null) o[n.trim().slice(0, 60)] = pr; }); return o; }
@@ -3772,7 +3774,7 @@ return api;
   }
   function cleanNote(t) { return typeof t === 'string' ? t.replace(/\s+/g, ' ').trim().slice(0, 60) : ''; }   // a short remark on one item
   function cleanValues(v) { var o = {}; if (v && typeof v === 'object') FIELDS.forEach(function (f) { var ls = cleanLines(v[f.k]); if (ls.length) o[f.k] = ls; }); return o; }
-  function outRecord(r) { var o = { model: r.model, modelName: modelLabel(r), config: r.config, name: r.name, showPrice: r.showPrice !== false, units: cleanUnits(r.units), job: cleanJob(r.job), board: r.board === true, delivery: r.delivery || '', dlvMonth: r.dlvMonth === true, dlvAsap: r.dlvAsap === true, vendors: cleanVendors(r.vendors), memo: r.memo || '', values: outValues(r.values), updatedAt: r.updatedAt }; if (r.quote) { o.quote = {}; Object.keys(r.quote).forEach(function (k) { if (r.quote[k] != null) o.quote[k] = r.quote[k]; }); } return o; }
+  function outRecord(r) { var o = { model: r.model, modelName: modelLabel(r), config: r.config, name: r.name, showPrice: r.showPrice !== false, units: cleanUnits(r.units), job: cleanJob(r.job), board: r.board === true, pre: r.pre === true && r.board === true, delivery: r.delivery || '', dlvMonth: r.dlvMonth === true, dlvAsap: r.dlvAsap === true, vendors: cleanVendors(r.vendors), memo: r.memo || '', values: outValues(r.values), updatedAt: r.updatedAt }; if (r.quote) { o.quote = {}; Object.keys(r.quote).forEach(function (k) { if (r.quote[k] != null) o.quote[k] = r.quote[k]; }); } return o; }
   function outValues(v) { var o = {}; FIELDS.forEach(function (f) { if (v[f.k] && v[f.k].length) o[f.k] = v[f.k].map(function (l) { var x = l.price == null ? { name: l.name } : { name: l.name, price: l.price }; if (l.note) x.note = l.note; return x; }); }); return o; }
   function parsePrice(t) {
     var raw = String(t == null ? '' : t).replace(/[０-９．]/g, function (c) { return c === '．' ? '.' : String.fromCharCode(c.charCodeAt(0) - 0xFEE0); }).replace(/[,，\s¥￥円]/g, '');
@@ -4332,7 +4334,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 18:10<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 18:30<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -4343,7 +4345,7 @@ return api;
     var live = ids.filter(function (id) { return !dlvOf(id); }), done = ids.filter(dlvOf).sort(function (x, y) { return dlvOf(y) < dlvOf(x) ? -1 : dlvOf(y) > dlvOf(x) ? 1 : 0; });
     function item(id) {
       var r = data.specs[id], m = { name: modelLabel(r) }, c = byId(CONFIGS, r.config), dv = dlvOf(id);
-      return '<div class="sw' + (ui.swipeId === id ? ' open' : '') + '" data-sw="' + esc(id) + '">' + (store.readOnly ? '' : '<button type="button" class="swdel" data-act="delSaved" data-id="' + esc(id) + '">' + (ui.confirmDelId === id ? '本当に削除' : '削除') + '</button>') + '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><em class="stt ' + (dv ? 'd' : r.board ? 'o' : 'q') + '">' + (dv ? '納品済み' : r.board ? '受注決定' : '見積もり段階') + '</em><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + (isWork(r.model) ? (workSummary(r) ? '　' + esc(workSummary(r)) : '') : '　' + esc(c.name)) + (dv ? '　' + dayShort(dv) + ' 納品' : r.delivery ? '　納品 ' + (r.dlvMonth ? (+r.delivery.slice(5, 7)) + '月まで' : dayShort(r.delivery)) : r.dlvAsap ? '　納品 ASAP' : '') + '</span></span>' + CHEV + '</button></div>'; }
+      return '<div class="sw' + (ui.swipeId === id ? ' open' : '') + '" data-sw="' + esc(id) + '">' + (store.readOnly ? '' : '<button type="button" class="swdel" data-act="delSaved" data-id="' + esc(id) + '">' + (ui.confirmDelId === id ? '本当に削除' : '削除') + '</button>') + '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><em class="stt ' + (dv ? 'd' : r.board && !r.pre ? 'o' : 'q') + '">' + (dv ? '納品済み' : r.board ? (r.pre ? '受注前（先行）' : '受注決定') : '見積もり段階') + '</em><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + (isWork(r.model) ? (workSummary(r) ? '　' + esc(workSummary(r)) : '') : '　' + esc(c.name)) + (dv ? '　' + dayShort(dv) + ' 納品' : r.delivery ? '　納品 ' + (r.dlvMonth ? (+r.delivery.slice(5, 7)) + '月まで' : dayShort(r.delivery)) : r.dlvAsap ? '　納品 ASAP' : '') + '</span></span>' + CHEV + '</button></div>'; }
     return '<div class="sec">保存した仕様書</div>' + (live.length ? '<div class="list">' + live.map(item).join('') + '</div>' : '<p class="dlvNone">進行中の仕様書はありません。</p>') +
       (done.length ? '<button type="button" class="dlvFold' + (ui.showDelivered ? ' open' : '') + '" data-act="toggleDelivered" aria-expanded="' + !!ui.showDelivered + '"><span class="chev">' + (ui.showDelivered ? '▼' : '▶') + '</span><b>納品済み</b><span class="n">' + done.length + '件</span><small>' + (ui.showDelivered ? '押すとたたみます' : '押すと開いて見返せます') + '</small></button>' + (ui.showDelivered ? '<div class="list dlvList">' + done.map(item).join('') + '</div>' : '') : '');
   }
@@ -4949,7 +4951,7 @@ return api;
         lines.push({ key: f.k + '|' + l.name + '|' + seen[l.name], part: f.label, name: l.name, note: l.note || '', vendor: vend });
       });
     });
-    return { id: id, client: r.name || '', spec: isWork(r.model) ? '工事・修理' + (workSummary(r) ? '　' + workSummary(r) : '') : modelLabel(r) + '　' + (c ? c.name : '') + (u > 1 ? '　×' + u : ''), k: ck.ok ? ck.k : '', delivery: r.delivery || '', dlvMonth: r.dlvMonth === true, dlvAsap: r.dlvAsap === true && !r.delivery, units: u, lines: lines };
+    return { id: id, client: r.name || '', spec: isWork(r.model) ? '工事・修理' + (workSummary(r) ? '　' + workSummary(r) : '') : modelLabel(r) + '　' + (c ? c.name : '') + (u > 1 ? '　×' + u : ''), k: ck.ok ? ck.k : '', pre: r.pre === true, delivery: r.delivery || '', dlvMonth: r.dlvMonth === true, dlvAsap: r.dlvAsap === true && !r.delivery, units: u, lines: lines };
   }
   function queueBoardSync(id) {
     if (!board || store.readOnly) return;
@@ -5012,11 +5014,11 @@ return api;
         (dlvRO() ? '' : '<div class="dlvDay"><label for="specDlv">納品した日</label><input id="specDlv" type="date" value="' + esc(dv) + '"></div>') +
         '<p>一覧では、いちばん下の「納品済み」にまとめてあります。発注の記録は残っています。</p><button type="button" class="btn line" data-act="openBoard">発注・納期を見る</button>' +
         (dlvRO() ? '' : '<button type="button" class="undo" data-act="undeliver">納品済みを取り消す</button>') + '</div>';
-      return '<div class="linkBox on"><b><em class="stt o">受注決定</em>　発注・納期ボードに載っています</b><div class="st">' + (st.n ? '発注 ' + st.n + '件　未発注 ' + st.todo + '・入荷済 ' + st.in + (st.late ? '　<i>遅延 ' + st.late + '</i>' : '') : '発注する品はまだありません') + '</div><p>品・発注先・納品日・工事番号を直すと、ボードも一緒に変わります。</p><button type="button" class="btn line" data-act="openBoard">発注・納期を見る</button>' +
+      return '<div class="linkBox on"><b>' + (r.pre ? '<em class="stt q">受注前（先行）</em>' : '<em class="stt o">受注決定</em>') + '　発注・納期ボードに載っています</b>' + (r.pre && !store.readOnly ? '<button type="button" class="btn fill" data-act="linkBoard" style="margin:6px 0 4px">受注決定にする</button>' : '') + '<b style="display:none"></b><div class="st">' + (st.n ? '発注 ' + st.n + '件　未発注 ' + st.todo + '・入荷済 ' + st.in + (st.late ? '　<i>遅延 ' + st.late + '</i>' : '') : '発注する品はまだありません') + '</div><p>品・発注先・納品日・工事番号を直すと、ボードも一緒に変わります。</p><button type="button" class="btn line" data-act="openBoard">発注・納期を見る</button>' +
         (dlvRO() ? '' : '<button type="button" class="btn line dlvBtn" data-act="deliver">✓ 納品済みにする</button>') +
         (store.readOnly ? '' : '<button type="button" class="undo" data-act="unlinkBoard">' + (ui.confirmUnlink ? 'もう一度押すと見積もり段階に戻します（ボードから外れます。発注済みの品は残ります）' : '見積もり段階に戻す') + '</button>') + '</div>';
     }
-    return '<div class="linkBox"><b><em class="stt q">見積もり段階</em></b><p>受注が決まったら押してください。受注決定にすると、この仕様書の品が発注・納期ボードに並びます（在庫品・支給品・未定の品は並びません）。見積番号（D…）は工事番号（K…）に変わります。</p><button type="button" class="btn fill" data-act="linkBoard">受注決定にする</button></div>';
+    return '<div class="linkBox"><b><em class="stt q">見積もり段階</em></b><p>受注が決まったら押してください。受注決定にすると、この仕様書の品が発注・納期ボードに並びます（在庫品・支給品・未定の品は並びません）。</p><button type="button" class="btn fill" data-act="linkBoard">受注決定にする</button><p style="margin-top:12px">受注はまだでも、先に動き始めるときは、こちらを押してください。「受注前」の印を付けて、ボードの一覧に並べます。</p><button type="button" class="btn line" data-act="linkPre">受注前だが、先に動く（ボードに載せる）</button></div>';
   }
   function showJobMsg(text, err) { var el = document.getElementById('jobMsg'); if (el) { el.textContent = text || ''; el.className = 'jobMsg' + (err ? ' err' : ''); } }
   function jobNote(v) {
@@ -5129,12 +5131,13 @@ return api;
     else if (act === 'delSaved') { if (!store.readOnly && data.specs[id]) { if (ui.confirmDelId !== id) { ui.confirmDelId = id; render(); } else { ui.specId = id; ui.swipeId = null; ui.confirmDelId = null; removeSpec(); } } }
     else if (act === 'openSaved' && (swipedAt && Date.now() - swipedAt < 400)) { /* the tap that ends a swipe is not an open */ }
     else if (act === 'toBoard') { setMode('board'); board.showHome(); }
-    else if (act === 'linkBoard') { if (!store.readOnly && board) { var lr = ensureRecord(); lr.board = true; saveSpec(); render(); } }
+    else if (act === 'linkBoard') { if (!store.readOnly && board) { var lr = ensureRecord(); lr.board = true; lr.pre = false; saveSpec(); render(); } }
+    else if (act === 'linkPre') { if (!store.readOnly && board) { var pr = ensureRecord(); pr.board = true; pr.pre = true; saveSpec(); render(); } }
     else if (act === 'openBoard') { if (board) { var bx = record() && record().board && !store.readOnly ? boardExport(ui.specId) : null, bid = ui.specId; (bx ? board.sync(bx) : Promise.resolve()).then(function () { setMode('board'); setTimeout(function () { board.showProject(bid); }, 60); }); } }
     else if (act === 'toggleDelivered') { ui.showDelivered = !ui.showDelivered; render(); }
     else if (act === 'deliver') { if (!store.readOnly && board && record() && record().board) { var dToday = new Date().toLocaleDateString('sv-SE'), dPlan = record().delivery || ''; board.setDelivered(ui.specId, dPlan && dPlan <= dToday ? dPlan : dToday).then(render); } }
     else if (act === 'undeliver') { if (!store.readOnly && board && record()) board.setDelivered(ui.specId, '').then(render); }
-    else if (act === 'unlinkBoard') { if (!store.readOnly && board && record()) { if (!ui.confirmUnlink) go({ confirmUnlink: true }); else { record().board = false; board.unlink(ui.specId); saveSpec(); go({ confirmUnlink: false }); } } }
+    else if (act === 'unlinkBoard') { if (!store.readOnly && board && record()) { if (!ui.confirmUnlink) go({ confirmUnlink: true }); else { record().board = false; record().pre = false; board.unlink(ui.specId); saveSpec(); go({ confirmUnlink: false }); } } }
     else if (act === 'changeModel') { if (!store.readOnly) { commitName(); go({ screen: 'modelPick' }); } }
     else if (act === 'closeModelPick') go({ screen: 'spec' });
     else if (act === 'pickModel') changeModel(id);
