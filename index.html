@@ -648,7 +648,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 15:10', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 15:25', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1518,6 +1518,7 @@ details.done[open]>summary::before{content:"▾"}
 .mtv .kp{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
 .mtv .kp div{border:1px solid rgba(212,175,55,.5);border-radius:8px;padding:5px;text-align:center}
 .mtv .kp b{display:block;font-size:22px;line-height:1.15}.mtv .kp b.hot{color:#D93025}.mtv .kp b.warn{color:#B07800}.mtv .kp span{font-size:12px;color:var(--muted);font-weight:700}
+.sheet.wide{max-width:min(980px,96vw)}
 .mtg[data-mid]{cursor:pointer}.mtg.wk{border-left:5px solid #D4AF37}
 .wl-mtbody{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;padding-right:.3vw;font-size:1.75vh;line-height:1.5;font-weight:600;color:#E8EDF5}
 .wl-mtbody::-webkit-scrollbar{display:none}
@@ -2313,8 +2314,10 @@ function fitScrim(){ const vv=window.visualViewport; if(!vv||root.host.classList
 if(window.visualViewport){ const onVV=()=>{ if(!scrim.classList.contains("open")) return; fitScrim(); const a=root.activeElement; if(a&&sheet.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) setTimeout(()=>{ try{ a.scrollIntoView({block:"nearest"}); }catch{} },30); };
   visualViewport.addEventListener("resize",onVV); visualViewport.addEventListener("scroll",onVV); }
 sheet.addEventListener("focusin",e=>{ if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) setTimeout(()=>{ fitScrim(); try{ e.target.scrollIntoView({block:"nearest"}); }catch{} },300); });
-function closeSheet(){ scrim.classList.remove("open","kb"); sheet.innerHTML=""; html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); }
-scrim.addEventListener("click",e=>{ if(e.target===scrim) closeSheet(); });
+// sheetLock：書きかけが消えないよう、外側を押しても閉じない入力画面（印刷の内容・掲示の打ち合わせ）。sheetBack：閉じたあとに戻る先（掲示画面など）
+let sheetLock=false, sheetBack=null;
+function closeSheet(){ const f=sheetBack; sheetBack=null; sheetLock=false; scrim.classList.remove("open","kb"); sheet.classList.remove("wide"); sheet.innerHTML=""; html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); if(f) try{ f(); }catch(err){ console.error(err); } }
+scrim.addEventListener("click",e=>{ if(e.target===scrim&&!sheetLock) closeSheet(); });
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!host.hidden) closeSheet(); });
 
 /* ---------- add flow (3 steps) ---------- */
@@ -3059,7 +3062,8 @@ function openWallMeeting(){
     <div class="f"><label for="wm-date">日付</label><input id="wm-date" type="date" value="${esc(m?m.date||todayStr():todayStr())}"></div>
     <div class="f"><label for="wm-text">内容</label><textarea id="wm-text" rows="14" style="display:block;width:100%;box-sizing:border-box;min-height:42vh;font:inherit;font-size:16px;line-height:1.6;padding:12px 14px">${esc(m?m.text||"":"")}</textarea></div>
     <div class="btns"><button class="b b-ghost" data-w="close">やめる</button><button class="b b-gold" data-w="save">掲示する</button></div>`);
-  const done=()=>{ sheet.onclick=null; closeSheet(); if(back) showWall(); };
+  sheetLock=true; sheet.classList.add("wide"); if(back) sheetBack=()=>showWall();
+  const done=()=>{ sheet.onclick=null; closeSheet(); };
   sheet.onclick=async e=>{
     const b=e.target.closest("button[data-w]"); if(!b) return;
     if(b.dataset.w==="close"){ done(); return; }
@@ -3188,7 +3192,8 @@ function openPrintEdit(r){
     ${isW?`<label style="display:flex;gap:10px;align-items:center;margin:4px 0 10px;font-weight:800"><input type="checkbox" id="pe-kp" checked style="width:22px;height:22px">上に数字の箱を入れる</label>`:""}
     ${canWrite?`<label style="display:flex;gap:10px;align-items:center;margin:4px 0 12px;font-weight:800"><input type="checkbox" id="pe-save" style="width:22px;height:22px">直した内容を${isW?"「今週のまとめ」":"掲示の打ち合わせ"}にも残す</label>`:""}
     <div class="btns"><button class="b b-ghost" data-pe="close">やめる</button><button class="b b-ghost" data-pe="reset">元に戻す</button><button class="b b-gold" data-pe="print">この内容で印刷</button></div>`);
-  const done=()=>{ sheet.onclick=null; closeSheet(); if(back) showWall(); };
+  sheetLock=true; sheet.classList.add("wide"); if(back) sheetBack=()=>showWall();
+  const done=()=>{ sheet.onclick=null; closeSheet(); };
   sheet.onclick=async e=>{
     const b=e.target.closest("button[data-pe]"); if(!b) return; const v=b.dataset.pe;
     if(v==="close"){ done(); return; }
@@ -3220,7 +3225,7 @@ function openMtgView(id){
 }
 $("#mtgs").addEventListener("click",e=>{ const d=e.target.closest(".mtg[data-mid]"); if(d) openMtgView(d.dataset.mid); });
 $("#wkMake").addEventListener("click",()=>{ const w=meetings.find(m=>m.id===weekId(weekMon())); if(w) openMtgView(w.id); else makeWeekly(true).then(()=>{ const n=meetings.find(m=>m.id===weekId(weekMon())); if(n) openMtgView(n.id); }); });
-function showWall(){ if(scrim.classList.contains("open")) closeSheet(); wallOn=true; wall.hidden=false; renderWall(); }
+function showWall(){ if(scrim.classList.contains("open")){ sheetBack=null; closeSheet(); } wallOn=true; wall.hidden=false; renderWall(); }
 function hideWall(){ wallOn=false; wall.hidden=true; wallAct=Date.now(); }
 wall.addEventListener("click",e=>{
   const t=e.target.closest("button"); if(!t) return;
@@ -4165,7 +4170,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 15:10<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 15:25<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
