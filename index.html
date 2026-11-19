@@ -370,6 +370,12 @@
   .grp + .list { margin-top: 8px; }
   .sec { margin: 32px 24px 0; display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: 700; color: var(--ink); }
   .sec::after { content: ""; flex-grow: 1; height: 1px; background: var(--edge); }
+  /* 保存した仕様書の並び順。選んである並びをもう一度押すと逆順 */
+  .sortbar { margin: 12px 24px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .sortbar > span { font-size: 15px; font-weight: 700; color: var(--sub); margin-right: 2px; }
+  .sortbar button { min-height: 46px; padding: 4px 16px; border: 2px solid var(--edge); border-radius: 999px; background: var(--card); color: var(--ink); font-family: inherit; font-size: 16px; font-weight: 700; line-height: 1.2; }
+  .sortbar button i { display: block; font-style: normal; font-size: 12px; font-weight: 400; }
+  .sortbar button[aria-pressed="true"] { border-color: var(--on); background: var(--on); color: var(--on-ink); }
   .saved { width: 100%; min-height: 64px; padding: 10px 16px; border: none; border-bottom: 1px solid var(--line); background: var(--card); text-align: left; display: flex; align-items: center; gap: 12px; }
   .saved:last-child { border-bottom: none; }
   .saved .who { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
@@ -709,7 +715,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 21:45', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 22:05', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1112,6 +1118,9 @@ input,textarea,select{-webkit-user-select:text!important;user-select:text!import
 .tksort{margin:0 0 12px;align-items:center}
 .tksort span{font-size:13px;font-weight:700;color:var(--muted);margin-right:2px}
 .tksort .chip{min-height:36px;padding:6px 14px;font-size:14px}
+#tkMat .chip{min-height:44px;font-size:15px}
+:host(.mode-d) #tkMat{display:flex !important;flex-wrap:wrap}
+.task .m .mat{background:var(--navy);color:var(--gold);border-radius:999px;padding:0 9px;font-weight:900}
 .tkbar .b{flex:1;min-height:48px}
 .tkg{margin-bottom:14px}
 .tkg-h{display:flex;align-items:center;gap:8px;padding:0 4px 6px;font-size:17px;font-weight:900}
@@ -1666,6 +1675,9 @@ details.done[open]>summary::before{content:"▾"}
 .sheet{position:relative}
 .sheet .shx{position:absolute;top:10px;right:12px;width:44px;height:44px;border:0;border-radius:50%;background:var(--well);color:var(--muted);font-size:24px;line-height:1;z-index:2}
 .sheet h2{padding-right:52px}
+.sheet .sub{font-size:15px;color:var(--muted);margin:2px 0 10px;line-height:1.5}
+.mat5{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:10px;margin:14px 0 12px}
+.mat5 .b{min-height:76px;font-size:21px;font-weight:900;padding:0 4px}
 .mtg[data-mid]{cursor:pointer}.mtg.wk{border-left:5px solid #D4AF37}
 .side .towall{margin-top:14px;border:2px dashed var(--line) !important}
 /* 左のメニュー（PC表示）：大きく・間隔を広く。一覧をスクロールしても画面に残す */
@@ -2018,6 +2030,7 @@ details.done[open]>summary::before{content:"▾"}
         <div class="lead" style="color:var(--muted);font-size:14px;margin:-2px 0 10px">納品以外の「やること」を相手ごとに。押すと直せます。長押しして動かすと順番を変えられます。</div>
         <div class="tkbar"><button class="b b-gold" id="addTask" type="button">＋ タスクを足す</button><button class="b b-ghost" id="taskPdf" type="button" style="flex:0 0 auto;padding:0 16px">PDFにする</button></div>
         <div class="chips tksort" id="tkSort" role="group" aria-label="相手の並び"><span>並び</span><button class="chip" data-ts="due" aria-pressed="true">日程順</button><button class="chip" data-ts="name" aria-pressed="false">名前順</button><button class="chip" data-ts="manual" aria-pressed="false">自分の順</button></div>
+        <div class="chips tksort" id="tkMat" role="group" aria-label="マターで絞る"></div>
         <div id="tasks"></div>
         <details class="memo memoFold" id="memoBox">
           <summary><b>打ち合わせのメモから足す</b><span>話した内容をそのまま入れると、AIが「やること」と「注文するもの」に分けて登録します</span></summary>
@@ -2083,6 +2096,10 @@ let orders=[], allOrders=[], projects=[], tasks=[], meetings=[], stockItems=[];
 let ordersReady=false, projectsReady=false; const waiting=[]; const listeners=[];
 function setOrders(list){ allOrders=list; orders=list.filter(o=>!o.hidden&&!o.own); stockItems=list.filter(o=>o.own&&!o.hidden); }   // hidden = 仕様書から来た発注をボードで外したもの（再作成させないための印）
 let sample=null, showDone=false;
+// タスクの「マター」（だれの担当か）：保存のあとに5つのボタンで聞く。値はタスクの「担当」に入れる
+const MATTERS=["社長","将虎","川内","藤本","全体"];
+const matterOf=t=>MATTERS.includes(t&&t.assignee)?t.assignee:"";
+let taskMat=""; try{ const v=localStorage.getItem("tsk_taskmat"); if(v==="none"||MATTERS.includes(v)) taskMat=v; }catch{}   // タスク画面の絞り込み（""＝すべて、"none"＝未設定）
 let taskSort="due"; try{ const v=localStorage.getItem("tsk_tasksort"); if(v==="name"||v==="manual") taskSort=v; }catch{}
 let settings={}; const dragEnders=[];   // 並び替えの「持ち上げ」を外から解除するための関数たち（reorderable が足す）   // 共有の設定（settings/board）：taskGroups＝相手の並び   // タスクの相手の並び：日程順／名前順（端末ごとに覚える）
 let db=null, downloads=null, canWrite=true;
@@ -3007,11 +3024,15 @@ function renderTasks(){
   $("#taskN").textContent=open.length;
   { const late=open.filter(t=>t.due&&t.due<todayStr()).length, st=$("#tkStrip"); st.hidden=!open.length; $("#tkStripN").textContent=open.length; $("#tkStripT").textContent=`件のタスク（${new Set(open.map(t=>taskWho(t)||"相手なし")).size}先）`; $("#tkStripL").hidden=!late; $("#tkStripL").textContent=late?`期限超過 ${late}`:""; st.classList.toggle("late",late>0);
     const nx=open.filter(t=>t.due).sort((a,b)=>a.due.localeCompare(b.due))[0]; $("#tkStripNext").textContent=nx?`次の期限 ${fmtDW(nx.due)}　${taskWho(nx)?taskWho(nx)+"：":""}${nx.title}`:""; }
-  const gs=taskGroupsOf(showDone?tasks.slice():open);
+  // マター別の絞り込み（すべて／社長／将虎／川内／藤本／全体／未設定）。数字は終わっていないタスクの件数
+  { const cnt=k=>open.filter(t=>k==="none"?!matterOf(t):matterOf(t)===k).length;
+    $("#tkMat").innerHTML=`<span>マター</span><button class="chip" type="button" data-tm="" aria-pressed="${!taskMat}">すべて</button>`+MATTERS.map(m=>`<button class="chip" type="button" data-tm="${m}" aria-pressed="${taskMat===m}">${m}<span class="n">${cnt(m)}</span></button>`).join("")+`<button class="chip" type="button" data-tm="none" aria-pressed="${taskMat==="none"}">未設定<span class="n">${cnt("none")}</span></button>`; }
+  const base=showDone?tasks.slice():open, gs=taskGroupsOf(taskMat?base.filter(t=>taskMat==="none"?!matterOf(t):matterOf(t)===taskMat):base);
   $("#tkSort").querySelectorAll("[data-ts]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.ts===taskSort));
   const row=t=>{ const late=!t.done&&t.due&&t.due<todayStr(), soon=!late&&!t.done&&t.due&&t.due<=addDays(todayStr(),3);
-    return `<div class="task ${t.done?"done":""} ${late?"late":""}" data-id="${t.id}"><button class="chk" data-act="toggle" aria-label="${t.done?"未完了に戻す":"完了にする"}">${t.done?'<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>':""}</button><button class="t" data-act="edit" type="button"><div class="title">${esc(t.title)}</div><div class="m">${t.due?`<span class="${late?"late":soon?"soon":""}">${late?"期限超過 ":soon?"期限 ":"期限 "}${fmtDW(t.due)}</span>`:""}${t.assignee?`<span>担当 ${esc(t.assignee)}</span>`:""}${t.note?`<span class="nt">${esc(t.note)}</span>`:""}${t.source?`<span>${esc(t.source)}</span>`:""}</div></button></div>`; };
+    return `<div class="task ${t.done?"done":""} ${late?"late":""}" data-id="${t.id}"><button class="chk" data-act="toggle" aria-label="${t.done?"未完了に戻す":"完了にする"}">${t.done?'<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>':""}</button><button class="t" data-act="edit" type="button"><div class="title">${esc(t.title)}</div><div class="m">${t.due?`<span class="${late?"late":soon?"soon":""}">${late?"期限超過 ":soon?"期限 ":"期限 "}${fmtDW(t.due)}</span>`:""}${t.assignee?(matterOf(t)?`<span class="mat">${esc(t.assignee)}マター</span>`:`<span>担当 ${esc(t.assignee)}</span>`):""}${t.note?`<span class="nt">${esc(t.note)}</span>`:""}${t.source?`<span>${esc(t.source)}</span>`:""}</div></button></div>`; };
   $("#tasks").innerHTML = gs.length? gs.map(g=>`<section class="tkg" data-who="${esc(g.w)}"><div class="tkg-h"><b>${esc(g.w)}</b><span class="n">${g.ls.filter(t=>!t.done).length}</span>${canWrite?`<button class="b b-sm b-ghost" type="button" data-tadd="${esc(g.w)}" aria-label="${esc(g.w)} にタスクを足す">＋</button>`:""}</div>${g.ls.map(row).join("")}</section>`).join("")
+    : taskMat?`<div class="empty" style="padding:24px"><b>${taskMat==="none"?"マターが決まっていないタスクはありません":esc(taskMat)+"マターのタスクはありません"}</b>上の「すべて」を押すと、全部のタスクに戻ります。</div>`
     : `<div class="empty" style="padding:24px"><b>抱えているタスクはありません</b>「＋ タスクを足す」か、打ち合わせのメモから足せます。</div>`;
   $("#mtgN").textContent=meetings.length;
   $("#mtgs").innerHTML = meetings.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||"").localeCompare(a.createdAt||"")).map(m=>`<div class="mtg ${m.kind==="weekly"?"wk":""}" data-mid="${esc(m.id)}"><div class="h"><b>${esc(m.title||"打ち合わせ")}</b><span>${m.kind==="weekly"?"自動のまとめ　押すと全文・印刷":`${m.date||""}　やること${m.taskCount||0}・注文${m.orderCount||0}`}</span></div><p>${esc(m.summary||"")}</p></div>`).join("")||`<div class="empty" style="padding:20px">まだ議事録はありません</div>`;
@@ -3034,7 +3055,7 @@ function openTask(t,presetWho){
   openSheet(`<h2>${t?"タスクを直す":"タスクを足す"}</h2>
     <div class="f"><label for="tkWho">相手・案件</label><input id="tkWho" list="tkWhos" value="${esc(t?taskWho(t):(presetWho||""))}" placeholder="例：ポルシェセンター目黒" autocomplete="off"><datalist id="tkWhos">${whos.map(w=>`<option value="${esc(w)}">`).join("")}</datalist></div>
     <div class="f"><label for="tkTitle">やること</label><input id="tkTitle" value="${esc(t?t.title:"")}" placeholder="例：ブレーキの交換" autocomplete="off"></div>
-    <div class="row2"><div class="f"><label for="tkAsg">担当</label><input id="tkAsg" value="${esc(t?t.assignee||"":"")}" placeholder="例：田中" autocomplete="off"></div><div class="f"><label for="tkDue">期限</label><input id="tkDue" type="date" value="${esc(t?t.due||"":"")}"></div></div>
+    <div class="f"><label for="tkDue">期限</label><input id="tkDue" type="date" value="${esc(t?t.due||"":"")}"></div>
     <div class="f"><label for="tkNote">メモ</label><input id="tkNote" value="${esc(t?t.note||"":"")}" placeholder="例：部品は手配済み" autocomplete="off"></div>
     <div class="btns">${t?`<button class="b b-ghost" data-t="del">削除</button>`:`<button class="b b-ghost" data-t="cancel">やめる</button>`}<button class="b b-gold" data-t="save" style="flex:1">${t?"保存する":"足す"}</button></div>`);
   if(!t) setTimeout(()=>{ const el=$(presetWho?"#tkTitle":"#tkWho"); if(el) el.focus(); },80);
@@ -3045,12 +3066,28 @@ function openTask(t,presetWho){
     if(b.dataset.t==="cancel"){ done(); return; }
     if(b.dataset.t==="del"){ if(!confirm("このタスクを削除しますか？")) return; b.disabled=true; try{ await deleteTask(t.id); toast("削除しました"); done(); }catch{ toast("削除できませんでした"); b.disabled=false; } return; }
     const title=$("#tkTitle").value.trim(); if(!title){ toast("やることを入れてください"); $("#tkTitle").focus(); return; }
-    const now=new Date().toISOString(), who=$("#tkWho").value.trim(), x={...(t?strip(t):{done:false,createdAt:now}),title,who,assignee:$("#tkAsg").value.trim(),due:$("#tkDue").value,note:$("#tkNote").value.trim(),updatedAt:now};
+    const now=new Date().toISOString(), who=$("#tkWho").value.trim(), x={...(t?strip(t):{done:false,createdAt:now}),title,who,assignee:t?t.assignee||"":"",due:$("#tkDue").value,note:$("#tkNote").value.trim(),updatedAt:now};
     if(t&&who&&who!==taskWho(t)&&t.projectId&&!t.who){ /* 案件から来た相手を書き換えたら、以後はその相手名で */ }
     b.disabled=true;
-    try{ await saveTask(t?t.id:gid("t"),x); snd.ok(); toast(t?"直しました":"タスクを足しました"); done(); }catch{ toast("保存できませんでした"); b.disabled=false; }
+    const id=t?t.id:gid("t");
+    try{ await saveTask(id,x); snd.ok(); toast(t?"直しました":"タスクを足しました"); sheet.onclick=null; sheet.onkeydown=null; askMatter(id,x); }catch{ toast("保存できませんでした"); b.disabled=false; }   // 保存できたら、最後に「誰マター？」を聞く
   };
 }
+// 「誰マター？」：社長・将虎・川内・藤本・全体 の5つから選ぶ。× や外側を押して閉じると、いまのまま
+function askMatter(id,x){
+  const cur=x.assignee||"";
+  openSheet(`<h2>誰マター？</h2><p class="sub">「${esc(x.title)}」は、だれの担当ですか。</p>
+    <div class="mat5">${MATTERS.map(m=>`<button class="b ${m===cur?"b-gold":"b-ghost"}" type="button" data-mat="${m}">${m}</button>`).join("")}</div>
+    ${cur?`<p class="sub">いまは「${esc(cur)}」です。変えないときは × で閉じてください。</p>`:`<p class="sub">あとで決めるときは × で閉じてください。</p>`}`);
+  sheet.onkeydown=null;
+  sheet.onclick=async e=>{ const b=e.target.closest("button[data-mat]"); if(!b) return; const m=b.dataset.mat, all=[...sheet.querySelectorAll("[data-mat]")];
+    const done=()=>{ sheet.onclick=null; closeSheet(); };
+    if(m===cur){ done(); return; }
+    all.forEach(z=>z.disabled=true);
+    try{ await saveTask(id,{...x,assignee:m,updatedAt:new Date().toISOString()}); snd.ok(); toast(`${m}マターにしました`); done(); }catch{ toast("保存できませんでした"); all.forEach(z=>z.disabled=false); }
+  };
+}
+$("#tkMat").addEventListener("click",e=>{ const b=e.target.closest("[data-tm]"); if(!b) return; taskMat=b.dataset.tm; try{ localStorage.setItem("tsk_taskmat",taskMat); }catch{} snd.tap(); renderTasks(); });
 $("#tkSort").addEventListener("click",e=>{ const b=e.target.closest("[data-ts]"); if(!b||b.dataset.ts===taskSort) return; taskSort=b.dataset.ts; try{ localStorage.setItem("tsk_tasksort",taskSort); }catch{} snd.tap(); renderTasks(); });
 /* ---------- TO DO リストを PDF に ----------
    以前に作った「社内 TODO リスト」の紙と同じ作り（紺の帯で相手ごと、No.・期限・やること・担当・メモ）。
@@ -3072,7 +3109,8 @@ function buildTodoPages(stage,gs,dateStr,nOpen,nWho){
 }
 async function taskPdf(){
   if(!window.html2canvas||!window.jspdf){ toast("PDFの部品を読み込めませんでした。通信を確認して開き直してください"); return; }
-  const open=tasks.filter(t=>!t.done), rows=showDone?tasks.slice():open; if(!rows.length){ toast("TO DO がありません"); return; }
+  const inMat=t=>!taskMat||(taskMat==="none"?!matterOf(t):matterOf(t)===taskMat);   // 画面でマターを絞っているときは、PDFも同じ絞り込みで作る
+  const open=tasks.filter(t=>!t.done&&inMat(t)), rows=showDone?tasks.filter(inMat):open; if(!rows.length){ toast("TO DO がありません"); return; }
   const gs=taskGroupsOf(rows), dateStr=(d=>`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${"日月火水木金土"[d.getDay()]}）`)(new Date()), nWho=new Set(open.map(t=>taskWho(t)||"相手なし")).size;
   const btn=$("#taskPdf"); btn.disabled=true; btn.textContent="PDFを作っています…";
   const stage=document.createElement("div"); stage.className="tdstage"; document.body.appendChild(stage);
@@ -3084,7 +3122,7 @@ async function taskPdf(){
     for(let i=0;i<pages.length;i++){
       const cv=await window.html2canvas(pages[i],{scale:2.5,backgroundColor:"#FFFFFF",useCORS:true,logging:false,windowWidth:794,windowHeight:1123,scrollX:0,scrollY:0,onclone:(doc,el)=>{ try{ el.style.transform="none"; el.style.margin="0"; doc.body.innerHTML=""; doc.body.style.cssText="margin:0;padding:0;width:794px;background:#FFFFFF"; doc.body.appendChild(el); }catch{} }});
       if(i) pdf.addPage(); pdf.addImage(cv.toDataURL("image/png"),"PNG",0,0,210,297,undefined,"FAST"); }
-    await savePdfBlob(`TSK_TODOリスト_${todayStr()}.pdf`,pdf.output("blob"));
+    await savePdfBlob(`TSK_TODOリスト_${taskMat&&taskMat!=="none"?taskMat+"マター_":""}${todayStr()}.pdf`,pdf.output("blob"));
   }catch(e){ console.error(e); toast("PDFを作れませんでした"); }
   finally{ stage.remove(); btn.disabled=false; btn.textContent="PDFにする"; }
 }
@@ -3093,10 +3131,10 @@ $("#toggleDone").addEventListener("click",e=>{ showDone=!showDone; e.currentTarg
 $("#tkStrip").addEventListener("click",()=>{ snd.tap(); showView("memo"); });
 $("#addTask").addEventListener("click",()=>{ if(!canWrite){ toast("閲覧のみの権限です"); return; } openTask(null,""); });
 // 長押しで並び替え：相手のまとまり（→「自分の順」になる）と、中のタスク
-reorderable($("#tasks"),{item:".tkg",handle:".tkg-h",skip:t=>!!t.closest("[data-tadd]"),canDrag:()=>canWrite,
+reorderable($("#tasks"),{item:".tkg",handle:".tkg-h",skip:t=>!!t.closest("[data-tadd]"),canDrag:()=>canWrite&&!taskMat,
   onDrop:async els=>{ const order=els.map(el=>el.dataset.who).filter(w=>w&&w!=="相手なし"); taskSort="manual"; try{ localStorage.setItem("tsk_tasksort","manual"); }catch{} settings.taskGroups=order; renderTasks();
     try{ await saveSettings({...settings,taskGroups:order,updatedAt:new Date().toISOString()}); toast("相手の並びを変えました（自分の順）"); }catch{ toast("並びを保存できませんでした"); } } });
-reorderable($("#tasks"),{item:".task",handle:".task .t",canDrag:()=>canWrite,
+reorderable($("#tasks"),{item:".task",handle:".task .t",canDrag:()=>canWrite&&!taskMat,
   onDrop:async els=>{ const now=new Date().toISOString(), jobs=[]; els.forEach((el,i)=>{ const t=tasks.find(x=>x.id===el.dataset.id); if(t&&t.order!==i){ t.order=i; jobs.push(saveTask(t.id,{...strip(t),order:i,updatedAt:now})); } });
     try{ await Promise.all(jobs); if(jobs.length) toast("並びを変えました"); }catch{ toast("並びを保存できませんでした"); } } });
 $("#tasks").addEventListener("click",async e=>{
@@ -3232,6 +3270,7 @@ function unlinkSpec(id){ chain=chain.then(async()=>{ await whenReady(); if(!canW
 function statsOf(specId){ const g=specId?orders.filter(o=>o.projectId==="sp_"+specId):orders.filter(o=>!oDlv(o)); return {n:g.length,open:g.filter(o=>STATUSES.indexOf(o.status)<ARR).length,todo:g.filter(o=>o.status===STATUSES[0]).length,in:g.filter(o=>STATUSES.indexOf(o.status)>=ARR).length,late:g.filter(isLate).length,soon:g.filter(dueSoon).length}; }
 const api={ layout:()=>(html.classList.contains("mode-d")?"d":"m"), setLayout:m=>{ forced=m; applyMode(); }, toggleSound:()=>$("#sndBtn").click(), soundOn:()=>!!snd.on, head:()=>$("#headCount").innerHTML, sync:syncSpec, unlink:unlinkSpec, stats:statsOf, showProject:id=>showGroup("sp_"+id), showHome:()=>showView("list"), onChange:f=>listeners.push(f), close:closeSheet, checkK,
   deliveredAt:id=>dlvAt("sp_"+id), canWrite:()=>canWrite, showWall:()=>showWall(),
+  nextK:extra=>{ const yy=String(fy()).padStart(2,"0"); let mx=0; [...projects.map(p=>p.k),...(extra||[])].forEach(k=>{ const m=normK(String(k||"")).match(/^[DK](\d{2})(\d{4})/); if(m&&m[1]===yy) mx=Math.max(mx,+m[2]); }); return mx&&mx<9999?"D"+yy+String(mx+1).padStart(4,"0"):""; },   // 今年度の番号がまだ無いときは空
   setDelivered:(id,v)=>{ chain=chain.then(async()=>{ await whenReady(); if(!canWrite) return; await setDelivered("sp_"+id,v); }).catch(err=>console.error(err)); return chain; } };
 
 { const tp=$(".top"); if(tp&&window.ResizeObserver) new ResizeObserver(()=>host.style.setProperty("--toph",tp.offsetHeight+"px")).observe(tp); }   // 左メニューを上の帯のすぐ下に留める
@@ -3958,7 +3997,11 @@ return api;
   function monthMode() { var r = record(); return !!(r && r.dlvMonth); }                       // 納品日を「○月まで」で入れている
   function monthEnd(ym) { var m = /^(\d{4})-(\d{2})$/.exec(ym || ''); if (!m) return ''; var t = new Date(+m[1], +m[2], 0); return m[1] + '-' + m[2] + '-' + ('0' + t.getDate()).slice(-2); }
   function cleanJob(v) { return typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, 30) : ''; }   // 工事番号, free text
-  function jobNo() { var r = record(); return r ? r.job || '' : ''; }
+  // 新しい仕様書には、いちばん新しい工事番号の次を先に入れておく（ボードの案件と、保存した仕様書の番号から数える）。
+  // 使わないときは消せる（消したら入れ直さない）。社外で先に番号を取っている場合もあるので、案内を添えて直せるようにしておく
+  function nextJob() { try { return board && board.nextK ? cleanJob(board.nextK(Object.keys(data.specs).map(function (id) { return data.specs[id].job; }))) : ''; } catch (e) { return ''; } }
+  function draftJob() { if (ui.draftJob == null) ui.draftJob = store.readOnly ? '' : nextJob(); return ui.draftJob; }
+  function jobNo() { var r = record(); return r ? r.job || '' : (ui.screen === 'spec' ? draftJob() : ''); }
   function cleanDay(v) { return typeof v === 'string' && dayOf(v) ? v : ''; }                    // 'YYYY-MM-DD' or ''
   function dayOf(v) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); if (!m) return null; var d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getMonth() === +m[2] - 1 ? d : null; }
   function dayLong(v) { var d = dayOf(v); return d ? d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日（' + '日月火水木金土'.charAt(d.getDay()) + '）' : ''; }
@@ -3970,7 +4013,7 @@ return api;
   function nameInBox() { return record() ? specName() : (ui.draftName != null ? ui.draftName : defaultName()); }
   function newId() { return 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function ensureRecord() {
-    if (!ui.specId || !data.specs[ui.specId]) { ui.specId = newId(); data.specs[ui.specId] = { model: ui.model, modelName: curModel().name, config: ui.config, name: nameInBox().trim().slice(0, 60), showPrice: ui.draftShow !== false, units: 1, job: '', delivery: '', vendors: {}, memo: '', values: {}, updatedAt: Date.now() }; }
+    if (!ui.specId || !data.specs[ui.specId]) { ui.specId = newId(); data.specs[ui.specId] = { model: ui.model, modelName: curModel().name, config: ui.config, name: nameInBox().trim().slice(0, 60), showPrice: ui.draftShow !== false, units: 1, job: cleanJob(draftJob()), delivery: '', vendors: {}, memo: '', values: {}, updatedAt: Date.now() }; if (data.specs[ui.specId].job) { ui.jobAutoId = ui.specId; ui.jobAutoV = data.specs[ui.specId].job; } ui.draftJob = null; }
     return data.specs[ui.specId];
   }
   // A stored document becomes a record only if it names a known model and config.
@@ -3980,7 +4023,7 @@ return api;
     var model = body.model, config = body.config;
     if (typeof model !== 'string' || typeof config !== 'string') { var cut = String(id).lastIndexOf('_'); model = String(id).slice(0, cut); config = String(id).slice(cut + 1); }
     if ((!byId(MODELS, model) && model !== TBDM.id && model !== WORKM.id && !/^m[a-z0-9]{4,24}$/.test(model)) || !byId(CONFIGS, config)) return null;
-    return { model: model, modelName: typeof body.modelName === 'string' ? body.modelName.trim().slice(0, 30) : '', config: config, name: typeof body.name === 'string' ? body.name.trim().slice(0, 60) : '', showPrice: body.showPrice !== false, units: cleanUnits(body.units != null ? body.units : (body.quote && body.quote.units)), job: cleanJob(body.job), board: body.board === true, pre: body.pre === true && body.board === true, delivery: cleanDay(body.delivery), dlvMonth: body.dlvMonth === true, dlvAsap: body.dlvAsap === true, vendors: cleanVendors(body.vendors), memo: typeof body.memo === 'string' ? body.memo.slice(0, 300) : '', quote: cleanQuote(body.quote), values: cleanValues(body.values), updatedAt: typeof body.updatedAt === 'number' ? body.updatedAt : 0 };
+    return { model: model, modelName: typeof body.modelName === 'string' ? body.modelName.trim().slice(0, 30) : '', config: config, name: typeof body.name === 'string' ? body.name.trim().slice(0, 60) : '', showPrice: body.showPrice !== false, units: cleanUnits(body.units != null ? body.units : (body.quote && body.quote.units)), job: cleanJob(body.job), board: body.board === true, pre: body.pre === true && body.board === true, delivery: cleanDay(body.delivery), dlvMonth: body.dlvMonth === true, dlvAsap: body.dlvAsap === true, vendors: cleanVendors(body.vendors), memo: typeof body.memo === 'string' ? body.memo.slice(0, 300) : '', quote: cleanQuote(body.quote), values: cleanValues(body.values), orderedAt: typeof body.orderedAt === 'number' && body.board === true ? body.orderedAt : 0, updatedAt: typeof body.updatedAt === 'number' ? body.updatedAt : 0 };
   }
   function cleanList(v) { return Array.isArray(v) ? v.filter(function (x) { return typeof x === 'string' && x.trim(); }).map(function (x) { return x.trim().slice(0, 60); }) : []; }
   function cleanPriceMap(m) { var o = {}; if (m && typeof m === 'object') Object.keys(m).slice(0, 200).forEach(function (n) { var pr = cleanPrice(m[n]); if (typeof n === 'string' && n.trim() && pr != null) o[n.trim().slice(0, 60)] = pr; }); return o; }
@@ -3995,7 +4038,7 @@ return api;
   }
   function cleanNote(t) { return typeof t === 'string' ? t.replace(/\s+/g, ' ').trim().slice(0, 60) : ''; }   // a short remark on one item
   function cleanValues(v) { var o = {}; if (v && typeof v === 'object') FIELDS.forEach(function (f) { var ls = cleanLines(v[f.k]); if (ls.length) o[f.k] = ls; }); return o; }
-  function outRecord(r) { var o = { model: r.model, modelName: modelLabel(r), config: r.config, name: r.name, showPrice: r.showPrice !== false, units: cleanUnits(r.units), job: cleanJob(r.job), board: r.board === true, pre: r.pre === true && r.board === true, delivery: r.delivery || '', dlvMonth: r.dlvMonth === true, dlvAsap: r.dlvAsap === true, vendors: cleanVendors(r.vendors), memo: r.memo || '', values: outValues(r.values), updatedAt: r.updatedAt }; if (r.quote) { o.quote = {}; Object.keys(r.quote).forEach(function (k) { if (r.quote[k] != null) o.quote[k] = r.quote[k]; }); } return o; }
+  function outRecord(r) { var o = { model: r.model, modelName: modelLabel(r), config: r.config, name: r.name, showPrice: r.showPrice !== false, units: cleanUnits(r.units), job: cleanJob(r.job), board: r.board === true, pre: r.pre === true && r.board === true, delivery: r.delivery || '', dlvMonth: r.dlvMonth === true, dlvAsap: r.dlvAsap === true, vendors: cleanVendors(r.vendors), memo: r.memo || '', values: outValues(r.values), updatedAt: r.updatedAt }; if (r.orderedAt && r.board === true) o.orderedAt = r.orderedAt; if (r.quote) { o.quote = {}; Object.keys(r.quote).forEach(function (k) { if (r.quote[k] != null) o.quote[k] = r.quote[k]; }); } return o; }
   function outValues(v) { var o = {}; FIELDS.forEach(function (f) { if (v[f.k] && v[f.k].length) o[f.k] = v[f.k].map(function (l) { var x = l.price == null ? { name: l.name } : { name: l.name, price: l.price }; if (l.note) x.note = l.note; return x; }); }); return o; }
   function parsePrice(t) {
     var raw = String(t == null ? '' : t).replace(/[０-９．]/g, function (c) { return c === '．' ? '.' : String.fromCharCode(c.charCodeAt(0) - 0xFEE0); }).replace(/[,，\s¥￥円]/g, '');
@@ -4555,19 +4598,39 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 21:45<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 22:05<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
   function dlvOf(id) { var r = data.specs[id]; return r && r.board && board && board.deliveredAt ? board.deliveredAt(id) : ''; }
+  // 保存した仕様書の並び順（選んだものは端末に覚える）
+  function jobNum(r) { var m = String((r && r.job) || '').toUpperCase().match(/(\d{2})(\d{4})/); return m ? +m[1] * 10000 + +m[2] : 0; }
+  function sttRank(r) { return r.board ? (r.pre ? 1 : 0) : 2; }   // 受注決定 → 受注前（先行）→ 見積もり段階
+  var SORTS = {
+    upd: { label: '直した順', note: '新しいものが上', revNote: '古いものが上', cmp: function (a, b) { return b.updatedAt - a.updatedAt; } },
+    num: { label: '工事番号順', note: '若い番号が上', revNote: '新しい番号が上', has: function (r) { return jobNum(r) > 0; }, cmp: function (a, b) { return jobNum(a) - jobNum(b) || String(a.job).localeCompare(String(b.job)); } },
+    stt: { label: '受注決定が上', note: '決定の新しい順', revNote: '見積もり段階が上', cmp: function (a, b) { return sttRank(a) - sttRank(b) || (b.orderedAt || 0) - (a.orderedAt || 0) || b.updatedAt - a.updatedAt; } },
+    due: { label: '納品日順', note: '近いものが上', revNote: '遠いものが上', has: function (r) { return !!(r.delivery || r.dlvAsap); }, cmp: function (a, b) { var x = a.dlvAsap && !a.delivery ? '0' : a.delivery, y = b.dlvAsap && !b.delivery ? '0' : b.delivery; return x < y ? -1 : x > y ? 1 : 0; } },
+    name: { label: '名前順', note: 'あいうえお順', revNote: '逆順', has: function (r) { return !!r.name; }, cmp: function (a, b) { return String(a.name).localeCompare(String(b.name), 'ja'); } }
+  }, SORT_KEYS = ['upd', 'num', 'stt', 'due', 'name'];
+  function savedSort() { if (!ui.sort) { var v = ''; try { v = localStorage.getItem('tsk-spec-sort') || ''; } catch (e) {} var k = v.replace(/-$/, ''); ui.sort = { k: SORTS[k] ? k : 'upd', rev: /-$/.test(v) && !!SORTS[k] }; } return ui.sort; }
+  function setSavedSort(k) { var so = savedSort(); if (!SORTS[k]) return; ui.sort = { k: k, rev: so.k === k ? !so.rev : false }; try { localStorage.setItem('tsk-spec-sort', k + (ui.sort.rev ? '-' : '')); } catch (e) {} }
   function savedHtml() {
     var ids = Object.keys(data.specs).sort(function (x, y) { return data.specs[y].updatedAt - data.specs[x].updatedAt; });
     if (!ids.length) return '';
     var live = ids.filter(function (id) { return !dlvOf(id); }), done = ids.filter(dlvOf).sort(function (x, y) { return dlvOf(y) < dlvOf(x) ? -1 : dlvOf(y) > dlvOf(x) ? 1 : 0; });
+    // 並び順：この端末に覚えておく。選んである並びをもう一度押すと、逆順になる（番号や日付が無いものは、いつも下）
+    var so = savedSort(), cmp = SORTS[so.k].cmp, has = SORTS[so.k].has;
+    live = live.map(function (id, i) { return { id: id, i: i }; }).sort(function (a, b) {
+      var ra = data.specs[a.id], rb = data.specs[b.id], ha = has ? has(ra) : true, hb = has ? has(rb) : true;
+      if (ha !== hb) return ha ? -1 : 1;
+      var c = ha ? cmp(ra, rb) * (so.rev ? -1 : 1) : 0; return c || a.i - b.i;
+    }).map(function (x) { return x.id; });
+    var bar = live.length > 1 ? '<div class="sortbar" role="group" aria-label="並び順"><span>並び順</span>' + SORT_KEYS.map(function (k) { var on = so.k === k; return '<button type="button" data-act="sort" data-id="' + k + '" aria-pressed="' + on + '">' + SORTS[k].label + (on ? '<i>' + (so.rev ? SORTS[k].revNote : SORTS[k].note) + '</i>' : '') + '</button>'; }).join('') + '</div>' : '';
     function item(id) {
       var r = data.specs[id], m = { name: modelLabel(r) }, c = byId(CONFIGS, r.config), dv = dlvOf(id);
       return '<div class="sw' + (ui.swipeId === id ? ' open' : '') + '" data-sw="' + esc(id) + '">' + (store.readOnly ? '' : '<button type="button" class="swdel" data-act="delSaved" data-id="' + esc(id) + '">' + (ui.confirmDelId === id ? '本当に削除' : '削除') + '</button>') + '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><em class="stt ' + (dv ? 'd' : r.board && !r.pre ? 'o' : 'q') + '">' + (dv ? '納品済み' : r.board ? (r.pre ? '受注前（先行）' : '受注決定') : '見積もり段階') + '</em><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + (isWork(r.model) ? (workSummary(r) ? '　' + esc(workSummary(r)) : '') : '　' + esc(c.name)) + (dv ? '　' + dayShort(dv) + ' 納品' : r.delivery ? '　納品 ' + (r.dlvMonth ? (+r.delivery.slice(5, 7)) + '月まで' : dayShort(r.delivery)) : r.dlvAsap ? '　納品 ASAP' : '') + '</span></span>' + CHEV + '</button></div>'; }
-    return '<div class="sec">保存した仕様書</div>' + (live.length ? '<div class="list">' + live.map(item).join('') + '</div>' : '<p class="dlvNone">進行中の仕様書はありません。</p>') +
+    return '<div class="sec">保存した仕様書</div>' + bar + (live.length ? '<div class="list">' + live.map(item).join('') + '</div>' : '<p class="dlvNone">進行中の仕様書はありません。</p>') +
       (done.length ? '<button type="button" class="dlvFold' + (ui.showDelivered ? ' open' : '') + '" data-act="toggleDelivered" aria-expanded="' + !!ui.showDelivered + '"><span class="chev">' + (ui.showDelivered ? '▼' : '▶') + '</span><b>納品済み</b><span class="n">' + done.length + '件</span><small>' + (ui.showDelivered ? '押すとたたみます' : '押すと開いて見返せます') + '</small></button>' + (ui.showDelivered ? '<div class="list dlvList">' + done.map(item).join('') + '</div>' : '') : '');
   }
   // ===== メール・見積書から仕様書の下書きを作る（AIが読み取る。作ったあと、いつもの画面で確かめて直す） =====
@@ -4597,7 +4660,7 @@ return api;
     var vals = {}; if (j && j.values && typeof j.values === 'object') FIELDS.forEach(function (f) { var ok = isM ? f.g !== 'work' : (f.g === 'work' || f.g === 'etc'); if (ok && Array.isArray(j.values[f.k])) vals[f.k] = j.values[f.k].map(function (l) { return { name: String((l && l.name) || ''), price: Number(l && l.price) || 0, note: String((l && l.note) || '') }; }); });
     var dl = String((j && j.delivery) || ''), dm = false; if (/^\d{4}-\d{2}$/.test(dl)) { dl = monthEnd(dl); dm = true; }
     var id = newId(), m = findModel(model);
-    var rec = cleanRecord(id, { model: model, modelName: m ? m.name : '', config: config, name: String((j && j.name) || ''), showPrice: true, units: Number(j && j.units) || 1, job: String((j && j.job) || ''), delivery: dl, dlvMonth: dm, dlvAsap: !dl && j && j.asap === true, memo: String((j && j.memo) || ''), values: vals });
+    var rec = cleanRecord(id, { model: model, modelName: m ? m.name : '', config: config, name: String((j && j.name) || ''), showPrice: true, units: Number(j && j.units) || 1, job: String((j && j.job) || '') || nextJob(), delivery: dl, dlvMonth: dm, dlvAsap: !dl && j && j.asap === true, memo: String((j && j.memo) || ''), values: vals });
     if (!rec) return null;
     rec.updatedAt = Date.now(); data.specs[id] = rec;
     go({ screen: 'spec', model: rec.model, config: rec.config, specId: id, printMode: 'spec' }); saveSpec();
@@ -5349,7 +5412,10 @@ return api;
     var ck = checkJob(v), other = null;
     if (!ck.ok) return '';
     Object.keys(data.specs).forEach(function (id) { if (id !== ui.specId && !other && data.specs[id].job && checkJob(data.specs[id].job).k === ck.k) other = data.specs[id]; });
-    return other ? 'この番号は「' + (other.name || '名前なし') + '」でも使われています' : (ck.level === 'warn' ? ck.msg : '');
+    if (other) return 'この番号は「' + (other.name || '名前なし') + '」でも使われています';
+    if (ui.jobAutoV && v === ui.jobAutoV && ui.jobAutoId === ui.specId) return 'いちばん新しい番号の次を入れてあります。違うときは直してください。';   // 自動で入れた番号のあいだだけ出す
+    if (!record() && ui.draftJob && v === ui.draftJob) return 'いちばん新しい番号の次を入れてあります。違うときは直してください。';
+    return ck.level === 'warn' ? ck.msg : '';
   }
   // 保存した仕様書：左へスワイプで「削除」を出す。右へスワイプか、ほかの場所を押すと閉じる。
   var swipe = null, swipedAt = 0;
@@ -5370,8 +5436,10 @@ return api;
     if (!ck.ok) { showJobMsg(ck.msg, true); return; }
     var v = cleanJob(ck.k);
     if (el.value !== v) el.value = v;
+    if (!record() && v !== draftJob()) { ui.draftJob = v; if (!v) { showJobMsg('', false); return; } ensureRecord().job = v; ui.jobAutoV = ''; saveSpec(); showJobMsg(jobNote(v), false); return; }   // まだ保存していない：先に入れてあった番号を直した・消した
     showJobMsg(jobNote(v), false);
     if (v === jobNo() || (!record() && !v)) return;
+    if (ui.jobAutoId === ui.specId) ui.jobAutoV = '';   // 自分で直したら、案内は消す
     ensureRecord().job = v;
     saveSpec();
   }
@@ -5454,13 +5522,14 @@ return api;
     else if (act === 'delSaved') { if (!store.readOnly && data.specs[id]) { if (ui.confirmDelId !== id) { ui.confirmDelId = id; render(); } else { ui.specId = id; ui.swipeId = null; ui.confirmDelId = null; removeSpec(); } } }
     else if (act === 'openSaved' && (swipedAt && Date.now() - swipedAt < 400)) { /* the tap that ends a swipe is not an open */ }
     else if (act === 'toBoard') { setMode('board'); board.showHome(); }
-    else if (act === 'linkBoard') { if (!store.readOnly && board) { var lr = ensureRecord(); lr.board = true; lr.pre = false; saveSpec(); render(); } }
+    else if (act === 'linkBoard') { if (!store.readOnly && board) { var lr = ensureRecord(); lr.board = true; lr.pre = false; if (!lr.orderedAt) lr.orderedAt = Date.now(); saveSpec(); render(); } }
     else if (act === 'linkPre') { if (!store.readOnly && board) { var pr = ensureRecord(); pr.board = true; pr.pre = true; saveSpec(); render(); } }
     else if (act === 'openBoard') { if (board) { var bx = record() && record().board && !store.readOnly ? boardExport(ui.specId) : null, bid = ui.specId; (bx ? board.sync(bx) : Promise.resolve()).then(function () { setMode('board'); setTimeout(function () { board.showProject(bid); }, 60); }); } }
     else if (act === 'toggleDelivered') { ui.showDelivered = !ui.showDelivered; render(); }
+    else if (act === 'sort') { setSavedSort(id); render(); }
     else if (act === 'deliver') { if (!store.readOnly && board && record() && record().board) { var dToday = new Date().toLocaleDateString('sv-SE'), dPlan = record().delivery || ''; board.setDelivered(ui.specId, dPlan && dPlan <= dToday ? dPlan : dToday).then(render); } }
     else if (act === 'undeliver') { if (!store.readOnly && board && record()) board.setDelivered(ui.specId, '').then(render); }
-    else if (act === 'unlinkBoard') { if (!store.readOnly && board && record()) { if (!ui.confirmUnlink) go({ confirmUnlink: true }); else { record().board = false; record().pre = false; board.unlink(ui.specId); saveSpec(); go({ confirmUnlink: false }); } } }
+    else if (act === 'unlinkBoard') { if (!store.readOnly && board && record()) { if (!ui.confirmUnlink) go({ confirmUnlink: true }); else { record().board = false; record().pre = false; record().orderedAt = 0; board.unlink(ui.specId); saveSpec(); go({ confirmUnlink: false }); } } }
     else if (act === 'changeModel') { if (!store.readOnly) { commitName(); go({ screen: 'modelPick' }); } }
     else if (act === 'closeModelPick') go({ screen: 'spec' });
     else if (act === 'pickModel') changeModel(id);
@@ -5479,14 +5548,14 @@ return api;
     else if (act === 'closeModelEdit') backToMaster();
     else if (act === 'saveModel') saveModel();
     else if (act === 'removeModel') removeModel();
-    else if (act === 'model') go({ screen: 'configs', model: id, config: null, specId: null, draftName: null });
-    else if (act === 'dupSpec') { if (!store.readOnly && record()) { var sr = record(), did = newId(), cp = cleanRecord(did, JSON.parse(JSON.stringify(outRecord(sr)))); if (cp) { cp.board = false; cp.pre = false; cp.job = ''; cp.delivery = ''; cp.dlvMonth = false; cp.dlvAsap = false; cp.name = ((sr.name || '') + '（追加）').slice(0, 60); if (cp.quote) { delete cp.quote.no; delete cp.quote.date; delete cp.quote.delivery; } cp.updatedAt = Date.now(); data.specs[did] = cp; go({ screen: 'spec', model: cp.model, config: cp.config, specId: did, printMode: 'spec' }); saveSpec(); window.scrollTo(0, 0); } } }
+    else if (act === 'model') go({ screen: 'configs', model: id, config: null, specId: null, draftName: null, draftJob: null });
+    else if (act === 'dupSpec') { if (!store.readOnly && record()) { var sr = record(), did = newId(), cp = cleanRecord(did, JSON.parse(JSON.stringify(outRecord(sr)))); if (cp) { cp.board = false; cp.pre = false; cp.orderedAt = 0; cp.job = nextJob(); ui.jobAutoId = did; ui.jobAutoV = cp.job; cp.delivery = ''; cp.dlvMonth = false; cp.dlvAsap = false; cp.name = ((sr.name || '') + '（追加）').slice(0, 60); if (cp.quote) { delete cp.quote.no; delete cp.quote.date; delete cp.quote.delivery; } cp.updatedAt = Date.now(); data.specs[did] = cp; go({ screen: 'spec', model: cp.model, config: cp.config, specId: did, printMode: 'spec' }); saveSpec(); window.scrollTo(0, 0); } } }
     else if (act === 'fromDoc') openFromDoc();
-    else if (act === 'workNew') go({ screen: 'spec', model: WORKM.id, config: 'work', specId: null, draftName: null, draftShow: true, printMode: 'spec' });
+    else if (act === 'workNew') go({ screen: 'spec', model: WORKM.id, config: 'work', specId: null, draftName: null, draftJob: null, draftShow: true, printMode: 'spec' });
     else if (act === 'toModels') go({ screen: 'models', model: null, config: null, specId: null });
     else if (act === 'openSaved') { var r = data.specs[id]; if (r) { go({ screen: 'spec', model: r.model, config: r.config, specId: id, printMode: 'spec' }); if (r.board) queueBoardSync(id); } }
     else if (act === 'delete') { if (ui.confirmDelete) removeSpec(); else go({ confirmDelete: true }); }
-    else if (act === 'config') go({ screen: 'spec', config: id, specId: null, draftName: null, draftShow: true, printMode: 'spec' });
+    else if (act === 'config') go({ screen: 'spec', config: id, specId: null, draftName: null, draftJob: null, draftShow: true, printMode: 'spec' });
     else if (act === 'toConfigs') go({ screen: 'configs', config: null });
     else if (act === 'edit') { if (!store.readOnly || parseInt(t.getAttribute('data-i'), 10) >= 0) openItem(id, parseInt(t.getAttribute('data-i'), 10)); }
     else if (act === 'closePicker') go({ screen: 'spec', picker: null, line: -1, draft: null, adding: false });
