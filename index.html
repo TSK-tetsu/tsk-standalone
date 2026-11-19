@@ -131,6 +131,15 @@
   .fdfiles:empty { display: none; }
   .fdfiles span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 6px 6px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 15px; font-weight: 700; max-width: 100%; overflow: hidden; }
   .fdfiles button { width: 30px; height: 30px; border: none; border-radius: 50%; background: var(--press); color: var(--ink); font-size: 16px; }
+  .fdmails { max-height: 38vh; overflow: auto; border: 1px solid var(--line); border-radius: 12px; }
+  .fdmails[hidden] { display: none; }
+  .fdmails p { margin: 0; padding: 14px; font-size: 16px; color: var(--sub); }
+  .fdmails button { display: block; width: 100%; text-align: left; border: none; border-bottom: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 12px 14px; }
+  .fdmails button:last-child { border-bottom: none; }
+  .fdmails button:active { background: var(--press); }
+  .fdmails b { display: block; font-size: 18px; font-weight: 700; line-height: 1.35; }
+  .fdmails span { display: block; margin-top: 2px; font-size: 15px; color: var(--sub); }
+  .fdmails small { display: block; font-size: 14px; color: var(--sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .fdmsg { min-height: 24px; font-size: 16px; font-weight: 700; color: var(--sub); }
   .fdmsg.err { color: #A3261B; }
   .fdbtns { display: flex; gap: 10px; }
@@ -666,7 +675,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 17:50', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 18:10', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -774,7 +783,8 @@
     var aiPost = function (o) { var first = pin() ? Promise.resolve() : needPin(false); return first.then(function () { o.pin = pin(); return fetch(AI, { method: 'POST', body: JSON.stringify(o) }); }).then(function (r) { if (r.status === 403) throw new Error('pin'); if (!r.ok) throw new Error('ai ' + r.status); return r; }); };
     sample = function (input) { return aiPost({ prompt: input }).then(function (r) { return r.text(); }).then(function (t) { return { text: t, truncated: false }; }); };
     sample.json = function (input) { return aiPost({ prompt: input }).then(function (r) { return r.text(); }).then(function (t) { var a = t.indexOf('{'), b = t.lastIndexOf('}'), a2 = t.indexOf('['), b2 = t.lastIndexOf(']'); if (a2 >= 0 && (a < 0 || a2 < a)) { a = a2; b = b2; } return JSON.parse(a >= 0 ? t.slice(a, b + 1) : t); }); };
-    window.TSK_AI = function (prompt, files) { return aiPost({ prompt: prompt, files: files || [] }).then(function (r) { return r.text(); }); };   // 仕様書の「メール・見積書から作る」用
+    window.TSK_AI = function (prompt, files, extra) { var o = { prompt: prompt, files: files || [] }; if (extra) Object.keys(extra).forEach(function (k) { o[k] = extra[k]; }); return aiPost(o).then(function (r) { return r.text(); }); };
+    window.TSK_MAILS = function () { return aiPost({ mode: 'mails' }).then(function (r) { return r.json(); }); };   // Gmailの一覧（添付つき・直近2週間。件名・差出人・日時だけ）   // 仕様書の「メール・見積書から作る」用
   }
   window.claude = { use: function (n) { return Promise.resolve(n === 'db' ? db : n === 'downloads' ? downloads : n === 'user' ? user : n === 'sample' ? sample : null); } };
   if (document.body) loop(); else document.addEventListener('DOMContentLoaded', loop);
@@ -4322,7 +4332,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 17:50<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 18:10<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -4372,9 +4382,10 @@ return api;
   }
   function openFromDoc() {
     if (!window.TSK_AI || store.readOnly || document.querySelector('.fdoc')) return;
-    var w = document.createElement('div'), files = [], busy = false; w.className = 'fdoc';
+    var w = document.createElement('div'), files = [], busy = false, mail = null, mails = []; w.className = 'fdoc';
     w.innerHTML = '<div class="fdbox"><h2>メール・見積書から仕様書を作る</h2><p class="fdlead">見積書のPDFや写真を選ぶか、メールの文を貼り付けてください。AIが読み取って下書きを作ります。作ったあと、いつもの画面で確かめて直せます。</p>' +
       '<input type="file" id="fdFile" accept="application/pdf,image/*" multiple hidden><button type="button" class="fdpick" data-fd="pick">PDF・写真を選ぶ</button><div class="fdfiles" id="fdFiles"></div>' +
+      (window.TSK_MAILS ? '<button type="button" class="fdpick" data-fd="gmail">Gmailから選ぶ（添付つき・この2週間）</button><div class="fdmails" id="fdMails" hidden></div><div class="fdfiles" id="fdSel"></div>' : '') +
       '<label for="fdText">メールの文（あれば貼り付け）</label><textarea id="fdText" rows="6" placeholder="ここにメールの文を貼り付け"></textarea><div class="fdmsg" id="fdMsg"></div>' +
       '<div class="fdbtns"><button type="button" data-fd="close">やめる</button><button type="button" class="go" data-fd="go">読み取って下書きを作る</button></div></div>';
     document.body.appendChild(w);
@@ -4386,10 +4397,20 @@ return api;
       if (a === 'close') { w.remove(); return; }
       if (a === 'pick') { q('#fdFile').click(); return; }
       if (a === 'rm') { files.splice(+b.getAttribute('data-i'), 1); list(); return; }
+      if (a === 'gmail') {   // Gmailの一覧を出す（添付つき・この2週間）
+        var box = q('#fdMails'); box.hidden = false; box.innerHTML = '<p>メールの一覧を取っています…</p>'; msg('');
+        window.TSK_MAILS().then(function (j) {
+          mails = (j && j.mails) || [];
+          box.innerHTML = mails.length ? mails.map(function (m, i) { var d = m.date ? new Date(m.date) : null; return '<button type="button" data-fd="mail" data-i="' + i + '"><b>' + esc(m.subject || '（件名なし）') + '</b><span>' + esc(String(m.from || '').replace(/<[^>]*>/, '').replace(/"/g, '').trim() || m.from || '') + (d ? '　' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2) : '') + '</span><small>' + esc(m.snippet || '') + '</small></button>'; }).join('') : '<p>添付の付いたメールは、この2週間にはありませんでした。</p>';
+        }).catch(function (e) { box.hidden = true; msg(String((e && e.message) || '') === 'pin' ? '合言葉（PIN）が違うようです。画面を読み込み直して、合言葉を入れ直してください。' : 'メールの一覧を取れませんでした。少し待ってから、もう一度試してください。', true); });
+        return;
+      }
+      if (a === 'mail') { mail = mails[+b.getAttribute('data-i')] || null; q('#fdMails').hidden = true; q('#fdSel').innerHTML = mail ? '<span>Gmail：' + esc(mail.subject || '（件名なし）') + '<button type="button" data-fd="unmail" aria-label="選んだメールを外す">×</button></span>' : ''; msg(mail ? 'このメールの本文と添付を読み取ります。' : ''); return; }
+      if (a === 'unmail') { mail = null; q('#fdSel').innerHTML = ''; msg(''); return; }
       if (a !== 'go') return;
-      var text = q('#fdText').value.trim(); if (!files.length && !text) { msg('PDF・写真を選ぶか、メールの文を貼り付けてください。', true); return; }
+      var text = q('#fdText').value.trim(); if (!files.length && !text && !mail) { msg('PDF・写真を選ぶか、Gmailから選ぶか、メールの文を貼り付けてください。', true); return; }
       busy = true; w.classList.add('busy'); msg('読み取っています… 30秒ほどかかることがあります。');
-      Promise.all(files.map(fdRead)).then(function (fs) { return window.TSK_AI(fdPrompt(text.slice(0, 20000)), fs); }).then(function (t) {
+      (mail ? window.TSK_AI(fdPrompt(text.slice(0, 20000)), [], { mode: 'mail', mailId: mail.id }) : Promise.all(files.map(fdRead)).then(function (fs) { return window.TSK_AI(fdPrompt(text.slice(0, 20000)), fs); })).then(function (t) {
         var a1 = t.indexOf('{'), b1 = t.lastIndexOf('}'), j = JSON.parse(a1 >= 0 ? t.slice(a1, b1 + 1) : t);
         var rec = fdMake(j); if (!rec) throw new Error('make');
         w.remove();
