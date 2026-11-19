@@ -120,6 +120,23 @@
     .list:has(> .sw) { display: grid; grid-template-columns: 1fr 1fr; }
     .list:has(> .sw) > .sw:nth-child(odd) { border-right: 1px solid var(--line); }
   }
+  .fdoc { position: fixed; inset: 0; z-index: 9000; background: rgba(5,14,30,.6); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .fdbox { width: 100%; max-width: 720px; max-height: 94vh; overflow: auto; background: var(--card); color: var(--ink); border-radius: 18px; padding: 22px 22px 18px; display: flex; flex-direction: column; gap: 12px; }
+  .fdbox h2 { margin: 0; font-size: 22px; font-weight: 700; }
+  .fdlead { margin: 0; font-size: 16px; line-height: 1.6; color: var(--sub); }
+  .fdbox label { font-size: 16px; font-weight: 700; }
+  .fdbox textarea { width: 100%; min-height: 130px; padding: 10px 12px; border: 2px solid var(--edge); border-radius: 10px; background: var(--card); color: var(--ink); font-family: inherit; font-size: 17px; line-height: 1.5; resize: vertical; }
+  .fdpick { min-height: 60px; border: 2px dashed var(--edge); border-radius: 12px; background: var(--press); color: var(--ink); font-size: 18px; font-weight: 700; }
+  .fdfiles { display: flex; flex-wrap: wrap; gap: 8px; }
+  .fdfiles:empty { display: none; }
+  .fdfiles span { display: inline-flex; align-items: center; gap: 6px; padding: 6px 6px 6px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 15px; font-weight: 700; max-width: 100%; overflow: hidden; }
+  .fdfiles button { width: 30px; height: 30px; border: none; border-radius: 50%; background: var(--press); color: var(--ink); font-size: 16px; }
+  .fdmsg { min-height: 24px; font-size: 16px; font-weight: 700; color: var(--sub); }
+  .fdmsg.err { color: #A3261B; }
+  .fdbtns { display: flex; gap: 10px; }
+  .fdbtns button { min-height: 56px; padding: 0 20px; border: 2px solid var(--edge); border-radius: 12px; background: var(--card); color: var(--ink); font-size: 17px; font-weight: 700; }
+  .fdbtns .go { flex: 1; border-color: var(--band); background: var(--band); color: var(--band-ink); }
+  .fdoc.busy .fdbtns button, .fdoc.busy .fdpick { opacity: .5; pointer-events: none; }
   .bar { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
   .head.first { padding-top: calc(4px + env(safe-area-inset-top, 0px)); }
   .dateBox .clr { flex: 0 0 auto; height: 44px; padding: 0 12px; border: 2px solid var(--edge); border-radius: 10px; background: var(--card); color: var(--sub); font-size: 14px; font-weight: 700; }
@@ -649,7 +666,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 17:00', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 17:40', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -752,7 +769,13 @@
   var user = { can: function () { return Promise.resolve(true); }, isOwner: function () { return false; }, canEdit: function () { return true; } };
   // AI整理：n8n などの Webhook に {prompt} を送り、返ってきた JSON をそのまま使う
   var sample = null;
-  if (AI) { sample = function (input) { return fetch(AI, { method: 'POST', body: JSON.stringify({ prompt: input }) }).then(function (r) { return r.text(); }).then(function (t) { return { text: t, truncated: false }; }); }; sample.json = function (input) { return fetch(AI, { method: 'POST', body: JSON.stringify({ prompt: input }) }).then(function (r) { return r.json(); }); }; }
+  if (AI) {
+    // 合言葉（PIN）を一緒に送り、n8n 側で確かめてからAIを動かす。本文は text/plain（事前確認の通信が要らない）
+    var aiPost = function (o) { var first = pin() ? Promise.resolve() : needPin(false); return first.then(function () { o.pin = pin(); return fetch(AI, { method: 'POST', body: JSON.stringify(o) }); }).then(function (r) { if (r.status === 403) throw new Error('pin'); if (!r.ok) throw new Error('ai ' + r.status); return r; }); };
+    sample = function (input) { return aiPost({ prompt: input }).then(function (r) { return r.text(); }).then(function (t) { return { text: t, truncated: false }; }); };
+    sample.json = function (input) { return aiPost({ prompt: input }).then(function (r) { return r.text(); }).then(function (t) { var a = t.indexOf('{'), b = t.lastIndexOf('}'), a2 = t.indexOf('['), b2 = t.lastIndexOf(']'); if (a2 >= 0 && (a < 0 || a2 < a)) { a = a2; b = b2; } return JSON.parse(a >= 0 ? t.slice(a, b + 1) : t); }); };
+    window.TSK_AI = function (prompt, files) { return aiPost({ prompt: prompt, files: files || [] }).then(function (r) { return r.text(); }); };   // 仕様書の「メール・見積書から作る」用
+  }
   window.claude = { use: function (n) { return Promise.resolve(n === 'db' ? db : n === 'downloads' ? downloads : n === 'user' ? user : n === 'sample' ? sample : null); } };
   if (document.body) loop(); else document.addEventListener('DOMContentLoaded', loop);
 })();
@@ -1715,6 +1738,9 @@ details.done[open]>summary::before{content:"▾"}
 @media (prefers-color-scheme: dark){ :host(:not([data-theme="light"])){ --v-red:#FF9A91; --v-redfill:#D93B30; --v-amber:#F2C14E; --v-amber-bg:#3A3010; --v-ok:#7FD6A6; --v-bar:#8FB8FF; } }
 :host([data-theme="dark"]){ --v-red:#FF9A91; --v-redfill:#D93B30; --v-amber:#F2C14E; --v-amber-bg:#3A3010; --v-ok:#7FD6A6; --v-bar:#8FB8FF; }
 .rowx,.rowhead{display:none}
+.rowx .c-d b.asap{display:inline-block;font-size:18px !important;line-height:1.25 !important;white-space:normal !important;background:var(--v-amber-bg);color:var(--v-amber);border-radius:8px;padding:4px 10px}
+.grp .grp-h .dlv.asap{background:var(--v-amber-bg) !important;color:var(--v-amber) !important;border:0 !important}
+.wl-row .dt.asap{justify-self:start;background:var(--v-amber-bg);color:var(--v-amber) !important;font-weight:700 !important;border-radius:.8vh;padding:.3vh .8vw}
 :host(.norail) .rail{display:none !important}
 /* 右の欄：文字を大きく */
 :host(.mode-d) .rl-h{font-size:18px;font-weight:700}
@@ -2095,7 +2121,7 @@ function dlvAt(key){ const p=projects.find(x=>x.id===key); return (p&&p.delivere
 function oDlv(o){ return !!(o.projectId&&dlvAt(o.projectId)); }
 let showDlv=false;   // 一覧のいちばん下の「納品済み」を開いているか
 function pjKey(o){ return o.projectId || (o.k?("k:"+o.k):"none"); }
-function pjLabel(o){ const p=pjOf(o); if(p) return {k:p.k||"",who:p.client||"（宛先未入力）",spec:p.spec||"",delivery:p.delivery||"",specId:p.specId||"",dm:!!p.dlvMonth}; return {k:o.k||"",who:o.k?"":"案件未設定",spec:"",delivery:"",specId:""}; }
+function pjLabel(o){ const p=pjOf(o); if(p) return {k:p.k||"",who:p.client||"（宛先未入力）",spec:p.spec||"",delivery:p.delivery||"",specId:p.specId||"",dm:!!p.dlvMonth,asap:!!p.dlvAsap&&!p.delivery}; return {k:o.k||"",who:o.k?"":"案件未設定",spec:"",delivery:"",specId:""}; }
 function fmtDW(d){ if(!d) return ""; const t=new Date(d+"T00:00:00"); return isNaN(t)?"":`${t.getMonth()+1}/${t.getDate()}（${"日月火水木金土"[t.getDay()]}）`; }
 
 // 並び順：納期の近い案件が上。納期＝案件の納品日、無ければ未入荷の発注でいちばん早い納期予定。日付のない案件は下。
@@ -2170,7 +2196,7 @@ function renderList0(){
   const sec=key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]||{projectId:key}); const lateN=g.filter(isLate).length, dv=dlvAt(key);
-    return `<section class="grp ${gOpen(key)?"open":""} ${dv?"dlvd":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${xTag(key)}${baseHtml(L)}${dv&&canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="xadd" data-xadd="1">＋ 追加工事</button>`:""}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="${dv?"納品した日を変更":"納品日を変更"}">${dlvHtml(L.delivery,dv,L.dm)}</span>${canWrite&&!dv&&L.delivery&&L.delivery<=todayStr()&&projects.some(x=>x.id===key)?`<button type="button" class="dlvgo" data-dlvgo="1">✓ 納品済みにする</button>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span>${qsHtml(g,dv)}${rowX(key,g,L,dv)}<span class="ghint">${gOpen(key)?"▲ タップしてたたむ":"▼ タップして詳細を表示"}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
+    return `<section class="grp ${gOpen(key)?"open":""} ${dv?"dlvd":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${xTag(key)}${baseHtml(L)}${dv&&canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="xadd" data-xadd="1">＋ 追加工事</button>`:""}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="${dv?"納品した日を変更":"納品日を変更"}">${dlvHtml(L.delivery,dv,L.dm,L.asap)}</span>${canWrite&&!dv&&L.delivery&&L.delivery<=todayStr()&&projects.some(x=>x.id===key)?`<button type="button" class="dlvgo" data-dlvgo="1">✓ 納品済みにする</button>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span>${qsHtml(g,dv)}${rowX(key,g,L,dv)}<span class="ghint">${gOpen(key)?"▲ タップしてたたむ":"▼ タップして詳細を表示"}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
   };
   // 納品済みの案件は、いちばん下にたたんでまとめる（納品した日の新しい順）。押せば開いて見返せる。
   const ak=keys.filter(k=>!dlvAt(k)), dk=keys.filter(k=>dlvAt(k)).sort((a,b)=>dlvAt(b).localeCompare(dlvAt(a)));
@@ -2212,7 +2238,7 @@ function rowX(key,g,L,dv){
   const n=g.length, a=g.filter(o=>STATUSES.indexOf(o.status)>=ARR).length, todo=g.filter(o=>o.status===STATUSES[0]).length, late=g.filter(isLate).length;
   const d=L.delivery, dd=d?Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000):null, dc=dv?"done":!d?"none":dd<0?"late":dd<=3?"soon":"";
   const wd=x=>"日月火水木金土"[new Date(x+"T00:00:00").getDay()];
-  const date=dv?`<b>${fmtD(dv)}<i>${wd(dv)}</i></b><small>納品済み</small>`:d?`<b>${L.dm?`${+d.slice(5,7)}月<i>まで</i>`:`${fmtD(d)}<i>${wd(d)}</i>`}</b><small>${dd<0?`${-dd}日超過`:dd===0?"本日":`あと${dd}日`}</small>`:`<b class="tbd">未定</b>`;
+  const date=dv?`<b>${fmtD(dv)}<i>${wd(dv)}</i></b><small>納品済み</small>`:d?`<b>${L.dm?`${+d.slice(5,7)}月<i>まで</i>`:`${fmtD(d)}<i>${wd(d)}</i>`}</b><small>${dd<0?`${-dd}日超過`:dd===0?"本日":`あと${dd}日`}</small>`:L.asap?`<b class="asap">なるべく<br>早く</b>`:`<b class="tbd">未定</b>`;
   let units=0; const rest=[]; String(L.spec||"").split("　").filter(Boolean).forEach(t=>{ const m=t.match(/^×(\d+)$/); if(m) units=+m[1]; else rest.push(t); });
   const x=xInfo(key);
   const prog=!n?`<em>発注なし</em>`:a===n?`<em class="ok">✓ 全部入荷</em><em>${n}件</em>`:`<span class="trk"><i style="width:${Math.round(a/n*100)}%"></i></span><em>入荷 <b>${a}</b> / ${n}</em>`;
@@ -2232,7 +2258,7 @@ function gAct(key){ const xb=`<button type="button" class="b b-sm b-ghost xlsb" 
 // 納品日の表示：日付を大きく、残り日数つき。過ぎていれば赤、未入力なら「納品日 未定」。
 function moTxt(d){ return `${+String(d).slice(5,7)}月まで`; }   // 「○月まで」の表示
 function moEnd(ym){ const m=/^(\d{4})-(\d{2})$/.exec(ym||""); if(!m) return ""; const t=new Date(+m[1],+m[2],0); return `${m[1]}-${m[2]}-${String(t.getDate()).padStart(2,"0")}`; }   // その月の最終日
-function dlvHtml(d,done,mo){ if(done) return `<span class="dlv done">納品済み<b>${fmtDW(done)}</b></span>`; if(!d) return `<span class="dlv none">納品日 未定</span>`; const n=Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000); return `<span class="dlv ${n<0?"over":""}">納品<b>${mo?moTxt(d):fmtDW(d)}</b><small>${n>0?`あと${n}日`:n===0?"本日":`${-n}日超過`}</small></span>`; }
+function dlvHtml(d,done,mo,asap){ if(!done&&!d&&asap) return `<span class="dlv asap">納品<b>なるべく早く</b></span>`; if(done) return `<span class="dlv done">納品済み<b>${fmtDW(done)}</b></span>`; if(!d) return `<span class="dlv none">納品日 未定</span>`; const n=Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000); return `<span class="dlv ${n<0?"over":""}">納品<b>${mo?moTxt(d):fmtDW(d)}</b><small>${n>0?`あと${n}日`:n===0?"本日":`${-n}日超過`}</small></span>`; }
 // カードの形：tile＝小さい札（初期）／full＝大きいカード（以前の形）（2列。押した札だけ広がって、いまのカードと同じ操作が出る）。端末ごとに覚える。
 let cardMode="tile", selId=null; try{ if(localStorage.getItem("tsk_cards2")==="full") cardMode="full"; }catch{}   // 初期は小さい札。大きいカードを選んだ端末だけ、それを覚える
 function card(o){ return cardMode==="tile"?tile(o):cardFull(o); }
@@ -2979,7 +3005,7 @@ async function doSync(x){
   await whenReady(); if(!canWrite) return;
   const pid="sp_"+x.id, now=new Date().toISOString();
   const cur=projects.find(p=>p.id===pid);
-  const pj={client:x.client,spec:x.spec,k:x.k,delivery:x.delivery,specId:x.id,dlvMonth:x.dlvMonth?true:""};
+  const pj={client:x.client,spec:x.spec,k:x.k,delivery:x.delivery,specId:x.id,dlvMonth:x.dlvMonth?true:"",dlvAsap:x.dlvAsap?true:""};
   if(!cur) await saveProject(pid,{...pj,createdAt:now,updatedAt:now});
   else if(Object.keys(pj).some(f=>(cur[f]||"")!==pj[f])) await saveProject(pid,{...strip(cur),...pj,updatedAt:now});
   const mine=allOrders.filter(o=>o.projectId===pid&&o.specKey); const want=new Map(x.lines.map(l=>[l.key,l]));
@@ -3076,10 +3102,10 @@ function dayTag(d){ const n=dayDiff(d); return n<0?{t:`${-n}日超過`,c:"late"}
 function wallProjects(){
   const m=new Map();
   orders.forEach(o=>{ const k=pjKey(o); if(k==="none"||dlvAt(k)) return; if(!m.has(k)) m.set(k,[]); m.get(k).push(o); });
-  projects.forEach(p=>{ if(!p.deliveredAt&&p.delivery&&!m.has(p.id)) m.set(p.id,[]); });
+  projects.forEach(p=>{ if(!p.deliveredAt&&(p.delivery||p.dlvAsap)&&!m.has(p.id)) m.set(p.id,[]); });
   return [...m.entries()].map(([k,ls])=>{
     const p=projects.find(x=>x.id===k);
-    const L=p?{k:p.k||"",who:p.client||"（宛先未入力）",spec:p.spec||"",delivery:p.delivery||"",dm:!!p.dlvMonth}:pjLabel(ls[0]);
+    const L=p?{k:p.k||"",who:p.client||"（宛先未入力）",spec:p.spec||"",delivery:p.delivery||"",dm:!!p.dlvMonth,asap:!!p.dlvAsap&&!p.delivery}:pjLabel(ls[0]);
     const date=pjDate(k);
     return {k,L,date,isDlv:!!L.delivery,n:ls.length,in:ls.filter(o=>STATUSES.indexOf(o.status)>=ARR).length,late:ls.filter(isLate).length,todo:ls.filter(o=>o.status===STATUSES[0]).length};
   }).sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999")||(a.L.k||"～").localeCompare(b.L.k||"～"));
@@ -3099,7 +3125,7 @@ function renderWall(){
   const now=new Date(), today=todayStr(), W="日月火水木金土", wd=d=>W[new Date(d+"T00:00:00").getDay()];
   $("#wlDate").textContent=`${now.getMonth()+1}月${now.getDate()}日（${W[now.getDay()]}）`;
   $("#wlTime").textContent=`${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}`;
-  const all=wallProjects(), pjs=[...all.filter(x=>x.isDlv&&x.date),...all.filter(x=>!(x.isDlv&&x.date))];   // 納品日の決まっているものが先
+  const all=wallProjects(), pjs=[...all.filter(x=>x.L.asap),...all.filter(x=>!x.L.asap&&x.isDlv&&x.date),...all.filter(x=>!x.L.asap&&!(x.isDlv&&x.date))];   // 納品日の決まっているものが先
   const soon=orders.filter(dueSoon).sort((a,b)=>a.due.localeCompare(b.due)), open=tasks.filter(t=>!t.done).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
   const lateN=orders.filter(isLate).length, tkLate=open.filter(t=>t.due&&t.due<today).length, pjLate=pjs.filter(x=>x.isDlv&&x.date&&x.date<today).length;
   // 上の帯：異常があるときだけ赤で出す。なければ「遅れはありません」
@@ -3107,7 +3133,7 @@ function renderWall(){
   const rm=d=>{ const g=dayTag(d); return `<span class="rm ${g.c}">${g.t}</span>`; };
   $("#wlPjN").textContent=pjs.length;
   $("#wlPj").innerHTML=pjs.length?pjs.map(x=>{ const dl=x.isDlv&&x.date, bad=dl&&x.date<today;
-    return `<button class="wl-row big ${bad?"late":""}" data-pj="${esc(x.k)}" type="button">${dl?`<span class="dt">${x.L.dm?`${+x.date.slice(5,7)}月<i>まで</i>`:`${fmtD(x.date)}<i>${wd(x.date)}</i>`}</span>${rm(x.date)}`:`<span class="dt none">納品日 未定</span><span class="rm"></span>`}<span class="tx"><b>${esc(x.L.who||"案件未設定")}</b><small>${esc(String(x.L.spec||"").replace(/　×1$/,"").replace(/　×(\d+)$/,"　$1台"))}</small></span><span class="no">${esc(x.L.k||"")}${x.late?`<em>発注の遅れ ${x.late}</em>`:""}</span></button>`; }).join(""):`<div class="wl-empty"><i>✓</i>納品待ちの案件はありません</div>`;
+    return `<button class="wl-row big ${bad?"late":""}" data-pj="${esc(x.k)}" type="button">${dl?`<span class="dt">${x.L.dm?`${+x.date.slice(5,7)}月<i>まで</i>`:`${fmtD(x.date)}<i>${wd(x.date)}</i>`}</span>${rm(x.date)}`:x.L.asap?`<span class="dt none asap">なるべく早く</span><span class="rm"></span>`:`<span class="dt none">納品日 未定</span><span class="rm"></span>`}<span class="tx"><b>${esc(x.L.who||"案件未設定")}</b><small>${esc(String(x.L.spec||"").replace(/　×1$/,"").replace(/　×(\d+)$/,"　$1台"))}</small></span><span class="no">${esc(x.L.k||"")}${x.late?`<em>発注の遅れ ${x.late}</em>`:""}</span></button>`; }).join(""):`<div class="wl-empty"><i>✓</i>納品待ちの案件はありません</div>`;
   // 右の上：発注の遅れ・タスクは「あるときだけ」出す。両方あるときは2件ずつ、片方だけなら4件まで
   const N=soon.length&&open.length?2:4, more=(id,n)=>{ const b=$(id); b.hidden=n<=0; b.textContent=n>0?`ほか ${n}件 ― 押すと開きます`:""; };
   $("#wlOrdBox").hidden=!soon.length; $("#wlOrdN").textContent=soon.length; $("#wlOrdN").classList.toggle("hot",lateN>0);
@@ -3523,10 +3549,10 @@ function editDelivery(key){ const p=projects.find(x=>x.id===key); if(!p||!canWri
   openSheet(`<h2>納品日を変える</h2><div class="lead">${esc(p.client||"")}</div>
     <div class="f"><label for="dvIn">日にちが決まっている</label><input id="dvIn" type="date" value="${esc(p.dlvMonth?"":p.delivery||"")}"></div>
     <div class="f"><label for="dvMo">月だけ決まっている（○月まで）</label><input id="dvMo" type="month" value="${esc(p.dlvMonth?(p.delivery||"").slice(0,7):"")}"></div>
-    <div class="btns"><button class="b b-ghost" data-cl="1">やめる</button><button class="b b-ghost" data-none="1">未定にする</button><button class="b b-gold" data-ok="1" style="flex:1">保存</button></div>`);
+    <div class="btns"><button class="b b-ghost" data-cl="1">やめる</button><button class="b b-ghost" data-none="1">未定にする</button><button class="b b-ghost" data-asap="1">なるべく早く</button><button class="b b-gold" data-ok="1" style="flex:1">保存</button></div>`);
   $("#dvIn").addEventListener("input",()=>{ mode="day"; $("#dvMo").value=""; }); $("#dvMo").addEventListener("input",()=>{ mode="mo"; $("#dvIn").value=""; });
-  const save=async(v,dm)=>{ sheet.onclick=null; try{ if(p.specId&&bridge.editSpec) bridge.editSpec(p.specId,{delivery:v,dlvMonth:dm}); await saveProject(p.id,{...strip(p),delivery:v,dlvMonth:dm?true:"",updatedAt:new Date().toISOString()}); toast(v?`納品日を ${dm?moTxt(v):fmtDW(v)} にしました`:"納品日を未定にしました"); }catch{ toast("保存できませんでした"); } closeSheet(); };
-  sheet.onclick=ev=>{ if(ev.target.closest("[data-ok]")){ const mo=mode==="mo"&&$("#dvMo").value; if(mo) save(moEnd($("#dvMo").value),true); else save($("#dvIn").value,false); } else if(ev.target.closest("[data-none]")) save("",false); else if(ev.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
+  const save=async(v,dm,asap)=>{ sheet.onclick=null; try{ if(p.specId&&bridge.editSpec) bridge.editSpec(p.specId,{delivery:v,dlvMonth:dm,dlvAsap:!!asap}); await saveProject(p.id,{...strip(p),delivery:v,dlvMonth:dm?true:"",dlvAsap:asap?true:"",updatedAt:new Date().toISOString()}); toast(v?`納品日を ${dm?moTxt(v):fmtDW(v)} にしました`:asap?"納品日を「なるべく早く」にしました":"納品日を未定にしました"); }catch{ toast("保存できませんでした"); } closeSheet(); };
+  sheet.onclick=ev=>{ if(ev.target.closest("[data-ok]")){ const mo=mode==="mo"&&$("#dvMo").value; if(mo) save(moEnd($("#dvMo").value),true); else save($("#dvIn").value,false); } else if(ev.target.closest("[data-none]")) save("",false); else if(ev.target.closest("[data-asap]")) save("",false,true); else if(ev.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
 }
 // 納品済みにする・日付を直す・取り消す。仕様書から来た案件でも、印はボードの案件に持たせる（仕様書側はこれを読む）。
 async function setDelivered(key,v){ const p=projects.find(x=>x.id===key); if(!p) return false; const {pinTop,...rest}=strip(p); await saveProject(p.id,{...(v?rest:strip(p)),deliveredAt:v,updatedAt:new Date().toISOString()}); if(v){ openGrp.delete(key); grpF.delete(key); } return true; }
@@ -3694,6 +3720,7 @@ return api;
     return names;
   }
   function deliveryDay() { var r = record(); return r ? r.delivery || '' : ''; }
+  function asapMode() { var r = record(); return !!(r && r.dlvAsap && !r.delivery); }           // 納期「なるべく早く」
   function monthMode() { var r = record(); return !!(r && r.dlvMonth); }                       // 納品日を「○月まで」で入れている
   function monthEnd(ym) { var m = /^(\d{4})-(\d{2})$/.exec(ym || ''); if (!m) return ''; var t = new Date(+m[1], +m[2], 0); return m[1] + '-' + m[2] + '-' + ('0' + t.getDate()).slice(-2); }
   function cleanJob(v) { return typeof v === 'string' ? v.replace(/\s+/g, ' ').trim().slice(0, 30) : ''; }   // 工事番号, free text
@@ -3719,7 +3746,7 @@ return api;
     var model = body.model, config = body.config;
     if (typeof model !== 'string' || typeof config !== 'string') { var cut = String(id).lastIndexOf('_'); model = String(id).slice(0, cut); config = String(id).slice(cut + 1); }
     if ((!byId(MODELS, model) && model !== TBDM.id && model !== WORKM.id && !/^m[a-z0-9]{4,24}$/.test(model)) || !byId(CONFIGS, config)) return null;
-    return { model: model, modelName: typeof body.modelName === 'string' ? body.modelName.trim().slice(0, 30) : '', config: config, name: typeof body.name === 'string' ? body.name.trim().slice(0, 60) : '', showPrice: body.showPrice !== false, units: cleanUnits(body.units != null ? body.units : (body.quote && body.quote.units)), job: cleanJob(body.job), board: body.board === true, delivery: cleanDay(body.delivery), dlvMonth: body.dlvMonth === true, vendors: cleanVendors(body.vendors), memo: typeof body.memo === 'string' ? body.memo.slice(0, 300) : '', quote: cleanQuote(body.quote), values: cleanValues(body.values), updatedAt: typeof body.updatedAt === 'number' ? body.updatedAt : 0 };
+    return { model: model, modelName: typeof body.modelName === 'string' ? body.modelName.trim().slice(0, 30) : '', config: config, name: typeof body.name === 'string' ? body.name.trim().slice(0, 60) : '', showPrice: body.showPrice !== false, units: cleanUnits(body.units != null ? body.units : (body.quote && body.quote.units)), job: cleanJob(body.job), board: body.board === true, delivery: cleanDay(body.delivery), dlvMonth: body.dlvMonth === true, dlvAsap: body.dlvAsap === true, vendors: cleanVendors(body.vendors), memo: typeof body.memo === 'string' ? body.memo.slice(0, 300) : '', quote: cleanQuote(body.quote), values: cleanValues(body.values), updatedAt: typeof body.updatedAt === 'number' ? body.updatedAt : 0 };
   }
   function cleanList(v) { return Array.isArray(v) ? v.filter(function (x) { return typeof x === 'string' && x.trim(); }).map(function (x) { return x.trim().slice(0, 60); }) : []; }
   function cleanPriceMap(m) { var o = {}; if (m && typeof m === 'object') Object.keys(m).slice(0, 200).forEach(function (n) { var pr = cleanPrice(m[n]); if (typeof n === 'string' && n.trim() && pr != null) o[n.trim().slice(0, 60)] = pr; }); return o; }
@@ -3734,7 +3761,7 @@ return api;
   }
   function cleanNote(t) { return typeof t === 'string' ? t.replace(/\s+/g, ' ').trim().slice(0, 60) : ''; }   // a short remark on one item
   function cleanValues(v) { var o = {}; if (v && typeof v === 'object') FIELDS.forEach(function (f) { var ls = cleanLines(v[f.k]); if (ls.length) o[f.k] = ls; }); return o; }
-  function outRecord(r) { var o = { model: r.model, modelName: modelLabel(r), config: r.config, name: r.name, showPrice: r.showPrice !== false, units: cleanUnits(r.units), job: cleanJob(r.job), board: r.board === true, delivery: r.delivery || '', dlvMonth: r.dlvMonth === true, vendors: cleanVendors(r.vendors), memo: r.memo || '', values: outValues(r.values), updatedAt: r.updatedAt }; if (r.quote) { o.quote = {}; Object.keys(r.quote).forEach(function (k) { if (r.quote[k] != null) o.quote[k] = r.quote[k]; }); } return o; }
+  function outRecord(r) { var o = { model: r.model, modelName: modelLabel(r), config: r.config, name: r.name, showPrice: r.showPrice !== false, units: cleanUnits(r.units), job: cleanJob(r.job), board: r.board === true, delivery: r.delivery || '', dlvMonth: r.dlvMonth === true, dlvAsap: r.dlvAsap === true, vendors: cleanVendors(r.vendors), memo: r.memo || '', values: outValues(r.values), updatedAt: r.updatedAt }; if (r.quote) { o.quote = {}; Object.keys(r.quote).forEach(function (k) { if (r.quote[k] != null) o.quote[k] = r.quote[k]; }); } return o; }
   function outValues(v) { var o = {}; FIELDS.forEach(function (f) { if (v[f.k] && v[f.k].length) o[f.k] = v[f.k].map(function (l) { var x = l.price == null ? { name: l.name } : { name: l.name, price: l.price }; if (l.note) x.note = l.note; return x; }); }); return o; }
   function parsePrice(t) {
     var raw = String(t == null ? '' : t).replace(/[０-９．]/g, function (c) { return c === '．' ? '.' : String.fromCharCode(c.charCodeAt(0) - 0xFEE0); }).replace(/[,，\s¥￥円]/g, '');
@@ -4293,8 +4320,8 @@ return api;
   }
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
-      '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 17:00<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 17:40<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -4305,9 +4332,71 @@ return api;
     var live = ids.filter(function (id) { return !dlvOf(id); }), done = ids.filter(dlvOf).sort(function (x, y) { return dlvOf(y) < dlvOf(x) ? -1 : dlvOf(y) > dlvOf(x) ? 1 : 0; });
     function item(id) {
       var r = data.specs[id], m = { name: modelLabel(r) }, c = byId(CONFIGS, r.config), dv = dlvOf(id);
-      return '<div class="sw' + (ui.swipeId === id ? ' open' : '') + '" data-sw="' + esc(id) + '">' + (store.readOnly ? '' : '<button type="button" class="swdel" data-act="delSaved" data-id="' + esc(id) + '">' + (ui.confirmDelId === id ? '本当に削除' : '削除') + '</button>') + '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><em class="stt ' + (dv ? 'd' : r.board ? 'o' : 'q') + '">' + (dv ? '納品済み' : r.board ? '受注決定' : '見積もり段階') + '</em><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + (isWork(r.model) ? (workSummary(r) ? '　' + esc(workSummary(r)) : '') : '　' + esc(c.name)) + (dv ? '　' + dayShort(dv) + ' 納品' : r.delivery ? '　納品 ' + (r.dlvMonth ? (+r.delivery.slice(5, 7)) + '月まで' : dayShort(r.delivery)) : '') + '</span></span>' + CHEV + '</button></div>'; }
+      return '<div class="sw' + (ui.swipeId === id ? ' open' : '') + '" data-sw="' + esc(id) + '">' + (store.readOnly ? '' : '<button type="button" class="swdel" data-act="delSaved" data-id="' + esc(id) + '">' + (ui.confirmDelId === id ? '本当に削除' : '削除') + '</button>') + '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><em class="stt ' + (dv ? 'd' : r.board ? 'o' : 'q') + '">' + (dv ? '納品済み' : r.board ? '受注決定' : '見積もり段階') + '</em><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + (isWork(r.model) ? (workSummary(r) ? '　' + esc(workSummary(r)) : '') : '　' + esc(c.name)) + (dv ? '　' + dayShort(dv) + ' 納品' : r.delivery ? '　納品 ' + (r.dlvMonth ? (+r.delivery.slice(5, 7)) + '月まで' : dayShort(r.delivery)) : r.dlvAsap ? '　納品 なるべく早く' : '') + '</span></span>' + CHEV + '</button></div>'; }
     return '<div class="sec">保存した仕様書</div>' + (live.length ? '<div class="list">' + live.map(item).join('') + '</div>' : '<p class="dlvNone">進行中の仕様書はありません。</p>') +
       (done.length ? '<button type="button" class="dlvFold' + (ui.showDelivered ? ' open' : '') + '" data-act="toggleDelivered" aria-expanded="' + !!ui.showDelivered + '"><span class="chev">' + (ui.showDelivered ? '▼' : '▶') + '</span><b>納品済み</b><span class="n">' + done.length + '件</span><small>' + (ui.showDelivered ? '押すとたたみます' : '押すと開いて見返せます') + '</small></button>' + (ui.showDelivered ? '<div class="list dlvList">' + done.map(item).join('') + '</div>' : '') : '');
+  }
+  // ===== メール・見積書から仕様書の下書きを作る（AIが読み取る。作ったあと、いつもの画面で確かめて直す） =====
+  function fdRead(f) {
+    return new Promise(function (res, rej) {
+      if (f.type === 'application/pdf') { if (f.size > 6000000) { rej(new Error('big')); return; } var r = new FileReader(); r.onload = function () { res({ type: 'application/pdf', data: String(r.result).split(',')[1] }); }; r.onerror = function () { rej(new Error('read')); }; r.readAsDataURL(f); return; }
+      var img = new Image(), u = URL.createObjectURL(f);   // 写真は長辺1800pxまで小さくして送る
+      img.onload = function () { var k = Math.min(1, 1800 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u); res({ type: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.85).split(',')[1] }); };
+      img.onerror = function () { URL.revokeObjectURL(u); rej(new Error('image')); }; img.src = u;
+    });
+  }
+  function fdPrompt(text) {
+    var t = new Date().toLocaleDateString('sv-SE');
+    return 'あなたはレーシングシミュレーターメーカー「TSK」の事務を手伝っています。添付の見積書・メール・写真と、下のメールの文を読んで、社内の「仕様書（手配書）」の下書きを作ってください。\n' +
+      '出力は JSON だけにしてください（前後に説明や ``` を付けない）。書かれていない項目は空文字か 0 にし、推測で埋めないでください。\n' +
+      '{\n "kind": "work" か "machine"（納入済みの機械の工事・修理・出張作業なら "work"、新しい機械の製作・納入なら "machine"）,\n "model": "機種の id（machine のとき、下の一覧から。合うものが無ければ空）",\n "config": "構成の id（machine のとき、下の一覧から。分からなければ空）",\n' +
+      ' "name": "だれ・どこ向けの何か（30字以内。例：TTDC 東富士研究所 シートレール交換）",\n "job": "見積No. や工事番号（例 D260130）",\n "delivery": "納品日・作業日。YYYY-MM-DD。月だけ分かるときは YYYY-MM",\n "asap": 納期が「なるべく早く」「至急」などのときだけ true,\n "units": 台数（数字。分からなければ 1）,\n' +
+      ' "values": { "項目のキー": [ { "name": "品名・内容（60字以内）", "price": 税抜の金額の合計（数字。分からなければ 0）, "note": "数量×単価などの補足（60字以内）" } ] },\n "memo": "受渡場所・支払条件・相手の担当者など、上に入らない大事なこと（300字以内）"\n}\n' +
+      '機種: ' + JSON.stringify(allModels().map(function (m) { return { id: m.id, name: m.name }; })) + '\n' +
+      '構成: ' + JSON.stringify(CONFIGS.filter(function (c) { return c.id !== 'work'; })) + '\n' +
+      '項目のキー（kind が "work" のときは g が "work" か "etc" のものだけ。"machine" のときは g が "work" 以外のもの。作業内容は「作業」、作業費・宿泊費・移動費は「作業費・出張費」に、1行ずつ入れる）: ' + JSON.stringify(FIELDS.map(function (f) { return { k: f.k, label: f.label, g: f.g }; })) + '\n' +
+      '今日の日付: ' + t + '\n--- メールの文 ---\n' + (text || '（なし。添付を読んでください）');
+  }
+  function fdMake(j) {
+    var isM = j && j.kind === 'machine', model = isM ? (findModel(j.model) && j.model !== WORKM.id ? j.model : TBDM.id) : WORKM.id;
+    var config = isM ? (byId(CONFIGS, j.config) && j.config !== 'work' ? j.config : 'dealer') : 'work';
+    var vals = {}; if (j && j.values && typeof j.values === 'object') FIELDS.forEach(function (f) { var ok = isM ? f.g !== 'work' : (f.g === 'work' || f.g === 'etc'); if (ok && Array.isArray(j.values[f.k])) vals[f.k] = j.values[f.k].map(function (l) { return { name: String((l && l.name) || ''), price: Number(l && l.price) || 0, note: String((l && l.note) || '') }; }); });
+    var dl = String((j && j.delivery) || ''), dm = false; if (/^\d{4}-\d{2}$/.test(dl)) { dl = monthEnd(dl); dm = true; }
+    var id = newId(), m = findModel(model);
+    var rec = cleanRecord(id, { model: model, modelName: m ? m.name : '', config: config, name: String((j && j.name) || ''), showPrice: true, units: Number(j && j.units) || 1, job: String((j && j.job) || ''), delivery: dl, dlvMonth: dm, dlvAsap: !dl && j && j.asap === true, memo: String((j && j.memo) || ''), values: vals });
+    if (!rec) return null;
+    rec.updatedAt = Date.now(); data.specs[id] = rec;
+    go({ screen: 'spec', model: rec.model, config: rec.config, specId: id, printMode: 'spec' }); saveSpec();
+    return rec;
+  }
+  function openFromDoc() {
+    if (!window.TSK_AI || store.readOnly || document.querySelector('.fdoc')) return;
+    var w = document.createElement('div'), files = [], busy = false; w.className = 'fdoc';
+    w.innerHTML = '<div class="fdbox"><h2>メール・見積書から仕様書を作る</h2><p class="fdlead">見積書のPDFや写真を選ぶか、メールの文を貼り付けてください。AIが読み取って下書きを作ります。作ったあと、いつもの画面で確かめて直せます。</p>' +
+      '<input type="file" id="fdFile" accept="application/pdf,image/*" multiple hidden><button type="button" class="fdpick" data-fd="pick">PDF・写真を選ぶ</button><div class="fdfiles" id="fdFiles"></div>' +
+      '<label for="fdText">メールの文（あれば貼り付け）</label><textarea id="fdText" rows="6" placeholder="ここにメールの文を貼り付け"></textarea><div class="fdmsg" id="fdMsg"></div>' +
+      '<div class="fdbtns"><button type="button" data-fd="close">やめる</button><button type="button" class="go" data-fd="go">読み取って下書きを作る</button></div></div>';
+    document.body.appendChild(w);
+    var q = function (x) { return w.querySelector(x); }, msg = function (t, err) { var e = q('#fdMsg'); e.textContent = t || ''; e.className = 'fdmsg' + (err ? ' err' : ''); };
+    var list = function () { q('#fdFiles').innerHTML = files.map(function (f, i) { return '<span>' + esc(f.name) + '<button type="button" data-fd="rm" data-i="' + i + '" aria-label="' + esc(f.name) + ' を外す">×</button></span>'; }).join(''); };
+    q('#fdFile').addEventListener('change', function (ev) { Array.prototype.forEach.call(ev.target.files || [], function (f) { if (files.length < 6) files.push(f); }); ev.target.value = ''; list(); msg(''); });
+    w.addEventListener('click', function (ev) {
+      var b = ev.target.closest && ev.target.closest('[data-fd]'); if (!b || busy) return; var a = b.getAttribute('data-fd');
+      if (a === 'close') { w.remove(); return; }
+      if (a === 'pick') { q('#fdFile').click(); return; }
+      if (a === 'rm') { files.splice(+b.getAttribute('data-i'), 1); list(); return; }
+      if (a !== 'go') return;
+      var text = q('#fdText').value.trim(); if (!files.length && !text) { msg('PDF・写真を選ぶか、メールの文を貼り付けてください。', true); return; }
+      busy = true; w.classList.add('busy'); msg('読み取っています… 30秒ほどかかることがあります。');
+      Promise.all(files.map(fdRead)).then(function (fs) { return window.TSK_AI(fdPrompt(text.slice(0, 20000)), fs); }).then(function (t) {
+        var a1 = t.indexOf('{'), b1 = t.lastIndexOf('}'), j = JSON.parse(a1 >= 0 ? t.slice(a1, b1 + 1) : t);
+        var rec = fdMake(j); if (!rec) throw new Error('make');
+        w.remove();
+      }).catch(function (e) {
+        busy = false; w.classList.remove('busy'); var m = String((e && e.message) || '');
+        msg(m === 'big' ? 'PDFが大きすぎます（6MBまで）。ページを減らすか、写真で試してください。' : m === 'image' ? 'この写真は読み込めませんでした。JPEGかPNG、またはPDFで試してください。' : m === 'pin' ? '合言葉（PIN）が違うようです。画面を読み込み直して、合言葉を入れ直してください。' : /^ai /.test(m) || m === 'Failed to fetch' ? 'AIにつながりませんでした。少し待ってから、もう一度試してください。' : '読み取った結果をうまく使えませんでした。もう一度試すか、メールの文を貼り付けて試してください。', true);
+      });
+    });
   }
   function screenConfigs() {
     var m = curModel();
@@ -4332,7 +4421,7 @@ return api;
       '<div class="topgrid"><div class="nameBox"><label for="specName">名前（だれ・どこ向け）</label><textarea id="specName" class="grow" rows="1" maxlength="60" autocomplete="off" placeholder="例：○○店 向け"' + (store.readOnly ? ' readonly' : '') + '>' + esc(nameInBox()) + '</textarea></div>' +
       '<div class="dateBox"><label for="specJob">工事番号</label><input id="specJob" type="text" maxlength="30" autocomplete="off" inputmode="text" autocapitalize="characters" placeholder="例：K260115" value="' + esc(jobNo()) + '"' + (store.readOnly ? ' readonly' : '') + '></div><div class="jobMsg" id="jobMsg">' + esc(jobNote(jobNo())) + '</div>' +
       (wk ? '' : '<div class="unitsBox"><span class="lb">台数</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsDown" aria-label="台数を減らす"' + (u <= 1 ? ' disabled' : '') + '>−</button>') + '<span class="n">' + u + '台</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsUp" aria-label="台数を増やす"' + (u >= 99 ? ' disabled' : '') + '>＋</button>') + '</div>') +
-      '<div class="dateBox"><label for="specDate">' + (wk ? '作業日' : '納品日') + '</label>' + (monthMode() ? '<input id="specMonth" type="month" value="' + esc(deliveryDay().slice(0, 7)) + '"' + (store.readOnly ? ' disabled' : '') + '>' : '<input id="specDate" type="date" value="' + esc(deliveryDay()) + '"' + (store.readOnly ? ' disabled' : '') + '>') + (store.readOnly ? '' : '<button type="button" class="clr' + (monthMode() ? ' on' : '') + '" data-act="dayMode" aria-pressed="' + monthMode() + '">月まで</button><button type="button" class="clr' + (deliveryDay() ? '' : ' on') + '" data-act="clearDay" aria-pressed="' + !deliveryDay() + '">未定</button>') + '</div></div>' +
+      '<div class="dateBox"><label for="specDate">' + (wk ? '作業日' : '納品日') + '</label>' + (monthMode() ? '<input id="specMonth" type="month" value="' + esc(deliveryDay().slice(0, 7)) + '"' + (store.readOnly ? ' disabled' : '') + '>' : '<input id="specDate" type="date" value="' + esc(deliveryDay()) + '"' + (store.readOnly ? ' disabled' : '') + '>') + (store.readOnly ? '' : '<button type="button" class="clr' + (monthMode() ? ' on' : '') + '" data-act="dayMode" aria-pressed="' + monthMode() + '">月まで</button><button type="button" class="clr' + (asapMode() ? ' on' : '') + '" data-act="dayAsap" aria-pressed="' + asapMode() + '">なるべく早く</button><button type="button" class="clr' + (deliveryDay() || asapMode() ? '' : ' on') + '" data-act="clearDay" aria-pressed="' + !(deliveryDay() || asapMode()) + '">未定</button>') + '</div></div>' +
       (store.readOnly ? '' : '<div class="stack" style="margin-top:10px">' + switchHtml() + '</div>') +
       '<div class="groups">' + rows + '</div><div class="note">' + FIELDS.filter(function (f) { return groupsFor(ui.model).some(function (g) { return g.id === f.g; }); }).length + '項目中 ' + filled + '項目 入力済み</div>' +
       (!memoText().trim() && !ui.memoOpen ? (store.readOnly ? '' : '<div class="stack" style="margin-top:12px"><button type="button" class="btn soft" data-act="openMemo">＋ 全体の備考を書く</button></div>') :
@@ -4838,7 +4927,7 @@ return api;
         lines.push({ key: f.k + '|' + l.name + '|' + seen[l.name], part: f.label, name: l.name, note: l.note || '', vendor: vend });
       });
     });
-    return { id: id, client: r.name || '', spec: isWork(r.model) ? '工事・修理' + (workSummary(r) ? '　' + workSummary(r) : '') : modelLabel(r) + '　' + (c ? c.name : '') + (u > 1 ? '　×' + u : ''), k: ck.ok ? ck.k : '', delivery: r.delivery || '', dlvMonth: r.dlvMonth === true, units: u, lines: lines };
+    return { id: id, client: r.name || '', spec: isWork(r.model) ? '工事・修理' + (workSummary(r) ? '　' + workSummary(r) : '') : modelLabel(r) + '　' + (c ? c.name : '') + (u > 1 ? '　×' + u : ''), k: ck.ok ? ck.k : '', delivery: r.delivery || '', dlvMonth: r.dlvMonth === true, dlvAsap: r.dlvAsap === true && !r.delivery, units: u, lines: lines };
   }
   function queueBoardSync(id) {
     if (!board || store.readOnly) return;
@@ -4881,6 +4970,7 @@ return api;
     var r = data.specs[id]; if (!r || store.readOnly) return false;
     if ('delivery' in patch) r.delivery = cleanDay(patch.delivery);
     if ('dlvMonth' in patch) r.dlvMonth = patch.dlvMonth === true;
+    if ('dlvAsap' in patch) r.dlvAsap = patch.dlvAsap === true;
     if ('job' in patch) r.job = cleanJob(patch.job);
     var keep = ui.specId; ui.specId = id; saveSpec(); ui.specId = keep;
     return true;
@@ -4940,11 +5030,11 @@ return api;
   }
   function commitDay() {
     var mo = document.getElementById('specMonth');
-    if (mo && !store.readOnly) { var mv = monthEnd(mo.value); if (mv === deliveryDay()) return; var rr = ensureRecord(); rr.delivery = mv; rr.dlvMonth = true; saveSpec(); return; }
+    if (mo && !store.readOnly) { var mv = monthEnd(mo.value); if (mv === deliveryDay()) return; var rr = ensureRecord(); rr.delivery = mv; rr.dlvMonth = true; rr.dlvAsap = false; saveSpec(); return; }
     var el = document.getElementById('specDate'); if (!el || store.readOnly) return;
     var v = cleanDay(el.value);
     if (v === deliveryDay()) return;
-    ensureRecord().delivery = v;
+    var dr = ensureRecord(); dr.delivery = v; if (v) dr.dlvAsap = false;
     saveSpec();
   }
   function changeUnits(d) {
@@ -5011,8 +5101,9 @@ return api;
     if (ui.screen === 'master') ui.masterY = window.scrollY || 0;
     if (act !== 'removeModel' && ui.confirmModel) ui.confirmModel = false;
     if (act === 'backToBoard') { ui.fromBoard = false; setMode('board'); window.scrollTo(0, boardScroll); }
-    else if (act === 'clearDay') { if (!store.readOnly && record()) { record().delivery = ''; record().dlvMonth = false; saveSpec(); render(); } }
-    else if (act === 'dayMode') { if (!store.readOnly) { var mr = ensureRecord(); mr.dlvMonth = !mr.dlvMonth; if (mr.dlvMonth && mr.delivery) mr.delivery = monthEnd(mr.delivery.slice(0, 7)); saveSpec(); render(); } }
+    else if (act === 'clearDay') { if (!store.readOnly && record()) { record().delivery = ''; record().dlvMonth = false; record().dlvAsap = false; saveSpec(); render(); } }
+    else if (act === 'dayAsap') { if (!store.readOnly) { var ar = ensureRecord(); ar.dlvAsap = !ar.dlvAsap; if (ar.dlvAsap) { ar.delivery = ''; ar.dlvMonth = false; } saveSpec(); render(); } }
+    else if (act === 'dayMode') { if (!store.readOnly) { var mr = ensureRecord(); mr.dlvAsap = false; mr.dlvMonth = !mr.dlvMonth; if (mr.dlvMonth && mr.delivery) mr.delivery = monthEnd(mr.delivery.slice(0, 7)); saveSpec(); render(); } }
     else if (act === 'delSaved') { if (!store.readOnly && data.specs[id]) { if (ui.confirmDelId !== id) { ui.confirmDelId = id; render(); } else { ui.specId = id; ui.swipeId = null; ui.confirmDelId = null; removeSpec(); } } }
     else if (act === 'openSaved' && (swipedAt && Date.now() - swipedAt < 400)) { /* the tap that ends a swipe is not an open */ }
     else if (act === 'toBoard') { setMode('board'); board.showHome(); }
@@ -5041,6 +5132,7 @@ return api;
     else if (act === 'saveModel') saveModel();
     else if (act === 'removeModel') removeModel();
     else if (act === 'model') go({ screen: 'configs', model: id, config: null, specId: null, draftName: null });
+    else if (act === 'fromDoc') openFromDoc();
     else if (act === 'workNew') go({ screen: 'spec', model: WORKM.id, config: 'work', specId: null, draftName: null, draftShow: true, printMode: 'spec' });
     else if (act === 'toModels') go({ screen: 'models', model: null, config: null, specId: null });
     else if (act === 'openSaved') { var r = data.specs[id]; if (r) { go({ screen: 'spec', model: r.model, config: r.config, specId: id, printMode: 'spec' }); if (r.board) queueBoardSync(id); } }
