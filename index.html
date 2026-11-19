@@ -634,7 +634,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/18 15:40', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 11:40', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1470,7 +1470,26 @@ details.done[open]>summary::before{content:"▾"}
 .wl-kpi.warn b{color:#F2C14E}
 .wl-open{align-self:stretch;display:flex;align-items:center;gap:.5vw;padding:0 1.4vw;border-radius:1.2vh;border:2px solid #D4AF37;border-bottom-width:5px;background:#D4AF37;color:#081527 !important;font-weight:900 !important;font-size:2vh !important;white-space:nowrap}
 .wl-open:active{transform:translateY(2px);border-bottom-width:3px}
-.wl-cols{flex:1;min-height:0;display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:1.2vw}
+.wl-cols{flex:1;min-height:0;display:grid;grid-template-columns:1.1fr 1fr 1fr 1.3fr;gap:1vw}
+/* 打ち合わせ内容（4列目）：書いた文をそのまま大きめに。長いときはゆっくり自動でスクロール */
+.wl-mt .wl-h .wl-edit{margin-left:auto;border:2px solid #D4AF37;background:transparent;color:#F1E3A6 !important;border-radius:1vh;padding:.3vh .8vw;font-size:1.5vh !important;font-weight:900 !important}
+.wl-mt .wl-h small{margin-left:.6vw}
+.wl-mtbody{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;padding-right:.3vw;font-size:1.75vh;line-height:1.5;font-weight:600;color:#E8EDF5}
+.wl-mtbody::-webkit-scrollbar{display:none}
+.wl-mtbody .h{margin:1.2vh 0 .4vh;padding:.3vh .6vw;border-left:.4vw solid #D4AF37;background:#132B4F;border-radius:.6vh;font-size:1.95vh;font-weight:900;color:#F2EEE3}
+.wl-mtbody .h:first-child{margin-top:0}
+.wl-mtbody .li{position:relative;padding-left:1.3vw;margin:.2vh 0}
+.wl-mtbody .li::before{content:"・";position:absolute;left:0;color:#D4AF37}
+.wl-mtbody .ar{padding-left:1.3vw;color:#F2C14E;font-weight:800}
+.wl-mtbody p{margin:.2vh 0}
+/* 4列にしたので、納品予定のカードはお客様名を1段目に全幅で出す */
+.wl-pj .who{grid-column:1 / -1 !important}
+.wl-pj .spec{grid-row:2}
+.wl-pj .when{grid-row:2 / span 1 !important;grid-column:2}
+.wl-pj .when .lb{display:inline !important;margin-right:.4vw}
+.wl-pj .when b{font-size:2.3vh !important}
+.wl-h{white-space:nowrap;min-width:0}
+.wl-h small{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .wl-col{min-height:0;display:flex;flex-direction:column;background:#0C1C36;border:2px solid #1C3253;border-radius:1.6vh;padding:1.2vh .9vw}
 .wl-h{display:flex;align-items:center;gap:.6vw;margin:0 0 1vh;font-size:2.3vh;font-weight:900}
 .wl-h .n{background:#1F3A63;border-radius:999px;padding:.1vh .9vw;font-size:1.9vh}
@@ -1637,6 +1656,7 @@ details.done[open]>summary::before{content:"▾"}
     <div class="wl-col"><div class="wl-h">納品予定<span class="n" id="wlPjN">0</span><small>納期の近い順</small></div><div class="wl-list" id="wlPj"></div><button class="wl-more" id="wlPjMore" type="button" hidden></button></div>
     <div class="wl-col"><div class="wl-h">要確認の発注<span class="n" id="wlOrdN">0</span><small>遅延・3日以内に納期</small></div><div class="wl-list" id="wlOrd"></div><button class="wl-more" id="wlOrdMore" type="button" hidden></button></div>
     <div class="wl-col"><div class="wl-h">タスク<span class="n" id="wlTkN">0</span><small>期限の近い順</small></div><div class="wl-list" id="wlTk"></div><button class="wl-more" id="wlTkMore" type="button" hidden></button></div>
+    <div class="wl-col wl-mt"><div class="wl-h"><span id="wlMtTtl">打ち合わせ</span><small id="wlMtDate"></small><button class="wl-edit" id="wlMtEdit" type="button">書き換える</button></div><div class="wl-mtbody" id="wlMt"></div></div>
   </div>
   <footer class="wl-foot"><span>押すと、その案件やタスクを開きます。</span><span id="wlSync"></span></footer>
 </section>
@@ -2737,7 +2757,7 @@ async function deleteProject(id){ if(db) await db.collection("projects").doc(id)
 async function saveTask(id,data){ if(db) await db.collection("tasks").doc(id).set(data); else { const i=tasks.findIndex(t=>t.id===id); if(i>=0) tasks[i]={id,...data}; else tasks.push({id,...data}); onData(); } }
 async function deleteTask(id){ if(db) await db.collection("tasks").doc(id).delete(); else { tasks=tasks.filter(t=>t.id!==id); onData(); } }
 async function saveSettings(data){ if(db) await db.collection("settings").doc("board").set(data); else { settings=data; onData(); } }
-async function saveMeeting(id,data){ if(db) await db.collection("meetings").doc(id).set(data); else { meetings.push({id,...data}); onData(); } }
+async function saveMeeting(id,data){ if(db) await db.collection("meetings").doc(id).set(data); else { const i=meetings.findIndex(m=>m.id===id); if(i>=0) meetings[i]={id,...data}; else meetings.push({id,...data}); onData(); } }
 async function saveProject(id,data){ if(db) await db.collection("projects").doc(id).set(data); else { const i=projects.findIndex(p=>p.id===id); if(i>=0) projects[i]={id,...data}; else projects.push({id,...data}); onData(); } }
 function onData(){ renderList(); renderPj(); renderTasks(); if($("#view-ledger").classList.contains("active")) renderLedger(); if($("#view-cal").classList.contains("active")) renderCal(); listeners.forEach(f=>{ try{ f(); }catch{} }); }
 function markReady(){ if(!(ordersReady&&projectsReady)) return; while(waiting.length) waiting.shift()(); }
@@ -2896,9 +2916,60 @@ function renderWall(){
     return `<button class="wl-row ${tg&&tg.c==="late"?"late":""}" data-tk="1" type="button"><div class="dt">${t.due?`<b>${fmtD(t.due)}</b><span class="wl-tag ${tg.c}">${tg.t}</span>`:`<b class="none">期限なし</b>`}</div>
       <div class="ttl">${esc(t.title||"")}</div>
       <div class="sub">${esc(who||"相手なし")}${t.assignee?`　担当：${esc(t.assignee)}`:""}</div></button>`; }).join(""):`<div class="wl-empty"><i>✓</i>抱えているタスクはありません</div>`;
+  renderWallMeeting();
   $("#wlSync").textContent=lastChange?`最後の変更 ${lastChange.getHours()}:${String(lastChange.getMinutes()).padStart(2,"0")}`:"";
   requestAnimationFrame(()=>{ fitList("#wlPj","#wlPjMore","一覧"); fitList("#wlOrd","#wlOrdMore","要確認の一覧"); fitList("#wlTk","#wlTkMore","タスクの画面"); });
 }
+// 掲示する打ち合わせ内容：議事録（meetings）のうち board:true のいちばん新しいもの。掲示画面の「書き換える」で直す
+function wallMeeting(){ return meetings.filter(m=>m.board).sort((a,b)=>String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||"")))[0]||null; }
+function mtHtml(text){
+  return String(text||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+    if(/^(○|◯|●|■|◆|#+\s*)/.test(l)) return `<div class="h">${esc(l.replace(/^(○|◯|●|■|◆|#+)\s*/,""))}</div>`;
+    if(/^(・|-|－|\*|•)/.test(l)) return `<div class="li">${esc(l.replace(/^(・|-|－|\*|•)\s*/,""))}</div>`;
+    if(/^(→|⇒)/.test(l)) return `<div class="ar">${esc(l)}</div>`;
+    return `<p>${esc(l)}</p>`;
+  }).join("");
+}
+let mtShown="";
+function renderWallMeeting(){
+  const m=wallMeeting(), box=$("#wlMt");
+  $("#wlMtTtl").textContent=m?(m.title||"打ち合わせ"):"打ち合わせ";
+  $("#wlMtDate").textContent=m&&m.date?fmtDW(m.date):"";
+  $("#wlMtEdit").hidden=!canWrite;
+  const html=m&&m.text?mtHtml(m.text):`<div class="wl-empty"><i>✎</i>「書き換える」から、打ち合わせの内容を書いておけます</div>`;
+  if(html!==mtShown){ mtShown=html; box.innerHTML=html; box.scrollTop=0; }
+}
+// 長い内容は、ゆっくり下へ流して、いちばん下で少し止まってから上に戻る。指でさわったら1分止める
+let mtHold=0, mtPause=0;
+$("#wlMt").addEventListener("pointerdown",()=>{ mtHold=Date.now()+60000; },{passive:true});
+$("#wlMt").addEventListener("wheel",()=>{ mtHold=Date.now()+60000; },{passive:true});
+setInterval(()=>{
+  if(!wallOn) return; const b=$("#wlMt"); if(b.scrollHeight<=b.clientHeight+2||Date.now()<mtHold) return;
+  if(mtPause){ if(Date.now()<mtPause) return; mtPause=0; if(b.scrollTop+b.clientHeight>=b.scrollHeight-2){ b.scrollTop=0; mtPause=Date.now()+6000; return; } }
+  b.scrollTop+=1;
+  if(b.scrollTop+b.clientHeight>=b.scrollHeight-2) mtPause=Date.now()+8000;
+},60);
+function openWallMeeting(){
+  if(!canWrite) return;
+  const m=wallMeeting(), back=wallOn; hideWall();
+  openSheet(`<h2>掲示画面の打ち合わせ内容</h2><div class="lead">掲示画面の右の欄に出ます。「○」で始まる行は見出し、「・」や「-」で始まる行は箇条書きになります。</div>
+    <div class="f"><label for="wm-title">題名</label><input id="wm-title" value="${esc(m?m.title||"":"社内打ち合わせ")}"></div>
+    <div class="f"><label for="wm-date">日付</label><input id="wm-date" type="date" value="${esc(m?m.date||todayStr():todayStr())}"></div>
+    <div class="f"><label for="wm-text">内容</label><textarea id="wm-text" rows="14" style="display:block;width:100%;box-sizing:border-box;min-height:42vh;font:inherit;font-size:16px;line-height:1.6;padding:12px 14px">${esc(m?m.text||"":"")}</textarea></div>
+    <div class="btns"><button class="b b-ghost" data-w="close">やめる</button><button class="b b-gold" data-w="save">掲示する</button></div>`);
+  const done=()=>{ sheet.onclick=null; closeSheet(); if(back) showWall(); };
+  sheet.onclick=async e=>{
+    const b=e.target.closest("button[data-w]"); if(!b) return;
+    if(b.dataset.w==="close"){ done(); return; }
+    const text=$("#wm-text").value.replace(/\s+$/,""), now=new Date().toISOString();
+    b.disabled=true;
+    try{
+      await saveMeeting(m?m.id:gid("m"),{...(m?strip(m):{}),title:$("#wm-title").value.trim()||"打ち合わせ",date:$("#wm-date").value||todayStr(),text,summary:text.split(/\r?\n/).find(l=>l.trim())?.trim().slice(0,120)||"",board:true,taskCount:m?.taskCount||0,orderCount:m?.orderCount||0,createdAt:m?.createdAt||now,updatedAt:now});
+      toast("掲示画面に出しました"); done();
+    }catch(err){ console.error(err); toast("保存できませんでした"); b.disabled=false; }
+  };
+}
+$("#wlMtEdit").addEventListener("click",e=>{ e.stopPropagation(); openWallMeeting(); });
 function showWall(){ if(scrim.classList.contains("open")) closeSheet(); wallOn=true; wall.hidden=false; renderWall(); }
 function hideWall(){ wallOn=false; wall.hidden=true; wallAct=Date.now(); }
 wall.addEventListener("click",e=>{
@@ -3844,7 +3915,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/18 15:40</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 11:40</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
