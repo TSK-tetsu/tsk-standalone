@@ -675,7 +675,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 18:30', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 18:45', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -2209,7 +2209,7 @@ function renderList0(){
   const sec=key=>{
     const g=groups.get(key).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"));
     const L=pjLabel(g[0]||{projectId:key}); const lateN=g.filter(isLate).length, dv=dlvAt(key);
-    return `<section class="grp ${gOpen(key)?"open":""} ${dv?"dlvd":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${L.pre&&!dv?`<span class="xtag pre">受注前（先行）</span>`:""}${xTag(key)}${baseHtml(L)}${dv&&canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="xadd" data-xadd="1">＋ 追加工事</button>`:""}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="${dv?"納品した日を変更":"納品日を変更"}">${dlvHtml(L.delivery,dv,L.dm,L.asap)}</span>${canWrite&&!dv&&L.delivery&&L.delivery<=todayStr()&&projects.some(x=>x.id===key)?`<button type="button" class="dlvgo" data-dlvgo="1">✓ 納品済みにする</button>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span>${qsHtml(g,dv)}${rowX(key,g,L,dv)}<span class="ghint">${gOpen(key)?"▲ タップしてたたむ":"▼ タップして詳細を表示"}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
+    return `<section class="grp ${gOpen(key)?"open":""} ${dv?"dlvd":""}" data-key="${esc(key)}"><div class="grp-h" role="button" tabindex="0" aria-expanded="${gOpen(key)}"><span class="chev">${gOpen(key)?"▼":"▶"}</span>${canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="k kbtn ${L.k?"":"none"}" data-kedit="1" aria-label="工事番号を入力・変更">${L.k?esc(L.k):"工事番号"}</button>`:(L.k?`<span class="k">${esc(L.k)}</span>`:"")}<span class="who">${esc(L.who)}</span>${L.pre&&!dv?`<span class="xtag pre">受注前（先行）</span>`:""}${xTag(key)}${baseHtml(L)}${dv&&canWrite&&projects.some(x=>x.id===key)?`<button type="button" class="xadd" data-xadd="1">＋ 追加工事</button><button type="button" class="xadd" data-xadd="注文">＋ 追加注文</button>`:""}<span class="dlvbtn" data-dedit="1" role="button" tabindex="0" aria-label="${dv?"納品した日を変更":"納品日を変更"}">${dlvHtml(L.delivery,dv,L.dm,L.asap)}</span>${canWrite&&!dv&&L.delivery&&L.delivery<=todayStr()&&projects.some(x=>x.id===key)?`<button type="button" class="dlvgo" data-dlvgo="1">✓ 納品済みにする</button>`:""}${L.specId?`<button type="button" class="tosp" data-spec="${esc(L.specId)}">仕様書を開く</button>`:""}<span class="meta">${g.length}件${lateN?`　<b>遅延${lateN}</b>`:""}</span>${qsHtml(g,dv)}${rowX(key,g,L,dv)}<span class="ghint">${gOpen(key)?"▲ タップしてたたむ":"▼ タップして詳細を表示"}</span></div>${gSum(g,key)}${gOpen(key)?gAct(key)+grpBody(key,g):""}</section>`;
   };
   // 納品済みの案件は、いちばん下にたたんでまとめる（納品した日の新しい順）。押せば開いて見返せる。
   const ak=keys.filter(k=>!dlvAt(k)), dk=keys.filter(k=>dlvAt(k)).sort((a,b)=>dlvAt(b).localeCompare(dlvAt(a)));
@@ -2246,7 +2246,7 @@ function gSum(g,key){ const cur=grpF.get(key)||""; const chip=(f,cls,style,label
 function qsHtml(g,dv){ if(dv) return ""; if(!g.length) return `<span class="qs"><em>発注なし</em></span>`; const n=g.length, a=g.filter(o=>STATUSES.indexOf(o.status)>=ARR).length, todo=g.filter(o=>o.status===STATUSES[0]).length, late=g.filter(isLate).length;
   return `<span class="qs"><span class="trk"><i style="width:${Math.round(a/n*100)}%"></i></span><em>入荷 <b>${a}/${n}</b></em>${todo?`<em class="y">未発注 ${todo}</em>`:""}${late?`<em class="r">遅延 ${late}</em>`:""}</span>`; }
 // PCの一覧の1行。空港の発着案内のように、同じ項目が同じ位置に並ぶ。色は「遅れ＝赤」「3日以内・未発注＝黄」だけ
-function xInfo(key){ const p=projects.find(x=>x.id===key); if(!p) return ""; if(p.parentId) return "追加工事"; const x=(p.extras||[]).slice(-1)[0]; return x&&!p.deliveredAt?`追加工事：${x.what||""}`:""; }
+function xInfo(key){ const p=projects.find(x=>x.id===key); if(!p) return ""; if(p.parentId) return "追加工事"; const x=(p.extras||[]).slice(-1)[0]; return x&&!p.deliveredAt?`追加${x.kind||"工事"}：${x.what||""}`:""; }
 function rowX(key,g,L,dv){
   const n=g.length, a=g.filter(o=>STATUSES.indexOf(o.status)>=ARR).length, todo=g.filter(o=>o.status===STATUSES[0]).length, late=g.filter(isLate).length;
   const d=L.delivery, dd=d?Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000):null, dc=dv?"done":!d?"none":dd<0?"late":dd<=3?"soon":"";
@@ -2267,7 +2267,7 @@ const openSup=new Set();
 function baseHtml(L){ if(!L.spec) return ""; let units=0; const rest=[]; String(L.spec).split("　").filter(Boolean).forEach(t=>{ const m=t.match(/^×(\d+)$/); if(m) units=+m[1]; else rest.push(t); }); if(!units&&L.specId&&!/^工事・修理/.test(L.spec)) units=1;   // 工事・修理の案件には台数を出さない
   return `<i class="brk"></i><span class="base"><b>${esc(rest[0]||"")}</b>${rest.length>1?`<small>${esc(rest.slice(1).join("　"))}</small>`:""}</span>${units?`<span class="units"><b>${units}</b>台</span>`:""}<i class="brk"></i>`; }
 // 開いた案件の先頭に置く操作（以前は「案件」画面にあったもの）
-function gAct(key){ const xb=`<button type="button" class="b b-sm b-ghost xlsb" data-gact="xlsx">購入品の表（Excel）</button>`; if(!canWrite) return `<div class="gact">${xb}</div>`; const p=projects.find(x=>x.id===key); return `<div class="gact">${p&&p.deliveredAt?`<button type="button" class="b b-sm b-gold" data-gact="extra">＋ 追加工事を立てる</button>`:""}<button type="button" class="b b-sm ${p&&p.deliveredAt?"b-ghost":"b-gold"}" data-gact="addto">＋ この案件に発注を足す</button>${p&&!p.specId?`<button type="button" class="b b-sm b-ghost" data-gact="editpj">案件を編集</button>`:""}${p?`<button type="button" class="b b-sm b-ghost dlvb" data-gact="dlv">${p.deliveredAt?"納品済みを取り消す・日付を直す":"✓ 納品済みにする"}</button>`:""}${xb}${p?`<button type="button" class="b b-sm b-red delpj" data-gact="delpj">案件を削除</button>`:""}</div>`; }
+function gAct(key){ const xb=`<button type="button" class="b b-sm b-ghost xlsb" data-gact="xlsx">購入品の表（Excel）</button>`; if(!canWrite) return `<div class="gact">${xb}</div>`; const p=projects.find(x=>x.id===key); return `<div class="gact">${p&&p.deliveredAt?`<button type="button" class="b b-sm b-gold" data-gact="extra">＋ 追加工事を立てる</button><button type="button" class="b b-sm b-gold" data-gact="extra2">＋ 追加注文を立てる</button>`:""}<button type="button" class="b b-sm ${p&&p.deliveredAt?"b-ghost":"b-gold"}" data-gact="addto">＋ この案件に発注を足す</button>${p&&!p.specId?`<button type="button" class="b b-sm b-ghost" data-gact="editpj">案件を編集</button>`:""}${p?`<button type="button" class="b b-sm b-ghost dlvb" data-gact="dlv">${p.deliveredAt?"納品済みを取り消す・日付を直す":"✓ 納品済みにする"}</button>`:""}${xb}${p?`<button type="button" class="b b-sm b-red delpj" data-gact="delpj">案件を削除</button>`:""}</div>`; }
 // 納品日の表示：日付を大きく、残り日数つき。過ぎていれば赤、未入力なら「納品日 未定」。
 function moTxt(d){ return `${+String(d).slice(5,7)}月まで`; }   // 「○月まで」の表示
 function moEnd(ym){ const m=/^(\d{4})-(\d{2})$/.exec(ym||""); if(!m) return ""; const t=new Date(+m[1],+m[2],0); return `${m[1]}-${m[2]}-${String(t.getDate()).padStart(2,"0")}`; }   // その月の最終日
@@ -2313,13 +2313,13 @@ $("#list").addEventListener("change",async e=>{ const pr=e.target.closest(".pric
 $("#list").addEventListener("click",async e=>{
   if(holding()){ e.preventDefault(); return; }
   const sp=e.target.closest("button[data-spec]"); if(sp){ bridge.openSpec(sp.dataset.spec); return; }
-  const xa=e.target.closest("[data-xadd]"); if(xa){ openExtra(xa.closest(".grp").dataset.key); return; }
+  const xa=e.target.closest("[data-xadd]"); if(xa){ openExtra(xa.closest(".grp").dataset.key,xa.dataset.xadd==="注文"?"注文":"工事"); return; }
   const ke=e.target.closest("[data-kedit]"); if(ke){ editK(ke.closest(".grp").dataset.key); return; }
   const de=e.target.closest("[data-dedit]"); if(de){ const dkey=de.closest(".grp").dataset.key; if(dlvAt(dkey)) openDelivered(dkey); else editDelivery(dkey); return; }
   const dg=e.target.closest("[data-dlvgo]"); if(dg){ openDelivered(dg.closest(".grp").dataset.key); return; }
   const ds=e.target.closest("[data-dlvsec]"); if(ds){ if(showDlv){ await foldOut([...ds.parentElement.querySelectorAll(".grp")]); showDlv=false; renderList(); } else { showDlv=true; renderList(); foldIn([...root.querySelectorAll(".dlvsec .grp")]); } return; }
   const gf=e.target.closest("[data-gf]"); if(gf){ const fk=gf.closest(".grp").dataset.key, fv=gf.dataset.gf; if(grpF.get(fk)===fv){ if(!openGrp.has(fk)) await foldOut(grpParts(gf.closest(".grp"))); const y0=bandY(fk); grpF.delete(fk); renderList(); holdBand(fk,y0); flipBand(fk,y0); } else { const y0=bandY(fk), was=inWork(); grpF.set(fk,fv); renderList(); if(!was){ scrollBox().scrollTo(0,0); flipBand(fk,y0); } foldIn(grpParts(bandEl(fk))); } return; }
-  const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="xlsx") exportProject(gk); else if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(ga.dataset.gact==="dlv") openDelivered(gk); else if(ga.dataset.gact==="extra") openExtra(gk); else if(ga.dataset.gact==="delpj") openDeletePj(gk); else if(gp) openEditPj(gp); return; }
+  const ga=e.target.closest("[data-gact]"); if(ga){ const gk=ga.closest(".grp").dataset.key, gp=projects.find(x=>x.id===gk); if(ga.dataset.gact==="xlsx") exportProject(gk); else if(ga.dataset.gact==="addto") openAdd(gp?gp.id:null); else if(ga.dataset.gact==="dlv") openDelivered(gk); else if(ga.dataset.gact==="extra") openExtra(gk); else if(ga.dataset.gact==="extra2") openExtra(gk,"注文"); else if(ga.dataset.gact==="delpj") openDeletePj(gk); else if(gp) openEditPj(gp); return; }
   const sa=e.target.closest("[data-supall]"); if(sa){ openSupAll(sa.dataset.supall); return; }
   const sh=e.target.closest(".sup-h"); if(sh){ const k=sh.dataset.sup; if(filter!=="all") return; if(openSup.has(k)){ const gr=sh.closest(".sup-row").nextElementSibling; await foldOut(gr&&gr.classList.contains("grid")?[...gr.children]:[]); openSup.delete(k); renderList(); } else { openSup.add(k); renderList(); const nh=[...root.querySelectorAll(".sup-h")].find(x=>x.dataset.sup===k); const g2=nh&&nh.closest(".sup-row").nextElementSibling; foldIn(g2&&g2.classList.contains("grid")?[...g2.children]:[]); } return; }
   const gh=e.target.closest(".grp-h"); if(gh){ const k=gh.parentElement.dataset.key; if(filter!=="all") return; if(isWide()&&focusKey===k){ closeFocus(); return; }
@@ -2567,20 +2567,20 @@ function openDetail(o){
 // 追加工事：納品済みの案件に、先方から追加の工事を頼まれたとき。元の案件は「納品済み」のまま残し、
 // 同じお客様の新しい案件（追加工事）を立てて、そこに発注を足していく。工事番号は新しい番号でも、元と同じ番号でもよい。
 function xTag(key){ const p=projects.find(x=>x.id===key); if(!p) return "";
-  if(!p.parentId){ const x=(p.extras||[]).slice(-1)[0]; return x&&!p.deliveredAt?`<span class="xtag">追加工事<small>${esc(x.what)}${x.prevDelivered?`（前回納品 ${fmtD(x.prevDelivered)}）`:""}</small></span>`:""; } const par=projects.find(x=>x.id===p.parentId); return `<span class="xtag">追加工事${par&&par.k?`<small>元 ${esc(par.k)}</small>`:""}</span>`; }
-function openExtra(key){
+  if(!p.parentId){ const x=(p.extras||[]).slice(-1)[0]; return x&&!p.deliveredAt?`<span class="xtag">追加${esc(x.kind||"工事")}<small>${esc(x.what)}${x.prevDelivered?`（前回納品 ${fmtD(x.prevDelivered)}）`:""}</small></span>`:""; } const par=projects.find(x=>x.id===p.parentId); return `<span class="xtag">追加工事${par&&par.k?`<small>元 ${esc(par.k)}</small>`:""}</span>`; }
+function openExtra(key,kind){ kind=kind==="注文"?"注文":"工事";   // 追加工事（作業の追加）／追加注文（品の追加）。どちらも納品済みから戻して一番上に出す
   const p=projects.find(x=>x.id===key); if(!p||!canWrite) return;
-  openSheet(`<h2>追加工事</h2><div class="lead">「${esc(p.client||"（宛先未入力）")}」${p.k?`（${esc(p.k)}）`:""}を納品済みから戻して、一覧のいちばん上に出します。今までの発注はそのまま残り、ここに追加の発注を足していけます。</div>
-    <div class="f"><label for="x-what">追加工事の内容</label><input id="x-what" placeholder="例：シート交換、モニター追加、ペダル交換"></div>
-    <div class="f"><label for="x-dlv">追加工事の納品日（決まっていれば）</label><input id="x-dlv" type="date"></div>
+  openSheet(`<h2>追加${kind}</h2><div class="lead">「${esc(p.client||"（宛先未入力）")}」${p.k?`（${esc(p.k)}）`:""}を納品済みから戻して、一覧のいちばん上に出します。今までの発注はそのまま残り、ここに追加の発注を足していけます。</div>
+    <div class="f"><label for="x-what">追加${kind}の内容</label><input id="x-what" placeholder="${kind==="注文"?"例：ペダル1台追加、モニター追加、消耗品":"例：シート交換、モニター追加、ペダル交換"}"></div>
+    <div class="f"><label for="x-dlv">追加${kind}の納品日（決まっていれば）</label><input id="x-dlv" type="date"></div>
     <div class="btns"><button class="b b-ghost" data-x="close">やめる</button><button class="b b-gold" data-x="save">戻して、発注を足す</button></div>`);
   setTimeout(()=>$("#x-what")?.focus(),60);
   sheet.onclick=async e=>{
     const b=e.target.closest("button[data-x]"); if(!b) return;
     if(b.dataset.x==="close"){ sheet.onclick=null; closeSheet(); return; }
-    const what=$("#x-what").value.trim(); if(!what){ toast("追加工事の内容を入れてください"); $("#x-what").focus(); return; }
+    const what=$("#x-what").value.trim(); if(!what){ toast(`追加${kind}の内容を入れてください`); $("#x-what").focus(); return; }
     const now=new Date().toISOString(), dlv=$("#x-dlv").value||"";
-    const extras=[...(p.extras||[]),{what,at:now,prevDelivered:p.deliveredAt||"",prevDelivery:p.delivery||"",delivery:dlv}];   // 前回の納品日などは、ここに残す
+    const extras=[...(p.extras||[]),{what,kind,at:now,prevDelivered:p.deliveredAt||"",prevDelivery:p.delivery||"",delivery:dlv}];   // 前回の納品日などは、ここに残す
     b.disabled=true;
     try{
       await saveProject(p.id,{...strip(p),deliveredAt:"",delivery:dlv,extras,pinTop:now,updatedAt:now});
@@ -4334,7 +4334,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 18:30<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 18:45<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
