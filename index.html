@@ -666,7 +666,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 17:40', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 17:50', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1560,6 +1560,7 @@ details.done[open]>summary::before{content:"▾"}
 .wl-row.big .dt{font-size:4.4vh}
 .wl-row.big .dt i{font-size:2.3vh}
 .wl-row.big .dt.none{font-size:2.6vh}
+.wl-row.big .dt.asap{font-size:3.6vh}
 .wl-row.big .rm{font-size:2.4vh}
 .wl-row.big .tx b{font-size:3.4vh;line-height:1.2;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .wl-row.big .dt.none{grid-column:1 / span 2}
@@ -1738,9 +1739,9 @@ details.done[open]>summary::before{content:"▾"}
 @media (prefers-color-scheme: dark){ :host(:not([data-theme="light"])){ --v-red:#FF9A91; --v-redfill:#D93B30; --v-amber:#F2C14E; --v-amber-bg:#3A3010; --v-ok:#7FD6A6; --v-bar:#8FB8FF; } }
 :host([data-theme="dark"]){ --v-red:#FF9A91; --v-redfill:#D93B30; --v-amber:#F2C14E; --v-amber-bg:#3A3010; --v-ok:#7FD6A6; --v-bar:#8FB8FF; }
 .rowx,.rowhead{display:none}
-.rowx .c-d b.asap{display:inline-block;font-size:18px !important;line-height:1.25 !important;white-space:normal !important;background:var(--v-amber-bg);color:var(--v-amber);border-radius:8px;padding:4px 10px}
+.rowx .c-d b.asap{display:inline-block;font-size:24px !important;font-weight:700 !important;letter-spacing:.04em;line-height:1.25 !important;background:var(--v-amber-bg);color:var(--v-amber);border-radius:8px;padding:4px 10px}
 .grp .grp-h .dlv.asap{background:var(--v-amber-bg) !important;color:var(--v-amber) !important;border:0 !important}
-.wl-row .dt.asap{justify-self:start;background:var(--v-amber-bg);color:var(--v-amber) !important;font-weight:700 !important;border-radius:.8vh;padding:.3vh .8vw}
+.wl-row .dt.asap{justify-self:start;letter-spacing:.04em;background:var(--v-amber-bg);color:var(--v-amber) !important;font-weight:700 !important;border-radius:.8vh;padding:.3vh .8vw}
 :host(.norail) .rail{display:none !important}
 /* 右の欄：文字を大きく */
 :host(.mode-d) .rl-h{font-size:18px;font-weight:700}
@@ -2238,7 +2239,7 @@ function rowX(key,g,L,dv){
   const n=g.length, a=g.filter(o=>STATUSES.indexOf(o.status)>=ARR).length, todo=g.filter(o=>o.status===STATUSES[0]).length, late=g.filter(isLate).length;
   const d=L.delivery, dd=d?Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000):null, dc=dv?"done":!d?"none":dd<0?"late":dd<=3?"soon":"";
   const wd=x=>"日月火水木金土"[new Date(x+"T00:00:00").getDay()];
-  const date=dv?`<b>${fmtD(dv)}<i>${wd(dv)}</i></b><small>納品済み</small>`:d?`<b>${L.dm?`${+d.slice(5,7)}月<i>まで</i>`:`${fmtD(d)}<i>${wd(d)}</i>`}</b><small>${dd<0?`${-dd}日超過`:dd===0?"本日":`あと${dd}日`}</small>`:L.asap?`<b class="asap">なるべく<br>早く</b>`:`<b class="tbd">未定</b>`;
+  const date=dv?`<b>${fmtD(dv)}<i>${wd(dv)}</i></b><small>納品済み</small>`:d?`<b>${L.dm?`${+d.slice(5,7)}月<i>まで</i>`:`${fmtD(d)}<i>${wd(d)}</i>`}</b><small>${dd<0?`${-dd}日超過`:dd===0?"本日":`あと${dd}日`}</small>`:L.asap?`<b class="asap">ASAP</b>`:`<b class="tbd">未定</b>`;
   let units=0; const rest=[]; String(L.spec||"").split("　").filter(Boolean).forEach(t=>{ const m=t.match(/^×(\d+)$/); if(m) units=+m[1]; else rest.push(t); });
   const x=xInfo(key);
   const prog=!n?`<em>発注なし</em>`:a===n?`<em class="ok">✓ 全部入荷</em><em>${n}件</em>`:`<span class="trk"><i style="width:${Math.round(a/n*100)}%"></i></span><em>入荷 <b>${a}</b> / ${n}</em>`;
@@ -2258,7 +2259,7 @@ function gAct(key){ const xb=`<button type="button" class="b b-sm b-ghost xlsb" 
 // 納品日の表示：日付を大きく、残り日数つき。過ぎていれば赤、未入力なら「納品日 未定」。
 function moTxt(d){ return `${+String(d).slice(5,7)}月まで`; }   // 「○月まで」の表示
 function moEnd(ym){ const m=/^(\d{4})-(\d{2})$/.exec(ym||""); if(!m) return ""; const t=new Date(+m[1],+m[2],0); return `${m[1]}-${m[2]}-${String(t.getDate()).padStart(2,"0")}`; }   // その月の最終日
-function dlvHtml(d,done,mo,asap){ if(!done&&!d&&asap) return `<span class="dlv asap">納品<b>なるべく早く</b></span>`; if(done) return `<span class="dlv done">納品済み<b>${fmtDW(done)}</b></span>`; if(!d) return `<span class="dlv none">納品日 未定</span>`; const n=Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000); return `<span class="dlv ${n<0?"over":""}">納品<b>${mo?moTxt(d):fmtDW(d)}</b><small>${n>0?`あと${n}日`:n===0?"本日":`${-n}日超過`}</small></span>`; }
+function dlvHtml(d,done,mo,asap){ if(!done&&!d&&asap) return `<span class="dlv asap">納品<b>ASAP</b></span>`; if(done) return `<span class="dlv done">納品済み<b>${fmtDW(done)}</b></span>`; if(!d) return `<span class="dlv none">納品日 未定</span>`; const n=Math.round((new Date(d+"T00:00:00")-new Date(todayStr()+"T00:00:00"))/86400000); return `<span class="dlv ${n<0?"over":""}">納品<b>${mo?moTxt(d):fmtDW(d)}</b><small>${n>0?`あと${n}日`:n===0?"本日":`${-n}日超過`}</small></span>`; }
 // カードの形：tile＝小さい札（初期）／full＝大きいカード（以前の形）（2列。押した札だけ広がって、いまのカードと同じ操作が出る）。端末ごとに覚える。
 let cardMode="tile", selId=null; try{ if(localStorage.getItem("tsk_cards2")==="full") cardMode="full"; }catch{}   // 初期は小さい札。大きいカードを選んだ端末だけ、それを覚える
 function card(o){ return cardMode==="tile"?tile(o):cardFull(o); }
@@ -3133,7 +3134,7 @@ function renderWall(){
   const rm=d=>{ const g=dayTag(d); return `<span class="rm ${g.c}">${g.t}</span>`; };
   $("#wlPjN").textContent=pjs.length;
   $("#wlPj").innerHTML=pjs.length?pjs.map(x=>{ const dl=x.isDlv&&x.date, bad=dl&&x.date<today;
-    return `<button class="wl-row big ${bad?"late":""}" data-pj="${esc(x.k)}" type="button">${dl?`<span class="dt">${x.L.dm?`${+x.date.slice(5,7)}月<i>まで</i>`:`${fmtD(x.date)}<i>${wd(x.date)}</i>`}</span>${rm(x.date)}`:x.L.asap?`<span class="dt none asap">なるべく早く</span><span class="rm"></span>`:`<span class="dt none">納品日 未定</span><span class="rm"></span>`}<span class="tx"><b>${esc(x.L.who||"案件未設定")}</b><small>${esc(String(x.L.spec||"").replace(/　×1$/,"").replace(/　×(\d+)$/,"　$1台"))}</small></span><span class="no">${esc(x.L.k||"")}${x.late?`<em>発注の遅れ ${x.late}</em>`:""}</span></button>`; }).join(""):`<div class="wl-empty"><i>✓</i>納品待ちの案件はありません</div>`;
+    return `<button class="wl-row big ${bad?"late":""}" data-pj="${esc(x.k)}" type="button">${dl?`<span class="dt">${x.L.dm?`${+x.date.slice(5,7)}月<i>まで</i>`:`${fmtD(x.date)}<i>${wd(x.date)}</i>`}</span>${rm(x.date)}`:x.L.asap?`<span class="dt none asap">ASAP</span><span class="rm"></span>`:`<span class="dt none">納品日 未定</span><span class="rm"></span>`}<span class="tx"><b>${esc(x.L.who||"案件未設定")}</b><small>${esc(String(x.L.spec||"").replace(/　×1$/,"").replace(/　×(\d+)$/,"　$1台"))}</small></span><span class="no">${esc(x.L.k||"")}${x.late?`<em>発注の遅れ ${x.late}</em>`:""}</span></button>`; }).join(""):`<div class="wl-empty"><i>✓</i>納品待ちの案件はありません</div>`;
   // 右の上：発注の遅れ・タスクは「あるときだけ」出す。両方あるときは2件ずつ、片方だけなら4件まで
   const N=soon.length&&open.length?2:4, more=(id,n)=>{ const b=$(id); b.hidden=n<=0; b.textContent=n>0?`ほか ${n}件 ― 押すと開きます`:""; };
   $("#wlOrdBox").hidden=!soon.length; $("#wlOrdN").textContent=soon.length; $("#wlOrdN").classList.toggle("hot",lateN>0);
@@ -3549,9 +3550,9 @@ function editDelivery(key){ const p=projects.find(x=>x.id===key); if(!p||!canWri
   openSheet(`<h2>納品日を変える</h2><div class="lead">${esc(p.client||"")}</div>
     <div class="f"><label for="dvIn">日にちが決まっている</label><input id="dvIn" type="date" value="${esc(p.dlvMonth?"":p.delivery||"")}"></div>
     <div class="f"><label for="dvMo">月だけ決まっている（○月まで）</label><input id="dvMo" type="month" value="${esc(p.dlvMonth?(p.delivery||"").slice(0,7):"")}"></div>
-    <div class="btns"><button class="b b-ghost" data-cl="1">やめる</button><button class="b b-ghost" data-none="1">未定にする</button><button class="b b-ghost" data-asap="1">なるべく早く</button><button class="b b-gold" data-ok="1" style="flex:1">保存</button></div>`);
+    <div class="btns"><button class="b b-ghost" data-cl="1">やめる</button><button class="b b-ghost" data-none="1">未定にする</button><button class="b b-ghost" data-asap="1">ASAP（なるべく早く）</button><button class="b b-gold" data-ok="1" style="flex:1">保存</button></div>`);
   $("#dvIn").addEventListener("input",()=>{ mode="day"; $("#dvMo").value=""; }); $("#dvMo").addEventListener("input",()=>{ mode="mo"; $("#dvIn").value=""; });
-  const save=async(v,dm,asap)=>{ sheet.onclick=null; try{ if(p.specId&&bridge.editSpec) bridge.editSpec(p.specId,{delivery:v,dlvMonth:dm,dlvAsap:!!asap}); await saveProject(p.id,{...strip(p),delivery:v,dlvMonth:dm?true:"",dlvAsap:asap?true:"",updatedAt:new Date().toISOString()}); toast(v?`納品日を ${dm?moTxt(v):fmtDW(v)} にしました`:asap?"納品日を「なるべく早く」にしました":"納品日を未定にしました"); }catch{ toast("保存できませんでした"); } closeSheet(); };
+  const save=async(v,dm,asap)=>{ sheet.onclick=null; try{ if(p.specId&&bridge.editSpec) bridge.editSpec(p.specId,{delivery:v,dlvMonth:dm,dlvAsap:!!asap}); await saveProject(p.id,{...strip(p),delivery:v,dlvMonth:dm?true:"",dlvAsap:asap?true:"",updatedAt:new Date().toISOString()}); toast(v?`納品日を ${dm?moTxt(v):fmtDW(v)} にしました`:asap?"納品日を ASAP にしました":"納品日を未定にしました"); }catch{ toast("保存できませんでした"); } closeSheet(); };
   sheet.onclick=ev=>{ if(ev.target.closest("[data-ok]")){ const mo=mode==="mo"&&$("#dvMo").value; if(mo) save(moEnd($("#dvMo").value),true); else save($("#dvIn").value,false); } else if(ev.target.closest("[data-none]")) save("",false); else if(ev.target.closest("[data-asap]")) save("",false,true); else if(ev.target.closest("[data-cl]")){ sheet.onclick=null; closeSheet(); } };
 }
 // 納品済みにする・日付を直す・取り消す。仕様書から来た案件でも、印はボードの案件に持たせる（仕様書側はこれを読む）。
@@ -4321,7 +4322,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 17:40<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 17:50<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -4332,7 +4333,7 @@ return api;
     var live = ids.filter(function (id) { return !dlvOf(id); }), done = ids.filter(dlvOf).sort(function (x, y) { return dlvOf(y) < dlvOf(x) ? -1 : dlvOf(y) > dlvOf(x) ? 1 : 0; });
     function item(id) {
       var r = data.specs[id], m = { name: modelLabel(r) }, c = byId(CONFIGS, r.config), dv = dlvOf(id);
-      return '<div class="sw' + (ui.swipeId === id ? ' open' : '') + '" data-sw="' + esc(id) + '">' + (store.readOnly ? '' : '<button type="button" class="swdel" data-act="delSaved" data-id="' + esc(id) + '">' + (ui.confirmDelId === id ? '本当に削除' : '削除') + '</button>') + '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><em class="stt ' + (dv ? 'd' : r.board ? 'o' : 'q') + '">' + (dv ? '納品済み' : r.board ? '受注決定' : '見積もり段階') + '</em><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + (isWork(r.model) ? (workSummary(r) ? '　' + esc(workSummary(r)) : '') : '　' + esc(c.name)) + (dv ? '　' + dayShort(dv) + ' 納品' : r.delivery ? '　納品 ' + (r.dlvMonth ? (+r.delivery.slice(5, 7)) + '月まで' : dayShort(r.delivery)) : r.dlvAsap ? '　納品 なるべく早く' : '') + '</span></span>' + CHEV + '</button></div>'; }
+      return '<div class="sw' + (ui.swipeId === id ? ' open' : '') + '" data-sw="' + esc(id) + '">' + (store.readOnly ? '' : '<button type="button" class="swdel" data-act="delSaved" data-id="' + esc(id) + '">' + (ui.confirmDelId === id ? '本当に削除' : '削除') + '</button>') + '<button type="button" class="saved" data-act="openSaved" data-id="' + esc(id) + '"><span class="who"><em class="stt ' + (dv ? 'd' : r.board ? 'o' : 'q') + '">' + (dv ? '納品済み' : r.board ? '受注決定' : '見積もり段階') + '</em><b' + (r.name ? '' : ' class="noname"') + '>' + esc(r.name || '（名前なし）') + '</b><span>' + (r.job ? '工事番号 ' + esc(r.job) + '　' : '') + esc(m.name) + (isWork(r.model) ? (workSummary(r) ? '　' + esc(workSummary(r)) : '') : '　' + esc(c.name)) + (dv ? '　' + dayShort(dv) + ' 納品' : r.delivery ? '　納品 ' + (r.dlvMonth ? (+r.delivery.slice(5, 7)) + '月まで' : dayShort(r.delivery)) : r.dlvAsap ? '　納品 ASAP' : '') + '</span></span>' + CHEV + '</button></div>'; }
     return '<div class="sec">保存した仕様書</div>' + (live.length ? '<div class="list">' + live.map(item).join('') + '</div>' : '<p class="dlvNone">進行中の仕様書はありません。</p>') +
       (done.length ? '<button type="button" class="dlvFold' + (ui.showDelivered ? ' open' : '') + '" data-act="toggleDelivered" aria-expanded="' + !!ui.showDelivered + '"><span class="chev">' + (ui.showDelivered ? '▼' : '▶') + '</span><b>納品済み</b><span class="n">' + done.length + '件</span><small>' + (ui.showDelivered ? '押すとたたみます' : '押すと開いて見返せます') + '</small></button>' + (ui.showDelivered ? '<div class="list dlvList">' + done.map(item).join('') + '</div>' : '') : '');
   }
@@ -4421,7 +4422,7 @@ return api;
       '<div class="topgrid"><div class="nameBox"><label for="specName">名前（だれ・どこ向け）</label><textarea id="specName" class="grow" rows="1" maxlength="60" autocomplete="off" placeholder="例：○○店 向け"' + (store.readOnly ? ' readonly' : '') + '>' + esc(nameInBox()) + '</textarea></div>' +
       '<div class="dateBox"><label for="specJob">工事番号</label><input id="specJob" type="text" maxlength="30" autocomplete="off" inputmode="text" autocapitalize="characters" placeholder="例：K260115" value="' + esc(jobNo()) + '"' + (store.readOnly ? ' readonly' : '') + '></div><div class="jobMsg" id="jobMsg">' + esc(jobNote(jobNo())) + '</div>' +
       (wk ? '' : '<div class="unitsBox"><span class="lb">台数</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsDown" aria-label="台数を減らす"' + (u <= 1 ? ' disabled' : '') + '>−</button>') + '<span class="n">' + u + '台</span>' + (store.readOnly ? '' : '<button type="button" data-act="unitsUp" aria-label="台数を増やす"' + (u >= 99 ? ' disabled' : '') + '>＋</button>') + '</div>') +
-      '<div class="dateBox"><label for="specDate">' + (wk ? '作業日' : '納品日') + '</label>' + (monthMode() ? '<input id="specMonth" type="month" value="' + esc(deliveryDay().slice(0, 7)) + '"' + (store.readOnly ? ' disabled' : '') + '>' : '<input id="specDate" type="date" value="' + esc(deliveryDay()) + '"' + (store.readOnly ? ' disabled' : '') + '>') + (store.readOnly ? '' : '<button type="button" class="clr' + (monthMode() ? ' on' : '') + '" data-act="dayMode" aria-pressed="' + monthMode() + '">月まで</button><button type="button" class="clr' + (asapMode() ? ' on' : '') + '" data-act="dayAsap" aria-pressed="' + asapMode() + '">なるべく早く</button><button type="button" class="clr' + (deliveryDay() || asapMode() ? '' : ' on') + '" data-act="clearDay" aria-pressed="' + !(deliveryDay() || asapMode()) + '">未定</button>') + '</div></div>' +
+      '<div class="dateBox"><label for="specDate">' + (wk ? '作業日' : '納品日') + '</label>' + (monthMode() ? '<input id="specMonth" type="month" value="' + esc(deliveryDay().slice(0, 7)) + '"' + (store.readOnly ? ' disabled' : '') + '>' : '<input id="specDate" type="date" value="' + esc(deliveryDay()) + '"' + (store.readOnly ? ' disabled' : '') + '>') + (store.readOnly ? '' : '<button type="button" class="clr' + (monthMode() ? ' on' : '') + '" data-act="dayMode" aria-pressed="' + monthMode() + '">月まで</button><button type="button" class="clr' + (asapMode() ? ' on' : '') + '" data-act="dayAsap" aria-pressed="' + asapMode() + '">ASAP</button><button type="button" class="clr' + (deliveryDay() || asapMode() ? '' : ' on') + '" data-act="clearDay" aria-pressed="' + !(deliveryDay() || asapMode()) + '">未定</button>') + '</div></div>' +
       (store.readOnly ? '' : '<div class="stack" style="margin-top:10px">' + switchHtml() + '</div>') +
       '<div class="groups">' + rows + '</div><div class="note">' + FIELDS.filter(function (f) { return groupsFor(ui.model).some(function (g) { return g.id === f.g; }); }).length + '項目中 ' + filled + '項目 入力済み</div>' +
       (!memoText().trim() && !ui.memoOpen ? (store.readOnly ? '' : '<div class="stack" style="margin-top:12px"><button type="button" class="btn soft" data-act="openMemo">＋ 全体の備考を書く</button></div>') :
