@@ -144,8 +144,42 @@
   .fdmsg.err { color: #A3261B; }
   .fdbtns { display: flex; gap: 10px; }
   .fdbtns button { min-height: 56px; padding: 0 20px; border: 2px solid var(--edge); border-radius: 12px; background: var(--card); color: var(--ink); font-size: 17px; font-weight: 700; }
-  .fdbtns .go { flex: 1; border-color: var(--band); background: var(--band); color: var(--band-ink); }
+  .fdbtns .go { flex: 1; border-color: var(--on); background: var(--on); color: var(--on-ink); }   /* 暗い画面でも見えるよう、--on の色で */
   .fdoc.busy .fdbtns button, .fdoc.busy .fdpick { opacity: .5; pointer-events: none; }
+  /* メールの中身を見る（本文・添付）。添付は画面いっぱいに開く */
+  .fdmails .hint { padding: 8px 14px; font-size: 15px; font-weight: 700; border-bottom: 1px solid var(--line); }
+  .fdfiles span em { font-style: normal; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fdfiles button { flex: none; }
+  .fdfiles button.txt { width: auto; height: 34px; padding: 0 12px; border-radius: 999px; font-size: 15px; font-weight: 700; }
+  .fdview { display: flex; flex-direction: column; gap: 10px; flex: none; }
+  .fdview[hidden] { display: none; }
+  .fdvh b { display: block; font-size: 21px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
+  .fdvh span { display: block; margin-top: 4px; font-size: 16px; color: var(--sub); overflow-wrap: anywhere; }
+  .fdbody { max-height: 46vh; min-height: 110px; overflow: auto; -webkit-overflow-scrolling: touch; border: 2px solid var(--edge); border-radius: 12px; padding: 12px 14px; font-size: 17px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .fdbody.wait { color: var(--sub); font-weight: 700; }
+  .fdatts { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; }
+  .fdatts i { flex: 1 0 100%; font-style: normal; font-size: 16px; font-weight: 700; }
+  .fdatts button, .fdatts span { display: block; max-width: 100%; min-height: 56px; padding: 8px 14px; border: 2px solid var(--edge); border-radius: 12px; background: var(--press); color: var(--ink); font-family: inherit; font-size: 16px; font-weight: 700; text-align: left; overflow-wrap: anywhere; }
+  .fdatts span { border-style: dashed; background: transparent; color: var(--sub); }
+  .fdatts small { display: block; font-size: 14px; font-weight: 400; color: var(--sub); }
+  .fdoc.peek .fdbox { max-width: 900px; }
+  .fdoc.peek h2, .fdoc.peek .fdlead, .fdoc.peek .fdpick, .fdoc.peek #fdFiles, .fdoc.peek #fdSel, .fdoc.peek .fdbox > label, .fdoc.peek .fdbox > textarea, .fdoc.peek .fdbox > .fdbtns { display: none; }
+  .fdatt { position: fixed; inset: 0; z-index: 9100; background: #0B1626; display: flex; flex-direction: column; }
+  .fdah { display: flex; align-items: center; gap: 10px; padding: 10px 14px; padding-top: calc(10px + env(safe-area-inset-top, 0px)); background: #0D1F3C; color: #fff; }
+  .fdah b { flex: 1; min-width: 0; font-size: 18px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fdah button { flex: none; min-height: 52px; padding: 0 18px; border: 2px solid rgba(255,255,255,.55); border-radius: 12px; background: transparent; color: #fff; font-family: inherit; font-size: 17px; font-weight: 700; white-space: nowrap; }
+  .fdab { flex: 1; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; padding: 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .fdab p { margin: 24px 0; text-align: center; color: #fff; font-size: 18px; font-weight: 700; }
+  .fdab canvas { display: block; width: 100%; max-width: 1100px; height: auto; margin: 0 auto 12px; background: #fff; }
+  .fdab img { display: block; max-width: min(100%, 1100px); height: auto; margin: 0 auto 12px; background: #fff; }
+  .fdatt.zoom .fdab canvas, .fdatt.zoom .fdab img { width: min(200%, 2200px); max-width: none; }
+  .fdab h3 { margin: 6px 0 8px; color: #fff; font-size: 20px; font-weight: 700; }
+  .fdxl { display: table; margin: 0 0 18px; background: #fff; }
+  .fdxl table { border-collapse: collapse; background: #fff; color: #000; font-size: 18px; line-height: 1.4; }
+  .fdxl td { border: 1px solid #C8CED8; padding: 4px 9px; vertical-align: top; white-space: pre; min-width: 14px; }   /* 短い文字は折り返さない（数字が途中で切れないように）。表が広いときは横に動かして見る */
+  .fdxl td .lg { width: max-content; max-width: 24em; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .fdatt.zoom .fdxl table { font-size: 27px; }
+  @media (max-width: 700px) { .fdxl table { font-size: 15px; } .fdatt.zoom .fdxl table { font-size: 22px; } .fdah button { padding: 0 12px; font-size: 16px; } .fdbody { max-height: 34vh; } .fdbtns button { padding: 0 14px; } .fdatts button, .fdatts span { min-height: 48px; padding: 6px 12px; } }
   .bar { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
   .head.first { padding-top: calc(4px + env(safe-area-inset-top, 0px)); }
   .dateBox .clr { flex: 0 0 auto; height: 44px; padding: 0 12px; border: 2px solid var(--edge); border-radius: 10px; background: var(--card); color: var(--sub); font-size: 14px; font-weight: 700; }
@@ -675,7 +709,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 20:45', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 21:05', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -784,7 +818,9 @@
     sample = function (input) { return aiPost({ prompt: input }).then(function (r) { return r.text(); }).then(function (t) { return { text: t, truncated: false }; }); };
     sample.json = function (input) { return aiPost({ prompt: input }).then(function (r) { return r.text(); }).then(function (t) { var a = t.indexOf('{'), b = t.lastIndexOf('}'), a2 = t.indexOf('['), b2 = t.lastIndexOf(']'); if (a2 >= 0 && (a < 0 || a2 < a)) { a = a2; b = b2; } return JSON.parse(a >= 0 ? t.slice(a, b + 1) : t); }); };
     window.TSK_AI = function (prompt, files, extra) { var o = { prompt: prompt, files: files || [] }; if (extra) Object.keys(extra).forEach(function (k) { o[k] = extra[k]; }); return aiPost(o).then(function (r) { return r.text(); }); };
-    window.TSK_MAILS = function () { return aiPost({ mode: 'mails' }).then(function (r) { return r.json(); }); };   // Gmailの一覧（添付つき・直近2週間。件名・差出人・日時だけ）   // 仕様書の「メール・見積書から作る」用
+    window.TSK_MAILS = function () { return aiPost({ mode: 'mails' }).then(function (r) { return r.json(); }); };
+    window.TSK_MAIL = function (id) { return aiPost({ mode: 'view', mailId: id }).then(function (r) { return r.json(); }); };   // 1通の中身（本文は文字だけ・添付は名前と種類）
+    window.TSK_MAIL_ATT = function (id, i) { return aiPost({ mode: 'att', mailId: id, idx: i }).then(function (r) { return r.json(); }); };   // 添付を1つ（PDF・写真・Excel）   // Gmailの一覧（添付つき・直近2週間。件名・差出人・日時だけ）   // 仕様書の「メール・見積書から作る」用
   }
   window.claude = { use: function (n) { return Promise.resolve(n === 'db' ? db : n === 'downloads' ? downloads : n === 'user' ? user : n === 'sample' ? sample : null); } };
   if (document.body) loop(); else document.addEventListener('DOMContentLoaded', loop);
@@ -4489,7 +4525,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 20:45<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 21:05<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -4537,17 +4573,110 @@ return api;
     go({ screen: 'spec', model: rec.model, config: rec.config, specId: id, printMode: 'spec' }); saveSpec();
     return rec;
   }
+  // ---- メールの添付を画面で開く：PDF＝pdf.js（vendor/pdfjs）／写真／Excel＝別スレッドで読んで表にする
+  var fdPdfP = null;
+  function fdPdf() { return fdPdfP || (fdPdfP = import('./vendor/pdfjs/pdf.min.js').then(function (m) { m.GlobalWorkerOptions.workerSrc = new URL('vendor/pdfjs/pdf.worker.min.js', document.baseURI).href; return m; }).catch(function (e) { fdPdfP = null; throw e; })); }
+  function fdBytes(b64) { var t = atob(b64), u = new Uint8Array(t.length); for (var i = 0; i < t.length; i++) u[i] = t.charCodeAt(i); return u; }
+  function fdSheets(u8) {   // Excelは別スレッド（Worker）で読む：おかしなファイルでも画面側を巻き込まない。20秒で打ち切る
+    return new Promise(function (res, rej) {
+      var code = 'self.onmessage=function(e){try{importScripts(e.data.src);var X=self.XLSX,wb=X.read(e.data.buf,{type:"array",cellFormula:false,cellHTML:false,cellStyles:false,sheetRows:300});var out=wb.SheetNames.slice(0,8).map(function(n){var ws=wb.Sheets[n]||{},ref=ws["!ref"];if(!ref)return{name:String(n).slice(0,60),rows:[],merges:[]};var r=X.utils.decode_range(ref),R1=Math.min(r.e.r,r.s.r+299),C1=Math.min(r.e.c,r.s.c+49),rows=[];for(var R=r.s.r;R<=R1;R++){var row=[];for(var C=r.s.c;C<=C1;C++){var c=ws[X.utils.encode_cell({r:R,c:C})];row.push(c?String(c.w!=null?c.w:(c.v!=null?c.v:"")).slice(0,300):"");}rows.push(row);}var mg=(ws["!merges"]||[]).slice(0,3000).map(function(m){return[m.s.r-r.s.r,m.s.c-r.s.c,m.e.r-r.s.r,m.e.c-r.s.c];});return{name:String(n).slice(0,60),rows:rows,merges:mg};});self.postMessage({ok:true,sheets:out});}catch(err){self.postMessage({ok:false});}};';
+      var url = URL.createObjectURL(new Blob([code], { type: 'text/javascript' })), wk = new Worker(url), done = false;
+      var end = function (f, v) { if (done) return; done = true; clearTimeout(tm); try { wk.terminate(); } catch (e) {} URL.revokeObjectURL(url); f(v); };
+      var tm = setTimeout(function () { end(rej, new Error('sheet')); }, 20000);
+      wk.onmessage = function (ev) { var d = ev.data; if (d && d.ok && Array.isArray(d.sheets)) end(res, d.sheets); else end(rej, new Error('sheet')); };
+      wk.onerror = function () { end(rej, new Error('sheet')); };
+      wk.postMessage({ src: new URL(XLSX_SRC[0], document.baseURI).href, buf: u8.buffer }, [u8.buffer]);
+    });
+  }
+  function fdSheetHtml(sheets) {   // 表にする（結合セルもそのまま）。中身は文字として入れる
+    return sheets.map(function (sh) {
+      var rows = sh.rows || [], nC = 0, lastR = -1;
+      rows.forEach(function (r, i) { for (var c = r.length - 1; c >= 0; c--) if (r[c] !== '') { if (c + 1 > nC) nC = c + 1; lastR = i; break; } });
+      var nR = lastR + 1; if (!nR || !nC) return '';   // 空のシートは出さない
+      var span = {}, hide = {};
+      (sh.merges || []).forEach(function (m) { var r0 = m[0], c0 = m[1], r1 = Math.min(m[2], nR - 1), c1 = Math.min(m[3], nC - 1); if (r0 < 0 || c0 < 0 || r0 > r1 || c0 > c1) return; span[r0 + ',' + c0] = [r1 - r0 + 1, c1 - c0 + 1]; for (var r = r0; r <= r1; r++) for (var c = c0; c <= c1; c++) if (r !== r0 || c !== c0) hide[r + ',' + c] = 1; });
+      var h = '<h3>' + esc(sh.name) + '</h3><div class="fdxl"><table>';
+      for (var r = 0; r < nR; r++) { h += '<tr>'; for (var c = 0; c < nC; c++) { var k = r + ',' + c; if (hide[k]) continue; var sp = span[k]; h += '<td' + (sp ? (sp[0] > 1 ? ' rowspan="' + sp[0] + '"' : '') + (sp[1] > 1 ? ' colspan="' + sp[1] + '"' : '') : '') + '>' + (String(rows[r][c] || '').length > 26 ? '<div class="lg">' + esc(rows[r][c]) + '</div>' : esc(rows[r][c] || '')) + '</td>'; } h += '</tr>'; }
+      return h + '</table></div>';
+    }).join('');
+  }
+  function fdShowAtt(host, name, load) {   // 添付を画面いっぱいに開く。load() は {type, data(base64)} を返す
+    var o = document.createElement('div'), alive = true; o.className = 'fdatt';
+    o.innerHTML = '<div class="fdah"><b>' + esc(name) + '</b><button type="button" data-av="zoom">大きくする</button><button type="button" data-av="close">閉じる</button></div><div class="fdab"><p>開いています…</p></div>';
+    host.appendChild(o);
+    var body = o.querySelector('.fdab'), say = function (t) { body.innerHTML = '<p>' + esc(t) + '</p>'; };
+    o.addEventListener('click', function (ev) {
+      ev.stopPropagation(); var b = ev.target.closest && ev.target.closest('[data-av]'); if (!b) return;
+      if (b.getAttribute('data-av') === 'close') { alive = false; o.remove(); } else b.textContent = o.classList.toggle('zoom') ? '元の大きさ' : '大きくする';
+    });
+    load().then(function (a) {
+      if (!alive) return;
+      var t = String(a.type || '');
+      if (/^image\/(jpeg|png|webp|gif)$/.test(t)) { var im = new Image(); im.alt = name; im.onerror = function () { if (alive) say('この写真は開けませんでした。'); }; im.src = 'data:' + t + ';base64,' + a.data; body.textContent = ''; body.appendChild(im); return; }
+      var u = fdBytes(a.data);
+      if (t !== 'application/pdf') return fdSheets(u).then(function (sh) { if (alive) body.innerHTML = fdSheetHtml(sh) || '<p>（中身がありません）</p>'; });
+      return fdPdf().then(function (lib) {
+        var base = new URL('vendor/pdfjs/', document.baseURI).href;
+        return lib.getDocument({ data: u, cMapUrl: base + 'cmaps/', cMapPacked: true, standardFontDataUrl: base + 'standard_fonts/', wasmUrl: base + 'wasm/', iccUrl: base + 'iccs/', isEvalSupported: false }).promise;
+      }).then(function (doc) {
+        if (!alive) { doc.destroy(); return; }
+        body.textContent = '';
+        var n = Math.min(doc.numPages, 10), i = 0, dpr = Math.min(window.devicePixelRatio || 1, 3), target = Math.max(1100, Math.min(2000, Math.round(Math.min(body.clientWidth - 24, 1100) * dpr * 1.6)));
+        var next = function () {
+          if (!alive) { doc.destroy(); return; }
+          if (i >= n) { if (doc.numPages > n) { var p = document.createElement('p'); p.textContent = 'はじめの' + n + 'ページだけを表示しています（全部で' + doc.numPages + 'ページ）。'; body.appendChild(p); } return; }
+          i++;
+          return doc.getPage(i).then(function (pg) {
+            var v1 = pg.getViewport({ scale: 1 }), sc = target / v1.width; if (v1.height * sc > 4200) sc = 4200 / v1.height;
+            var vp = pg.getViewport({ scale: sc }), c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height); body.appendChild(c);
+            return pg.render({ canvas: c, viewport: vp }).promise;
+          }).then(next);
+        };
+        return next();
+      });
+    }).catch(function (e) {
+      if (!alive) return; var m = String((e && e.message) || '');
+      say(m === 'pin' ? '合言葉（PIN）が違うようです。画面を読み込み直して、合言葉を入れ直してください。' : m === 'big' ? 'このファイルは大きすぎて、ここでは開けません（6MBまで）。' : m === 'type' ? 'この種類のファイルは、ここでは開けません。' : m === 'sheet' ? 'このExcelは、ここでは開けませんでした。' : 'ファイルを開けませんでした。少し待ってから、もう一度試してください。');
+    });
+  }
   function openFromDoc() {
     if (!window.TSK_AI || store.readOnly || document.querySelector('.fdoc')) return;
-    var w = document.createElement('div'), files = [], busy = false, mail = null, mails = []; w.className = 'fdoc';
+    var w = document.createElement('div'), files = [], busy = false, mail = null, mails = [], peekM = null, peekSel = false, seen = {}, attSeen = {}; w.className = 'fdoc';
     w.innerHTML = '<div class="fdbox"><h2>メール・見積書から仕様書を作る</h2><p class="fdlead">見積書のPDFや写真を選ぶか、メールの文を貼り付けてください。AIが読み取って下書きを作ります。作ったあと、いつもの画面で確かめて直せます。</p>' +
       '<input type="file" id="fdFile" accept="application/pdf,image/*" multiple hidden><button type="button" class="fdpick" data-fd="pick">PDF・写真を選ぶ</button><div class="fdfiles" id="fdFiles"></div>' +
-      (window.TSK_MAILS ? '<button type="button" class="fdpick" data-fd="gmail">Gmailから選ぶ（添付つき・この2週間）</button><div class="fdmails" id="fdMails" hidden></div><div class="fdfiles" id="fdSel"></div>' : '') +
+      (window.TSK_MAILS ? '<button type="button" class="fdpick" data-fd="gmail">Gmailから選ぶ（添付つき・この2週間）</button><div class="fdmails" id="fdMails" hidden></div><div class="fdview" id="fdView" hidden></div><div class="fdfiles" id="fdSel"></div>' : '') +
       '<label for="fdText">メールの文（あれば貼り付け）</label><textarea id="fdText" rows="6" placeholder="ここにメールの文を貼り付け"></textarea><div class="fdmsg" id="fdMsg"></div>' +
       '<div class="fdbtns"><button type="button" data-fd="close">やめる</button><button type="button" class="go" data-fd="go">読み取って下書きを作る</button></div></div>';
     document.body.appendChild(w);
     var q = function (x) { return w.querySelector(x); }, msg = function (t, err) { var e = q('#fdMsg'); e.textContent = t || ''; e.className = 'fdmsg' + (err ? ' err' : ''); };
     var list = function () { q('#fdFiles').innerHTML = files.map(function (f, i) { return '<span>' + esc(f.name) + '<button type="button" data-fd="rm" data-i="' + i + '" aria-label="' + esc(f.name) + ' を外す">×</button></span>'; }).join(''); };
+    // ---- Gmailの1通の中身を見る（本文・添付）。見てから「このメールを使う」で選ぶ
+    var fdWhen = function (v) { var d = v ? new Date(v) : null; return d && !isNaN(d.getTime()) ? (d.getMonth() + 1) + '/' + d.getDate() + '（' + '日月火水木金土'.charAt(d.getDay()) + '）' + d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2) : ''; };
+    var chip = function () { q('#fdSel').innerHTML = mail ? '<span><em>Gmail：' + esc(mail.subject || '（件名なし）') + '</em><button type="button" class="txt" data-fd="peek">中身を見る</button><button type="button" data-fd="unmail" aria-label="選んだメールを外す">×</button></span>' : ''; };
+    var paint = function () {
+      var m = peekM, v = q('#fdView'); if (!m) { v.hidden = true; v.innerHTML = ''; return; }
+      var d = seen[m.id], ml = d && d.mail;
+      var h = '<div class="fdvh"><b>' + esc(m.subject || '（件名なし）') + '</b><span>' + esc(String(ml && ml.from ? ml.from : (m.from || '')).replace(/"/g, '')) + '　' + esc(fdWhen(ml && ml.date ? ml.date : m.date)) + '</span></div>';
+      if (!d) h += '<div class="fdbody wait">本文を読み込んでいます…</div>';
+      else if (d.err) h += '<div class="fdbody wait">' + esc(d.err) + '</div>';
+      else {
+        h += '<div class="fdbody" tabindex="0">' + (ml.text ? esc(ml.text) : '（本文はありません）') + '</div>';
+        var at = ml.atts || [];
+        if (at.length) h += '<div class="fdatts"><i>添付 ' + at.length + '件</i>' + at.map(function (a, n) { return a.show ? '<button type="button" data-fd="att" data-n="' + n + '">' + esc(a.name) + '<small>' + esc(a.size) + '　押すと開きます</small></button>' : '<span>' + esc(a.name) + '<small>' + esc(a.size) + '　ここでは開けません</small></span>'; }).join('') + '</div>';
+      }
+      v.innerHTML = h + '<div class="fdbtns"><button type="button" data-fd="back">' + (peekSel ? '閉じる' : '一覧に戻る') + '</button>' + (d && d.old ? '' : '<button type="button" class="go" data-fd="use">このメールを使う</button>') + '</div>'; v.hidden = false;
+    };
+    var peek = function (m, fromSel) {
+      peekM = m; peekSel = !!fromSel; w.classList.add('peek'); q('#fdMails').hidden = true; msg(''); paint(); var bx = q('.fdbox'); if (bx) bx.scrollTop = 0;
+      if (seen[m.id] && !seen[m.id].err) return;
+      delete seen[m.id];
+      window.TSK_MAIL(m.id).then(function (j) {
+        seen[m.id] = j && j.ok && j.mail ? { mail: j.mail } : j && j.error === 'old' ? { err: 'このメールは2週間より前のものなので、ここでは使えません。', old: true } : { err: 'このメールの中身を取れませんでした。' };
+      }).catch(function (e) {
+        seen[m.id] = { err: String((e && e.message) || '') === 'pin' ? '合言葉（PIN）が違うようです。画面を読み込み直して、合言葉を入れ直してください。' : 'メールの中身を取れませんでした。少し待ってから、もう一度試してください。' };
+      }).then(function () { if (peekM === m) paint(); });
+    };
+    var endPeek = function (showList) { peekM = null; w.classList.remove('peek'); paint(); q('#fdMails').hidden = !showList; };
     q('#fdFile').addEventListener('change', function (ev) { Array.prototype.forEach.call(ev.target.files || [], function (f) { if (files.length < 6) files.push(f); }); ev.target.value = ''; list(); msg(''); });
     w.addEventListener('click', function (ev) {
       var b = ev.target.closest && ev.target.closest('[data-fd]'); if (!b || busy) return; var a = b.getAttribute('data-fd');
@@ -4558,12 +4687,21 @@ return api;
         var box = q('#fdMails'); box.hidden = false; box.innerHTML = '<p>メールの一覧を取っています…</p>'; msg('');
         window.TSK_MAILS().then(function (j) {
           mails = (j && j.mails) || [];
-          box.innerHTML = mails.length ? mails.map(function (m, i) { var d = m.date ? new Date(m.date) : null; return '<button type="button" data-fd="mail" data-i="' + i + '"><b>' + esc(m.subject || '（件名なし）') + '</b><span>' + esc(String(m.from || '').replace(/<[^>]*>/, '').replace(/"/g, '').trim() || m.from || '') + (d ? '　' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2) : '') + '</span><small>' + esc(m.snippet || '') + '</small></button>'; }).join('') : '<p>添付の付いたメールは、この2週間にはありませんでした。</p>';
+          box.innerHTML = mails.length ? '<p class="hint">押すと、メールの中身（本文・添付）が見られます。</p>' + mails.map(function (m, i) { var d = m.date ? new Date(m.date) : null; return '<button type="button" data-fd="mail" data-i="' + i + '"><b>' + esc(m.subject || '（件名なし）') + '</b><span>' + esc(String(m.from || '').replace(/<[^>]*>/, '').replace(/"/g, '').trim() || m.from || '') + (d ? '　' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2) : '') + '</span><small>' + esc(m.snippet || '') + '</small></button>'; }).join('') : '<p>添付の付いたメールは、この2週間にはありませんでした。</p>';
         }).catch(function (e) { box.hidden = true; msg(String((e && e.message) || '') === 'pin' ? '合言葉（PIN）が違うようです。画面を読み込み直して、合言葉を入れ直してください。' : 'メールの一覧を取れませんでした。少し待ってから、もう一度試してください。', true); });
         return;
       }
-      if (a === 'mail') { mail = mails[+b.getAttribute('data-i')] || null; q('#fdMails').hidden = true; q('#fdSel').innerHTML = mail ? '<span>Gmail：' + esc(mail.subject || '（件名なし）') + '<button type="button" data-fd="unmail" aria-label="選んだメールを外す">×</button></span>' : ''; msg(mail ? 'このメールの本文と添付を読み取ります。' : ''); return; }
-      if (a === 'unmail') { mail = null; q('#fdSel').innerHTML = ''; msg(''); return; }
+      if (a === 'mail') { var mm = mails[+b.getAttribute('data-i')]; if (mm) peek(mm, false); return; }   // 行を押す → まず中身を見る
+      if (a === 'peek') { if (mail) peek(mail, true); return; }
+      if (a === 'back') { endPeek(!peekSel && mails.length > 0); return; }
+      if (a === 'use') { if (peekM) mail = peekM; endPeek(false); chip(); msg(mail ? 'このメールの本文と添付を読み取ります。' : ''); return; }
+      if (a === 'att') {   // 添付を開く（一度開いたものは覚えておく）
+        var d0 = peekM && seen[peekM.id], at0 = d0 && d0.mail && (d0.mail.atts || [])[+b.getAttribute('data-n')]; if (!at0) return;
+        var mid = peekM.id, key = mid + ':' + at0.i;
+        fdShowAtt(w, at0.name, function () { return attSeen[key] ? Promise.resolve(attSeen[key]) : window.TSK_MAIL_ATT(mid, at0.i).then(function (j) { if (!j || !j.ok || !j.att) throw new Error((j && j.error) || 'x'); attSeen[key] = j.att; return j.att; }); });
+        return;
+      }
+      if (a === 'unmail') { mail = null; chip(); msg(''); return; }
       if (a !== 'go') return;
       var text = q('#fdText').value.trim(); if (!files.length && !text && !mail) { msg('PDF・写真を選ぶか、Gmailから選ぶか、メールの文を貼り付けてください。', true); return; }
       busy = true; w.classList.add('busy'); msg('読み取っています… 30秒ほどかかることがあります。');
