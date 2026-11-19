@@ -675,7 +675,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 20:05', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 20:25', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -2504,20 +2504,26 @@ function openSheet(html){ clearDrag(); sheet.innerHTML=`<div class="grab"></div>
 // キーボードが出ている間は、見えている範囲（visualViewport）にシートを収める。入力中の欄は、その中で見える位置へ
 function fitScrim(){ const vv=window.visualViewport; if(!vv||root.host.classList.contains("framed")){ html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); return; }
   const kb=window.innerHeight-vv.height>80;   // キーボード（またはそれに近いもの）が出ている
-  if(kb){ html.style.setProperty("--vvh",Math.round(vv.height)+"px"); html.style.setProperty("--vvt",Math.round(vv.offsetTop)+"px"); } else { html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); } }
+  if(kb&&vv.height>=260){ html.style.setProperty("--vvh",Math.round(vv.height)+"px"); html.style.setProperty("--vvt",Math.round(vv.offsetTop)+"px"); } else { html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); } }
 if(window.visualViewport){ const onVV=()=>{ if(!scrim.classList.contains("open")) return; fitScrim(); const a=root.activeElement; if(a&&sheet.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) setTimeout(()=>{ try{ a.scrollIntoView({block:"nearest"}); }catch{} },30); };
   visualViewport.addEventListener("resize",onVV); visualViewport.addEventListener("scroll",onVV); }
 sheet.addEventListener("focusin",e=>{ if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) setTimeout(()=>{ fitScrim(); try{ e.target.scrollIntoView({block:"nearest"}); }catch{} },300); });
 // sheetLock：書きかけが消えないよう、外側を押しても閉じない入力画面（印刷の内容・掲示の打ち合わせ）。sheetBack：閉じたあとに戻る先（掲示画面など）
-let sheetLock=false, sheetBack=null;
-function closeSheet(){ const f=sheetBack; sheetBack=null; sheetLock=false; scrim.classList.remove("open","kb"); sheet.classList.remove("wide"); sheet.innerHTML=""; html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); if(f) try{ f(); }catch(err){ console.error(err); } }
+let sheetLock=false, sheetBack=null, lastSheetFocus=0; const diagLog=[];
+// 調査用：入力の画面が「何によって」閉じたかを直近8件覚える。入力欄を押した直後に閉じたとき・外側やEscで閉じたときは、保存先にも書く（settings/diag）。個人の情報は入れない
+function diagPush(why,extra){ try{ const vv=window.visualViewport, a=root.activeElement, sf=lastSheetFocus?Date.now()-lastSheetFocus:null;
+    const e={at:new Date().toISOString(),why,h2:String((sheet.querySelector("h2")||{}).textContent||"").slice(0,30),ih:window.innerHeight,iw:window.innerWidth,vvh:vv?Math.round(vv.height):null,vvt:vv?Math.round(vv.offsetTop):null,cssvvh:html.style.getPropertyValue("--vvh")||"",kb:scrim.classList.contains("kb"),act:a?(a.tagName+"#"+(a.id||"")):"",sinceFocus:sf,stack:String(new Error().stack||"").split("\n").slice(2,9).map(x=>x.trim().replace(/https?:\/\/[^ )]*\//,"")).join(" < ").slice(0,900),...(extra||{})};
+    diagLog.push(e); if(diagLog.length>8) diagLog.shift();
+    if(db&&canWrite&&(why!=="call"||(sf!=null&&sf<5000))) db.collection("settings").doc("diag").set({log:diagLog.slice(-8),updatedAt:e.at}).catch(()=>{});
+  }catch(err){} }
+function closeSheet(why){ if(scrim.classList.contains("open")) diagPush(why||"call"); const f=sheetBack; sheetBack=null; sheetLock=false; scrim.classList.remove("open","kb"); sheet.classList.remove("wide"); sheet.innerHTML=""; html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); if(f) try{ f(); }catch(err){ console.error(err); } }
 // 外側を押して閉じるのは、押し始めも外側だったときだけ。入力欄を押した瞬間にタッチキーボードが出て画面がずれると、指を離した位置が外側になり、勝手に閉じてしまっていた
 // 入力のある画面は、外側を押しても閉じない（書きかけを守る）。閉じるのは「やめる」などのボタンか、右上の×
 let scrimDown=false;
 scrim.addEventListener("pointerdown",e=>{ scrimDown=e.target===scrim; },true);
-scrim.addEventListener("click",e=>{ const ok=e.target===scrim&&scrimDown&&!sheetLock; scrimDown=false; if(!ok||sheet.querySelector("input,textarea,select")) return; closeSheet(); });
-sheet.addEventListener("click",e=>{ if(e.target.closest&&e.target.closest("[data-shx]")){ e.stopImmediatePropagation(); sheet.onclick=null; closeSheet(); } },true);
-document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!host.hidden) closeSheet(); });
+scrim.addEventListener("click",e=>{ const ok=e.target===scrim&&scrimDown&&!sheetLock; scrimDown=false; if(!ok||sheet.querySelector("input,textarea,select")) return; closeSheet("outside"); });
+sheet.addEventListener("click",e=>{ if(e.target.closest&&e.target.closest("[data-shx]")){ e.stopImmediatePropagation(); sheet.onclick=null; closeSheet("x"); } },true);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&!host.hidden&&scrim.classList.contains("open")) closeSheet("esc"); });
 
 /* ---------- add flow (3 steps) ---------- */
 let draft=null;
@@ -3184,7 +3190,9 @@ window.addEventListener("pointerdown",e=>{ lastPtr=e.pointerType||"mouse"; },{ca
 const isTextInput=el=>!!el&&(el.tagName==="TEXTAREA"||(el.tagName==="INPUT"&&!/^(checkbox|radio|button|submit|date|month|color|range|file)$/.test(el.type)));
 root.addEventListener("focusin",e=>{
   const el=e.target; if(lastPtr==="mouse"||!isTextInput(el)) return;
-  if(el.closest("#sheet")){ scrim.classList.add("kb"); setTimeout(()=>el.scrollIntoView({block:"nearest"}),60); }
+  if(el.closest("#sheet")){ lastSheetFocus=Date.now(); scrim.classList.add("kb"); setTimeout(()=>el.scrollIntoView({block:"nearest"}),60);
+    [500,1500].forEach(ms=>setTimeout(()=>{ try{ if(!scrim.classList.contains("open")) return; const r=sheet.getBoundingClientRect(), sr=scrim.getBoundingClientRect();
+      if(r.height<80||r.bottom<60||r.top>window.innerHeight-40||sr.height<120){ diagPush("collapsed",{rect:[Math.round(r.top),Math.round(r.height),Math.round(sr.top),Math.round(sr.height)]}); html.style.removeProperty("--vvh"); html.style.removeProperty("--vvt"); scrim.classList.remove("kb"); } }catch(err){} },ms)); }
   else { el.style.scrollMarginTop=`calc(var(--bandh,64px) + 24px)`; setTimeout(()=>el.scrollIntoView({block:"start",behavior:"smooth"}),80); }
 });
 root.addEventListener("focusout",()=>{ setTimeout(()=>{ if(!isTextInput(root.activeElement)) scrim.classList.remove("kb"); },150); });
@@ -3504,7 +3512,7 @@ function openMtgView(id){
 }
 $("#mtgs").addEventListener("click",e=>{ const d=e.target.closest(".mtg[data-mid]"); if(d) openMtgView(d.dataset.mid); });
 $("#wkMake").addEventListener("click",()=>{ const w=meetings.find(m=>m.id===weekId(weekMon())); if(w) openMtgView(w.id); else makeWeekly(true).then(()=>{ const n=meetings.find(m=>m.id===weekId(weekMon())); if(n) openMtgView(n.id); }); });
-function showWall(){ if(scrim.classList.contains("open")){ sheetBack=null; closeSheet(); } wallOn=true; wall.hidden=false; renderWall(); }
+function showWall(){ if(scrim.classList.contains("open")){ sheetBack=null; closeSheet("wall"); } wallOn=true; wall.hidden=false; renderWall(); }
 function hideWall(){ wallOn=false; wall.hidden=true; wallAct=Date.now(); }
 wall.addEventListener("click",e=>{
   const t=e.target.closest("button"); if(!t) return;
@@ -4457,7 +4465,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 20:05<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 20:25<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
