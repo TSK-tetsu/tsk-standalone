@@ -675,7 +675,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 19:55', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 20:05', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -3285,9 +3285,10 @@ function renderWall(){
 }
 // 掲示する打ち合わせ内容：議事録（meetings）のうち board:true のいちばん新しいもの。掲示画面の「書き換える」で直す
 function wallMeeting(){ return meetings.filter(m=>m.board&&m.kind!=="weekly").sort((a,b)=>String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||"")))[0]||null; }
-function mtHtml(text){
+// num=true（打ち合わせ）のときは、見出し（案件）に ①②③… を自動で振る。すでに番号で始まる見出しはそのまま
+function mtHtml(text,num){ let hn=0; const C="①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚";
   return String(text||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
-    if(/^(○|◯|●|■|◆|#+\s*)/.test(l)) return `<div class="h">${esc(l.replace(/^(○|◯|●|■|◆|#+)\s*/,""))}</div>`;
+    if(/^(○|◯|●|■|◆|#+\s*)/.test(l)){ let t=l.replace(/^(○|◯|●|■|◆|#+)\s*/,""); if(num&&!/^[①-⑳㉑-㉟0-9０-９]/.test(t)) t=(C[hn]||`(${hn+1})`)+" "+t; hn++; return `<div class="h">${esc(t)}</div>`; }
     if(/^(・|-|－|\*|•)/.test(l)) return `<div class="li">${esc(l.replace(/^(・|-|－|\*|•)\s*/,""))}</div>`;
     if(/^(→|⇒)/.test(l)) return `<div class="ar">${esc(l)}</div>`;
     return `<p>${esc(l)}</p>`;
@@ -3310,7 +3311,7 @@ function renderWallMeeting(){
     $("#wlMtDate").textContent=m&&m.date?fmtDW(m.date):"";
     $("#wlMtEdit").hidden=!canWrite; $("#wlMtEdit").textContent="書き換える";
     $("#wlMtPrint").hidden=!(m&&m.text);
-    html=m&&m.text?mtHtml(m.text):`<div class="wl-empty"><i>✎</i>「書き換える」から、打ち合わせの内容を書いておけます</div>`;
+    html=m&&m.text?mtHtml(m.text,true):`<div class="wl-empty"><i>✎</i>「書き換える」から、打ち合わせの内容を書いておけます</div>`;
   }
   if(html!==mtShown){ mtShown=html; box.innerHTML=html; box.scrollTop=0; }
 }
@@ -3443,7 +3444,7 @@ h1 small{display:block;font-size:.62em;font-weight:700;margin-top:.1em}
 .ar{padding-left:1.1em;font-weight:900;break-inside:avoid}
 p{margin:.12em 0}
 #doc.tight{line-height:1.42}#doc.tight .h{margin:.55em 0 .15em}#doc.tight .li,#doc.tight p{margin:.04em 0}#doc.tight header{margin-bottom:.45em}
-</style></head><body><div id="doc"><header><div class="brand">TSK</div><h1>${esc(r.printTitle||(isW?"今週のまとめ（社内の仕事の状況）":(r.title||"打ち合わせ")))}<small>${esc(sub)}</small></h1><div class="meta">TSK株式会社<br>${now.getMonth()+1}/${now.getDate()} 印刷</div></header>${kp}${mtHtml(r.text)}</div></body></html>`;
+</style></head><body><div id="doc"><header><div class="brand">TSK</div><h1>${esc(r.printTitle||(isW?"今週のまとめ（社内の仕事の状況）":(r.title||"打ち合わせ")))}<small>${esc(sub)}</small></h1><div class="meta">TSK株式会社<br>${now.getMonth()+1}/${now.getDate()} 印刷</div></header>${kp}${mtHtml(r.text,!isW)}</div></body></html>`;
   const f=document.createElement("iframe"); f.setAttribute("aria-hidden","true");
   f.style.cssText="position:fixed;left:-3000px;top:0;width:210mm;height:297mm;border:0;visibility:hidden";
   f.onload=()=>setTimeout(()=>{
@@ -3491,7 +3492,7 @@ function openMtgView(id){
   const m=meetings.find(x=>x.id===id); if(!m) return;
   const isW=m.kind==="weekly", cur=isW&&m.id===weekId(weekMon());
   openSheet(`<h2>${esc(m.title||"打ち合わせ")}</h2><div class="lead">${esc(isW?`${fmtDW(m.date)}〜${fmtDW(addDays(m.date,6))}`:(m.date?fmtDW(m.date):""))}</div>
-    <div class="mtv">${m.text?(isW?wkHtml(m):mtHtml(m.text)):`<p>${esc(m.summary||"（本文なし）")}</p>`}</div>
+    <div class="mtv">${m.text?(isW?wkHtml(m):mtHtml(m.text,true)):`<p>${esc(m.summary||"（本文なし）")}</p>`}</div>
     <div class="btns"><button class="b b-ghost" data-v="close">閉じる</button>${m.text?`<button class="b b-ghost" data-v="print">印刷</button>`:""}${canWrite&&cur?`<button class="b b-gold" data-v="remake">今の状況で作り直す</button>`:""}${canWrite&&!isW&&m.text?`<button class="b b-gold" data-v="board">掲示画面に出す</button>`:""}</div>`);
   sheet.onclick=async e=>{ const b=e.target.closest("button[data-v]"); if(!b) return; const v=b.dataset.v;
     if(v==="close"){ sheet.onclick=null; closeSheet(); return; }
@@ -4456,7 +4457,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 19:55<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 20:05<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
