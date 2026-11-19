@@ -715,7 +715,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 22:25', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 22:45', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1510,6 +1510,7 @@ details.done[open]>summary::before{content:"▾"}
 .grp .card.tile.fin .item{font-size:13px;font-weight:700;color:var(--muted)}
 .grp .card.tile.on{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold);transform:scale(1.035);z-index:3}
 .tpop{position:absolute;left:0;z-index:5;scroll-margin:96px 0 112px;filter:drop-shadow(0 12px 16px rgba(5,14,30,.34))}
+.tpop .tpx{position:absolute;right:0;top:calc(100% + 8px);z-index:2;min-height:44px;padding:0 16px;border:0;border-radius:999px;background:var(--navy);color:#fff;font-size:16px;font-weight:900;box-shadow:0 4px 10px rgba(5,14,30,.3);white-space:nowrap}
 .tpop::before{content:"";position:absolute;top:-8px;left:var(--nx,25%);width:18px;height:18px;margin-left:-9px;background:var(--gold);transform:rotate(45deg);border-radius:3px}
 .grp .grid.tiles .tpop .card{position:relative;margin:0;border:3px solid var(--gold);border-bottom-width:6px}
 .tpop::after{content:"";position:absolute;top:100%;left:0;width:1px;height:112px;pointer-events:none}   /* いちばん下の札でも、箱がOKのバーに隠れないだけ下へ送れるように */
@@ -1658,6 +1659,9 @@ details.done[open]>summary::before{content:"▾"}
 .wl-mtbody .h:first-child{margin-top:0}
 .wl-mtbody .li{position:relative;padding-left:1.4vw;margin:.2vh 0}
 .wl-mtbody .li::before{content:"・";position:absolute;left:0;color:var(--muted)}
+.li.n{position:static !important;padding-left:1.55em !important;text-indent:-1.55em !important}
+.li.n::before{content:none !important}
+.li.n>b{display:inline-block;width:1.55em;text-indent:0;font-weight:700}
 .wl-mtbody .ar{padding-left:1.4vw;font-weight:700}
 .wl-mtbody p{margin:.2vh 0}
 .wl-mtbody .kp{display:none}
@@ -2298,6 +2302,7 @@ function applyFocus(){
   host.classList.toggle("focusing",!!g);
   root.querySelectorAll("#list .grp").forEach(x=>x.classList.toggle("focus",!!g&&x===g));
   if(g){ const L=pjLabel(orders.find(o=>pjKey(o)===focusKey)||{projectId:focusKey}); $("#focusTtl").textContent=`${L.k?L.k+"　":""}${L.who||""}`; stickFocus(g); }
+  placePop();   // 開いた画面の並びになってから、札の小窓の位置を決め直す（先に測ると、札の上に重なってしまう）
 }
 // 止めておく部分の「上からの位置」を、見出し・状態・ボタンの順に積み上げて決める
 function stickFocus(g){ const fb=$("#focusBar"); let y=(parseFloat(getComputedStyle(fb).top)||0)+fb.offsetHeight;
@@ -2399,7 +2404,7 @@ function dlvHtml(d,done,mo,asap){ if(!done&&!d&&asap) return `<span class="dlv a
 let cardMode="tile", selId=null; try{ if(localStorage.getItem("tsk_cards2")==="full") cardMode="full"; }catch{}   // 初期は小さい札。大きいカードを選んだ端末だけ、それを覚える
 function card(o){ return cardMode==="tile"?tile(o):cardFull(o); }
 // 小さい札を押すと、札はその場のまま、真下に操作の箱（いまのカードと同じ中身）を重ねて出す。まわりの札は動かない。
-function popFor(ls){ if(cardMode!=="tile"||!selId) return ""; const o=ls.find(x=>x.id===selId); return o?`<div class="tpop" data-for="${o.id}">${cardFull(o)}</div>`:""; }
+function popFor(ls){ if(cardMode!=="tile"||!selId) return ""; const o=ls.find(x=>x.id===selId); return o?`<div class="tpop" data-for="${o.id}"><button type="button" class="tpx" data-popx="1" aria-label="この小窓を閉じる">× 閉じる</button>${cardFull(o)}</div>`:""; }
 function placePop(){ root.querySelectorAll("#list .tpop").forEach(p=>{ const g=p.parentElement, t=[...g.querySelectorAll(".card.tile")].find(x=>x.dataset.id===p.dataset.for); if(!t){ p.remove(); return; }
   const cs=getComputedStyle(g), pl=parseFloat(cs.paddingLeft)||0, cw=g.clientWidth-pl-(parseFloat(cs.paddingRight)||0), w=Math.min(cw,520), mid=t.offsetLeft+t.offsetWidth/2, left=Math.max(pl,Math.min(mid-w/2,pl+cw-w));
   p.style.top=(t.offsetTop+t.offsetHeight+11)+"px"; p.style.left=left+"px"; p.style.width=w+"px"; p.style.setProperty("--nx",(mid-left)+"px"); }); }
@@ -2451,6 +2456,7 @@ $("#list").addEventListener("click",async e=>{
   const pc=e.target.closest(".planclr"); if(pc){ const op=orders.find(x=>x.id===pc.dataset.id); if(op&&op.planDate){ const ps=STATUSES.indexOf(op.status); try{ await saveOrder(op.id,{...strip(op),planDate:"",status:ps===PLAN?STATUSES[0]:op.status,updatedAt:new Date().toISOString()}); toast("発注予定日を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const dc=e.target.closest(".dueclr"); if(dc){ const od=orders.find(x=>x.id===dc.dataset.id); if(od&&od.due){ try{ await saveOrder(od.id,{...strip(od),due:"",updatedAt:new Date().toISOString()}); toast("納期を未定に戻しました"); }catch{ toast("更新できませんでした"); } } return; }
   const cm=e.target.closest("[data-cm]"); if(cm){ cardMode=cm.dataset.cm==="tile"?"tile":"full"; selId=null; try{ localStorage.setItem("tsk_cards2",cardMode); }catch{} renderList(); return; }
+  if(e.target.closest("[data-popx]")){ selId=null; renderList(); return; }   // 小窓の「× 閉じる」
   const tl=e.target.closest(".card.tile"); if(tl){ if(selId===tl.dataset.id){ selId=null; renderList(); return; } selId=tl.dataset.id; renderList(); const pp=root.querySelector("#list .tpop"); if(pp){ if(pp.animate&&!calm) pp.animate([{transform:"translateY(-10px) scale(.94)",opacity:0},{transform:"none",opacity:1}],{duration:170,easing:"cubic-bezier(.2,.8,.2,1)"}); pp.scrollIntoView({block:"nearest",behavior:calm?"auto":"smooth"}); } return; }
   const b=e.target.closest("button[data-act]"); if(!b) return;
   const id=b.closest(".card").dataset.id; const o=orders.find(x=>x.id===id); if(!o) return;
@@ -3417,10 +3423,14 @@ function renderWall(){
 // 掲示する打ち合わせ内容：議事録（meetings）のうち board:true のいちばん新しいもの。掲示画面の「書き換える」で直す
 function wallMeeting(){ return meetings.filter(m=>m.board&&m.kind!=="weekly").sort((a,b)=>String(b.updatedAt||b.createdAt||"").localeCompare(String(a.updatedAt||a.createdAt||"")))[0]||null; }
 // num=true（打ち合わせ）のときは、見出し（案件）に ①②③… を自動で振る。すでに番号で始まる見出しはそのまま
-function mtHtml(text,num){ let hn=0; const C="①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚";
+// liNum=true（今週のまとめ）のときは、見出しごとに、案件などの箇条書きへ ①②③… を振る（「〜はありません」の行には振らない）
+function mtHtml(text,num,liNum){ let hn=0, ln=0, inPj=false; const C="①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳㉑㉒㉓㉔㉕㉖㉗㉘㉙㉚";
+  const li=t=>liNum&&!/ありません。?$/.test(t)?`<div class="li n"><b>${C[ln]||`(${ln+1})`}</b>${esc(t)}</div>`+(ln++,""):`<div class="li">${esc(t)}</div>`;
   return String(text||"").split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
-    if(/^(○|◯|●|■|◆|#+\s*)/.test(l)){ let t=l.replace(/^(○|◯|●|■|◆|#+)\s*/,""); if(num&&!/^[①-⑳㉑-㉟0-9０-９]/.test(t)) t=(C[hn]||`(${hn+1})`)+" "+t; hn++; return `<div class="h">${esc(t)}</div>`; }
-    if(/^(・|-|－|\*|•)/.test(l)) return `<div class="li">${esc(l.replace(/^(・|-|－|\*|•)\s*/,""))}</div>`;
+    if(/^(○|◯|●|■|◆|#+\s*)/.test(l)){ let t=l.replace(/^(○|◯|●|■|◆|#+)\s*/,""); if(num&&!/^[①-⑳㉑-㉟0-9０-９]/.test(t)) t=(C[hn]||`(${hn+1})`)+" "+t; hn++; ln=0; inPj=/案件/.test(t); return `<div class="h">${esc(t)}</div>`; }
+    if(/^(・|-|－|\*|•)/.test(l)){ const t=l.replace(/^(・|-|－|\*|•)\s*/,""), m=liNum&&inPj?t.match(/^\d+件（(.+)）$/):null;
+      if(m) return m[1].replace(/\s*ほか$/,"").split("、").map(x=>x.trim()).filter(Boolean).map(li).join("")+(/ほか$/.test(m[1])?`<div class="ar">→ ほかにもあります（ボードで確認）</div>`:"");   // 以前の作り（1行に「4件（A、B、…）」）は、案件ごとの行に分けて番号を振る
+      return li(t); }
     if(/^(→|⇒)/.test(l)) return `<div class="ar">${esc(l)}</div>`;
     return `<p>${esc(l)}</p>`;
   }).join("");
@@ -3524,14 +3534,14 @@ function buildWeekly(){
     ...sec("今週が期限のタスク",tWeek,tL),
     ...sec(`先週納品した案件（${fmtD(lMon)}〜${fmtD(lSun)}）`,doneL,p=>`・${fmtDW(p.deliveredAt)}　${[p.k||"番号未定",p.client].filter(Boolean).join(" ")}${p.spec?`　${p.spec}`:""}`),
   ];
-  if(nodate.length) L.push("○ 納品日が決まっていない案件",`・${nodate.length}件（${nodate.slice(0,6).map(x=>[x.L.k,x.L.who].filter(Boolean).join(" ")).join("、")}${nodate.length>6?" ほか":""}）`);
+  L.push(...sec("納品日が決まっていない案件",nodate,x=>`・${[x.L.k||"番号未定",x.L.who].filter(Boolean).join(" ")}`,null,12));   // 案件ごとに1行（掲示では ①②③… が付く）
   if(mt) L.push("○ 最近の打ち合わせ",`→ ${mt.date?fmtDW(mt.date)+"　":""}${mt.title||"打ち合わせ"}${mt.board?"（掲示画面の「打ち合わせ」に全文）":""}`);
   const stats={thisW:thisW.length,over:over.length,late:late.length,todo:todoPj.length,tLate:tLate.length,doneL:doneL.length,arrL:arrL.length,pending:pjs.length,tasks:open.length,nextW:nextW.length};
   return {mon,sun,text:L.join("\n"),stats};
 }
 function wkKp(){ return [["thisW","今週の納品",""],["over","納品日超過","hot"],["late","発注の遅れ","hot"],["todo","未発注の案件","warn"],["tLate","期限超過タスク","hot"],["doneL","先週の納品",""]]; }
 function wkHtml(w,noKp){ const st=w.stats||{};
-  return `${noKp?"":`<div class="kp">${wkKp().map(([k,l,c])=>`<div><b class="${st[k]?c:""}">${st[k]??"—"}</b><span>${l}</span></div>`).join("")}</div>`}${mtHtml(w.text)}<p class="wkfoot">作成 ${w.madeAt?new Date(w.madeAt).toLocaleString("ja-JP",{month:"numeric",day:"numeric",weekday:"short",hour:"numeric",minute:"2-digit"}):""}　納品待ち ${st.pending??"—"}件・タスク ${st.tasks??"—"}件・先週の入荷 ${st.arrL??"—"}件</p>`; }
+  return `${noKp?"":`<div class="kp">${wkKp().map(([k,l,c])=>`<div><b class="${st[k]?c:""}">${st[k]??"—"}</b><span>${l}</span></div>`).join("")}</div>`}${mtHtml(w.text,false,true)}<p class="wkfoot">作成 ${w.madeAt?new Date(w.madeAt).toLocaleString("ja-JP",{month:"numeric",day:"numeric",weekday:"short",hour:"numeric",minute:"2-digit"}):""}　納品待ち ${st.pending??"—"}件・タスク ${st.tasks??"—"}件・先週の入荷 ${st.arrL??"—"}件</p>`; }
 async function makeWeekly(manual){
   if(!canWrite) return;
   const b=buildWeekly(), id=weekId(b.mon), old=meetings.find(m=>m.id===id), now=new Date().toISOString(), st=b.stats;
@@ -3584,10 +3594,11 @@ header.mt .meta{position:absolute;right:0;bottom:.5em;white-space:nowrap}
 .h{break-after:avoid;font-weight:900;font-size:1.12em;margin:.9em 0 .25em;padding:.1em .45em;border-left:.35em solid #000;background:#EDEDED}
 .h:first-child{margin-top:0}
 .li{padding-left:1.1em;text-indent:-1.1em;margin:.12em 0;break-inside:avoid}.li::before{content:"・"}
+.li.n{padding-left:1.5em;text-indent:-1.5em}.li.n::before{content:none}.li.n>b{display:inline-block;width:1.5em;text-indent:0;font-weight:900}
 .ar{padding-left:1.1em;font-weight:900;break-inside:avoid}
 p{margin:.12em 0}
 #doc.tight{line-height:1.42}#doc.tight .h{margin:.55em 0 .15em}#doc.tight .li,#doc.tight p{margin:.04em 0}#doc.tight header{margin-bottom:.45em}
-</style></head><body><div id="doc"><header class="${!isW&&r.date?"mt":""}"><div class="brand">TSK</div><h1>${!isW&&r.date?`<b class="when">${esc((d=>{ const t=new Date(d+"T00:00:00"); return isNaN(t)?d:`${t.getFullYear()}年${t.getMonth()+1}月${t.getDate()}日（${"日月火水木金土"[t.getDay()]}）`; })(r.date))}</b><span class="ttl">${esc(r.printTitle||r.title||"打ち合わせ")}</span>`:`${esc(r.printTitle||(isW?"今週のまとめ（社内の仕事の状況）":(r.title||"打ち合わせ")))}<small>${esc(sub)}</small>`}</h1><div class="meta">TSK株式会社<br>${now.getMonth()+1}/${now.getDate()} 印刷</div></header>${kp}${mtHtml(r.text,!isW)}</div></body></html>`;
+</style></head><body><div id="doc"><header class="${!isW&&r.date?"mt":""}"><div class="brand">TSK</div><h1>${!isW&&r.date?`<b class="when">${esc((d=>{ const t=new Date(d+"T00:00:00"); return isNaN(t)?d:`${t.getFullYear()}年${t.getMonth()+1}月${t.getDate()}日（${"日月火水木金土"[t.getDay()]}）`; })(r.date))}</b><span class="ttl">${esc(r.printTitle||r.title||"打ち合わせ")}</span>`:`${esc(r.printTitle||(isW?"今週のまとめ（社内の仕事の状況）":(r.title||"打ち合わせ")))}<small>${esc(sub)}</small>`}</h1><div class="meta">TSK株式会社<br>${now.getMonth()+1}/${now.getDate()} 印刷</div></header>${kp}${mtHtml(r.text,!isW,isW)}</div></body></html>`;
   const f=document.createElement("iframe"); f.setAttribute("aria-hidden","true");
   f.style.cssText="position:fixed;left:-3000px;top:0;width:210mm;height:297mm;border:0;visibility:hidden";
   f.onload=()=>setTimeout(()=>{
@@ -3766,6 +3777,9 @@ function reorderable(cont,o){
   ["pointerup","pointercancel"].forEach(n=>cont.addEventListener(n,e=>{ if(t) cancel(); if(d&&e.pointerId===d.pid) end(); }));
   ["pointerup","pointercancel"].forEach(n=>window.addEventListener(n,e=>{ if(t) cancel(); if(d&&e.pointerId===d.pid) end(); },true));   // 指を一覧の外で離しても
   cont.addEventListener("lostpointercapture",e=>{ if(d&&e.pointerId===d.pid&&!d.item.isConnected) end(); });
+  // 指で持ち上げている間は、この入れ物の上でも画面を動かさない。入れ物そのものに付けておかないと、場所によっては指を動かした瞬間に
+  // ブラウザが「スクロール」と判断して、持ち上げた札を放してしまう（左のメニューで起きていた）
+  cont.addEventListener("touchmove",e=>{ if(d&&e.cancelable) e.preventDefault(); },{passive:false});
   dragEnders.push(()=>{ cancel(); if(d) end(); });
   function begin(){ const item=p0.item, pid=p0.id, others=items(item); p0=null;
     heldAt=Date.now(); holdOpen=true;                                   // 持ち上げたあとの指離しをタップとみなさない
@@ -3789,6 +3803,8 @@ function reorderable(cont,o){
     else if(o.onHold) o.onHold(x.item); }
 }
 let lastY=0; root.addEventListener("pointerdown",e=>{ lastY=e.clientY; },{passive:true,capture:true});
+// 札の小窓は、小窓と札のどちらでもない所を押すと閉じる（閉じにくさをなくす）
+root.addEventListener("click",e=>{ if(!selId||cardMode!=="tile"||!e.target.closest||e.target.closest(".tpop,.card.tile,.sheet,.scrim")||scrim.classList.contains("open")) return; if(!root.querySelector("#list .tpop")) return; selId=null; renderList(); });
 root.addEventListener("contextmenu",e=>{ if(e.target.closest&&e.target.closest(".grp-h,.tkg-h,.task .t,.side button[data-view]")) e.preventDefault(); });   // 長押しで右クリックメニューを出さない
 root.addEventListener("touchmove",e=>{ if(dragLive&&e.cancelable) e.preventDefault(); },{passive:false});
 document.addEventListener("visibilitychange",()=>{ if(document.hidden) clearDrag(); });   // 持ち上げている間は画面をスクロールさせない
@@ -4613,7 +4629,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 22:25<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 22:45<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
