@@ -675,7 +675,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 20:25', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 20:45', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1583,7 +1583,19 @@ details.done[open]>summary::before{content:"▾"}
 .wl-tabs button{flex:0 0 auto;padding:.7vh 1.1vw !important;border:1.5px solid var(--line);background:var(--well);color:var(--muted) !important;border-radius:1vh;padding:.7vh .4vw;font-size:2vh !important;font-weight:700 !important;white-space:nowrap}
 .wl-tabs button[aria-pressed="true"]{background:var(--navy-3);border-color:var(--navy-3);color:#fff !important}
 .wl-mt .wl-h .wl-edit{margin-left:auto;border:1.5px solid var(--line);background:var(--card);color:var(--ink) !important;border-radius:1vh;padding:.5vh .9vw;font-size:1.8vh !important;font-weight:700 !important}
-.wl-mt .wl-h #wlMtEdit{margin-left:.4vw}
+.wl-mt .wl-h .wl-edit+.wl-edit{margin-left:.4vw}
+.wl-mtttl{display:flex;align-items:baseline;gap:1vw;margin:0 0 1vh;min-width:0}
+.wl-mtttl:empty{display:none}
+.wl-mtttl b{font-size:3.2vh;font-weight:700;white-space:nowrap}
+.wl-mtttl span{font-size:2.3vh;font-weight:700;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wl-mtbody .h{break-after:avoid}.wl-mtbody .li,.wl-mtbody .ar{break-inside:avoid}
+.wall.mtmax .wl-cols{grid-template-columns:minmax(0,1fr)}
+.wall.mtmax .wl-main,.wall.mtmax #wlOrdBox,.wall.mtmax #wlTkBox{display:none}
+.wall.mtmax .wl-mtttl b{font-size:4.4vh}
+.wall.mtmax .wl-mtttl span{font-size:2.8vh}
+.wall.mtmax .wl-mtbody{font-size:2.9vh}
+.wall.mtmax .wl-mtbody .h{font-size:3.1vh}
+.wall.mtmax .mtcols{columns:2;column-gap:3vw}
 .wl-mt .wl-h small{margin-left:.4vw;font-size:1.9vh;flex:0 1 auto}
 .wl-mtbody{flex:1;min-height:0;overflow-y:auto;scrollbar-width:none;padding-right:.3vw;font-size:2.35vh;line-height:1.55;font-weight:400;color:var(--ink)}
 .wl-mtbody::-webkit-scrollbar{display:none}
@@ -1899,7 +1911,7 @@ details.done[open]>summary::before{content:"▾"}
     <div class="wl-side">
       <div class="wl-col" id="wlOrdBox" hidden><div class="wl-h">発注の遅れ・もうすぐ納期<span class="n" id="wlOrdN">0</span></div><div class="wl-list" id="wlOrd"></div><button class="wl-more" id="wlOrdMore" type="button" hidden></button></div>
       <div class="wl-col" id="wlTkBox" hidden><div class="wl-h">タスク<span class="n" id="wlTkN">0</span></div><div class="wl-list" id="wlTk"></div><button class="wl-more" id="wlTkMore" type="button" hidden></button></div>
-      <div class="wl-col wl-mt"><div class="wl-h"><div class="wl-tabs" id="wlMtTabs"><button type="button" data-mt="mtg">打ち合わせ</button><button type="button" data-mt="week">今週のまとめ</button></div><span id="wlMtTtl" hidden></span><small id="wlMtDate"></small><button class="wl-edit" id="wlMtPrint" type="button">印刷</button><button class="wl-edit" id="wlMtEdit" type="button">書き換える</button></div><div class="wl-mtbody" id="wlMt"></div></div>
+      <div class="wl-col wl-mt"><div class="wl-h"><div class="wl-tabs" id="wlMtTabs"><button type="button" data-mt="mtg">打ち合わせ</button><button type="button" data-mt="week">今週のまとめ</button></div><small id="wlMtDate"></small><button class="wl-edit" id="wlMtMax" type="button">大きく表示</button><button class="wl-edit" id="wlMtPrint" type="button">印刷</button><button class="wl-edit" id="wlMtEdit" type="button">書き換える</button></div><div class="wl-mtttl" id="wlMtTtl"></div><div class="wl-mtbody" id="wlMt"></div></div>
     </div>
   </div>
   <footer class="wl-foot"><span>行を押すと、その案件やタスクを開きます。</span><span id="wlSync"></span></footer>
@@ -3308,28 +3320,32 @@ function renderWallMeeting(){
   if(!mtTab) mtTab=w?"week":"mtg";
   $("#wlMtTabs").querySelectorAll("[data-mt]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.mt===mtTab));
   let html;
+  const jd=d=>{ const t=new Date(d+"T00:00:00"); return isNaN(t)?"":`${t.getMonth()+1}月${t.getDate()}日（${"日月火水木金土"[t.getDay()]}）`; };
+  $("#wlMtDate").textContent="";
   if(mtTab==="week"){
-    $("#wlMtTtl").textContent=w?"今週のまとめ":"今週のまとめ";
-    $("#wlMtDate").textContent=w?`${fmtD(w.date)}〜${fmtD(addDays(w.date,6))}`:"";
+    $("#wlMtTtl").innerHTML=w?`<b>${fmtD(w.date)}〜${fmtD(addDays(w.date,6))}</b><span>の週のまとめ</span>`:`<span>今週のまとめ</span>`;   // いつの分かを大きく
     $("#wlMtEdit").hidden=!canWrite; $("#wlMtEdit").textContent="作り直す";
     $("#wlMtPrint").hidden=!w;
     html=w?wkHtml(w,true):`<div class="wl-empty"><i>☰</i>今週のまとめは、月曜の朝8時に自動で作られます${canWrite?`<button class="wk-make" type="button" data-wkmake="1">今すぐまとめる</button>`:""}</div>`;
   } else {
-    $("#wlMtTtl").textContent=m?(m.title||"打ち合わせ"):"打ち合わせ";
-    $("#wlMtDate").textContent=m&&m.date?fmtDW(m.date):"";
+    $("#wlMtTtl").innerHTML=m?`<b>${m.date?jd(m.date):""}</b><span>${esc(m.title||"打ち合わせ")}</span>`:"";
     $("#wlMtEdit").hidden=!canWrite; $("#wlMtEdit").textContent="書き換える";
     $("#wlMtPrint").hidden=!(m&&m.text);
     html=m&&m.text?mtHtml(m.text,true):`<div class="wl-empty"><i>✎</i>「書き換える」から、打ち合わせの内容を書いておけます</div>`;
   }
-  if(html!==mtShown){ mtShown=html; box.innerHTML=html; box.scrollTop=0; }
+  if(html!==mtShown){ mtShown=html; box.innerHTML=`<div class="mtcols">${html}</div>`; box.scrollTop=0; }
 }
 // 掲示画面の右の欄：「今週のまとめ」と「打ち合わせ」をタブで切り替え。さわっていなければ40秒ごとに自動で切り替える
-let mtTabAt=Date.now();
+let mtTabAt=Date.now(), mtMax=false;
+// 「大きく表示」：連絡の欄だけを画面いっぱいに（2段組み・大きい文字）。10分さわらなければ元に戻す
+function setMtMax(v){ mtMax=!!v; wall.classList.toggle("mtmax",mtMax); $("#wlMtMax").textContent=mtMax?"元に戻す":"大きく表示"; $("#wlMt").scrollTop=0; mtPause=Date.now()+6000; }
+$("#wlMtMax").addEventListener("click",e=>{ e.stopPropagation(); setMtMax(!mtMax); });
+setInterval(()=>{ try{ if(wallOn&&mtMax&&Date.now()-wallAct>600000) setMtMax(false); }catch(err){} },30000);
 function setMtTab(t){ mtTab=t; mtTabAt=Date.now(); mtPause=0; renderWallMeeting(); }
 $("#wlMtTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-mt]"); if(!b) return; e.stopPropagation(); mtHold=Date.now()+120000; setMtTab(b.dataset.mt); });
 $("#wlMt").addEventListener("click",e=>{ if(e.target.closest("[data-wkmake]")){ e.stopPropagation(); makeWeekly(true); } });
 $("#wlMtPrint").addEventListener("click",e=>{ e.stopPropagation(); const r=mtTab==="week"?weeklyNow():wallMeeting(); if(r) openPrintEdit(r); });
-setInterval(()=>{ if(!wallOn||Date.now()<mtHold||Date.now()-mtTabAt<40000) return; const b=$("#wlMt"); if(b.scrollHeight>b.clientHeight+2&&b.scrollTop+b.clientHeight<b.scrollHeight-2) return;   // 長い内容は最後まで流してから
+setInterval(()=>{ if(!wallOn||mtMax||Date.now()<mtHold||Date.now()-mtTabAt<40000) return; const b=$("#wlMt"); if(b.scrollHeight>b.clientHeight+2&&b.scrollTop+b.clientHeight<b.scrollHeight-2) return;   // 長い内容は最後まで流してから
   if(weeklyNow()&&wallMeeting()) setMtTab(mtTab==="week"?"mtg":"week"); },5000);
 // 長い内容は、ゆっくり下へ流して、いちばん下で少し止まってから上に戻る。指でさわったら1分止める
 let mtHold=0, mtPause=0;
@@ -3441,6 +3457,14 @@ header{display:flex;align-items:flex-end;gap:.8em;border-bottom:.18em solid #000
 .brand{font-weight:900;font-size:1.5em;letter-spacing:.06em;line-height:1}
 h1{margin:0;font-size:1.45em;line-height:1.25;font-weight:900}
 h1 small{display:block;font-size:.62em;font-weight:700;margin-top:.1em}
+h1 .when{display:block;font-size:1.4em;line-height:1.15;letter-spacing:.01em}
+h1 .ttl{display:block;font-size:.72em;margin-top:.15em}
+header.mt{display:block;position:relative}
+header.mt .brand{display:none}
+header.mt .when{white-space:nowrap}
+header.mt .ttl{padding-right:6em}
+header.mt .meta{position:absolute;right:0;bottom:.5em;white-space:nowrap}
+.meta{white-space:nowrap}
 .meta{margin-left:auto;text-align:right;font-size:.62em;line-height:1.4}
 .kp{display:grid;grid-template-columns:repeat(3,1fr);gap:.35em;margin-bottom:.8em}
 .kp div{border:.08em solid #000;border-radius:.3em;padding:.15em .3em;text-align:center}
@@ -3452,7 +3476,7 @@ h1 small{display:block;font-size:.62em;font-weight:700;margin-top:.1em}
 .ar{padding-left:1.1em;font-weight:900;break-inside:avoid}
 p{margin:.12em 0}
 #doc.tight{line-height:1.42}#doc.tight .h{margin:.55em 0 .15em}#doc.tight .li,#doc.tight p{margin:.04em 0}#doc.tight header{margin-bottom:.45em}
-</style></head><body><div id="doc"><header><div class="brand">TSK</div><h1>${esc(r.printTitle||(isW?"今週のまとめ（社内の仕事の状況）":(r.title||"打ち合わせ")))}<small>${esc(sub)}</small></h1><div class="meta">TSK株式会社<br>${now.getMonth()+1}/${now.getDate()} 印刷</div></header>${kp}${mtHtml(r.text,!isW)}</div></body></html>`;
+</style></head><body><div id="doc"><header class="${!isW&&r.date?"mt":""}"><div class="brand">TSK</div><h1>${!isW&&r.date?`<b class="when">${esc((d=>{ const t=new Date(d+"T00:00:00"); return isNaN(t)?d:`${t.getFullYear()}年${t.getMonth()+1}月${t.getDate()}日（${"日月火水木金土"[t.getDay()]}）`; })(r.date))}</b><span class="ttl">${esc(r.printTitle||r.title||"打ち合わせ")}</span>`:`${esc(r.printTitle||(isW?"今週のまとめ（社内の仕事の状況）":(r.title||"打ち合わせ")))}<small>${esc(sub)}</small>`}</h1><div class="meta">TSK株式会社<br>${now.getMonth()+1}/${now.getDate()} 印刷</div></header>${kp}${mtHtml(r.text,!isW)}</div></body></html>`;
   const f=document.createElement("iframe"); f.setAttribute("aria-hidden","true");
   f.style.cssText="position:fixed;left:-3000px;top:0;width:210mm;height:297mm;border:0;visibility:hidden";
   f.onload=()=>setTimeout(()=>{
@@ -4465,7 +4489,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       (window.TSK_AI && !store.readOnly ? '<div class="sec">メール・見積書から作る</div><div class="list"><button type="button" class="saved" data-act="fromDoc"><span class="who"><b>PDF・写真・メールの文から下書きを作る</b><span>AIが読み取って、名前・番号・納品日・内容を入れます。作ったあとで直せます</span></span>' + CHEV + '</button></div>' : '') + '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 20:25<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 20:45<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
