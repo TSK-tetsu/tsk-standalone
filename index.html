@@ -634,7 +634,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 13:40', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 14:10', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -3003,7 +3003,7 @@ let mtTabAt=Date.now();
 function setMtTab(t){ mtTab=t; mtTabAt=Date.now(); mtPause=0; renderWallMeeting(); }
 $("#wlMtTabs").addEventListener("click",e=>{ const b=e.target.closest("[data-mt]"); if(!b) return; e.stopPropagation(); mtHold=Date.now()+120000; setMtTab(b.dataset.mt); });
 $("#wlMt").addEventListener("click",e=>{ if(e.target.closest("[data-wkmake]")){ e.stopPropagation(); makeWeekly(true); } });
-$("#wlMtPrint").addEventListener("click",e=>{ e.stopPropagation(); const r=mtTab==="week"?weeklyNow():wallMeeting(); if(r) printRecord(r); });
+$("#wlMtPrint").addEventListener("click",e=>{ e.stopPropagation(); const r=mtTab==="week"?weeklyNow():wallMeeting(); if(r) openPrintEdit(r); });
 setInterval(()=>{ if(!wallOn||Date.now()<mtHold||Date.now()-mtTabAt<40000) return; const b=$("#wlMt"); if(b.scrollHeight>b.clientHeight+2&&b.scrollTop+b.clientHeight<b.scrollHeight-2) return;   // 長い内容は最後まで流してから
   if(weeklyNow()&&wallMeeting()) setMtTab(mtTab==="week"?"mtg":"week"); },5000);
 // 長い内容は、ゆっくり下へ流して、いちばん下で少し止まってから上に戻る。指でさわったら1分止める
@@ -3104,7 +3104,7 @@ setInterval(autoWeekly,60000);
 // 内容の量に合わせて文字の大きさを自動で決める（1枚に入るいちばん大きい文字。入らないときは12ptで2枚以上）
 function printRecord(r){
   const isW=r.kind==="weekly", st=r.stats||{}, now=new Date();
-  const kp=isW?`<div class="kp">${wkKp().map(([k,l,c])=>`<div><b class="${st[k]?c:""}">${st[k]??"—"}</b><span>${l}</span></div>`).join("")}</div>`:"";
+  const kp=isW&&!r.noKp?`<div class="kp">${wkKp().map(([k,l,c])=>`<div><b class="${st[k]?c:""}">${st[k]??"—"}</b><span>${l}</span></div>`).join("")}</div>`:"";
   const sub=isW?`${fmtDW(r.date)}〜${fmtDW(addDays(r.date,6))}`:(r.date?fmtDW(r.date):"");
   const html=`<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>${esc(r.title||"")}</title><style id="pg">@page{size:A4 portrait;margin:0}</style><style>
 *{box-sizing:border-box}
@@ -3126,7 +3126,7 @@ h1 small{display:block;font-size:.62em;font-weight:700;margin-top:.1em}
 .ar{padding-left:1.1em;font-weight:900;break-inside:avoid}
 p{margin:.12em 0}
 #doc.tight{line-height:1.42}#doc.tight .h{margin:.55em 0 .15em}#doc.tight .li,#doc.tight p{margin:.04em 0}#doc.tight header{margin-bottom:.45em}
-</style></head><body><div id="doc"><header><div class="brand">TSK</div><h1>${esc(isW?"今週のまとめ（社内の仕事の状況）":(r.title||"打ち合わせ"))}<small>${esc(sub)}</small></h1><div class="meta">TSK株式会社<br>${now.getMonth()+1}/${now.getDate()} 印刷</div></header>${kp}${mtHtml(r.text)}</div></body></html>`;
+</style></head><body><div id="doc"><header><div class="brand">TSK</div><h1>${esc(r.printTitle||(isW?"今週のまとめ（社内の仕事の状況）":(r.title||"打ち合わせ")))}<small>${esc(sub)}</small></h1><div class="meta">TSK株式会社<br>${now.getMonth()+1}/${now.getDate()} 印刷</div></header>${kp}${mtHtml(r.text)}</div></body></html>`;
   const f=document.createElement("iframe"); f.setAttribute("aria-hidden","true");
   f.style.cssText="position:fixed;left:-3000px;top:0;width:210mm;height:297mm;border:0;visibility:hidden";
   f.onload=()=>setTimeout(()=>{
@@ -3143,6 +3143,31 @@ p{margin:.12em 0}
   },300);
   document.body.appendChild(f); f.srcdoc=html;
 }
+// 印刷の前に、中身をその場で直せる。直した内容はその紙だけ（「掲示の内容にも残す」を選んだときだけ保存）
+function openPrintEdit(r){
+  const back=wallOn; if(back) hideWall();
+  const isW=r.kind==="weekly";
+  openSheet(`<h2>印刷する内容</h2><div class="lead">ここで直した内容で印刷します。「○」で始まる行は見出し、「・」で始まる行は箇条書き、「→」で始まる行は太字になります。</div>
+    <div class="f"><label for="pe-title">題名</label><input id="pe-title" value="${esc(isW?"今週のまとめ（社内の仕事の状況）":(r.title||"打ち合わせ"))}"></div>
+    <div class="f"><label for="pe-text">内容</label><textarea id="pe-text" rows="16" style="display:block;width:100%;box-sizing:border-box;min-height:46vh;font:inherit;font-size:17px;line-height:1.65;padding:12px 14px">${esc(r.text||"")}</textarea></div>
+    ${isW?`<label style="display:flex;gap:10px;align-items:center;margin:4px 0 10px;font-weight:800"><input type="checkbox" id="pe-kp" checked style="width:22px;height:22px">上に数字の箱を入れる</label>`:""}
+    ${canWrite?`<label style="display:flex;gap:10px;align-items:center;margin:4px 0 12px;font-weight:800"><input type="checkbox" id="pe-save" style="width:22px;height:22px">直した内容を${isW?"「今週のまとめ」":"掲示の打ち合わせ"}にも残す</label>`:""}
+    <div class="btns"><button class="b b-ghost" data-pe="close">やめる</button><button class="b b-ghost" data-pe="reset">元に戻す</button><button class="b b-gold" data-pe="print">この内容で印刷</button></div>`);
+  const done=()=>{ sheet.onclick=null; closeSheet(); if(back) showWall(); };
+  sheet.onclick=async e=>{
+    const b=e.target.closest("button[data-pe]"); if(!b) return; const v=b.dataset.pe;
+    if(v==="close"){ done(); return; }
+    if(v==="reset"){ $("#pe-text").value=r.text||""; $("#pe-title").value=isW?"今週のまとめ（社内の仕事の状況）":(r.title||"打ち合わせ"); return; }
+    const title=$("#pe-title").value.trim(), text=$("#pe-text").value.replace(/\s+$/,"");
+    const out={...r,text,printTitle:title}; if(isW&&!$("#pe-kp").checked) out.noKp=true;
+    if($("#pe-save")?.checked&&r.id&&(text!==(r.text||"")||(!isW&&title&&title!==r.title))){
+      b.disabled=true;
+      try{ await saveMeeting(r.id,{...strip(r),...(isW?{}:{title:title||r.title}),text,summary:isW?r.summary:(text.split(/\r?\n/).find(l=>l.trim())?.trim().slice(0,120)||""),updatedAt:new Date().toISOString()}); toast("直した内容を残しました"); }
+      catch(err){ console.error(err); toast("保存できませんでした（印刷はします）"); }
+    }
+    done(); printRecord(out);
+  };
+}
 // 議事録の一覧：押すと全文を表示。印刷・掲示画面に出す・（週次まとめは）作り直す
 function openMtgView(id){
   const m=meetings.find(x=>x.id===id); if(!m) return;
@@ -3152,7 +3177,7 @@ function openMtgView(id){
     <div class="btns"><button class="b b-ghost" data-v="close">閉じる</button>${m.text?`<button class="b b-ghost" data-v="print">印刷</button>`:""}${canWrite&&cur?`<button class="b b-gold" data-v="remake">今の状況で作り直す</button>`:""}${canWrite&&!isW&&m.text?`<button class="b b-gold" data-v="board">掲示画面に出す</button>`:""}</div>`);
   sheet.onclick=async e=>{ const b=e.target.closest("button[data-v]"); if(!b) return; const v=b.dataset.v;
     if(v==="close"){ sheet.onclick=null; closeSheet(); return; }
-    if(v==="print"){ printRecord(m); return; }
+    if(v==="print"){ sheet.onclick=null; closeSheet(); openPrintEdit(m); return; }
     b.disabled=true;
     if(v==="remake"){ await makeWeekly(true); sheet.onclick=null; closeSheet(); openMtgView(id); return; }
     if(v==="board"){ try{ await saveMeeting(m.id,{...strip(m),board:true,updatedAt:new Date().toISOString()}); toast("掲示画面に出しました"); sheet.onclick=null; closeSheet(); }catch(err){ console.error(err); toast("保存できませんでした"); b.disabled=false; } }
@@ -4105,7 +4130,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 13:40</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 14:10</div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
