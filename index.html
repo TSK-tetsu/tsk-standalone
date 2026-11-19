@@ -648,7 +648,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 14:50', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 15:10', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -1687,6 +1687,10 @@ details.done[open]>summary::before{content:"▾"}
 :host(.focusing) #stats,:host(.focusing) .tkstrip,:host(.focusing) #filters,:host(.focusing) #list>.cardsw,:host(.focusing) #list>.legend,:host(.focusing) #list .grp:not(.focus),:host(.focusing) #list .dlvsec-h,:host(.focusing) .rail{display:none !important}
 :host(.focusing) #list .dlvsec{border:0;margin:0;padding:0}
 :host(.focusing) #list .grp.focus{grid-column:1 / -1;margin-top:0}
+/* 開いた案件は、上の部分（見出し・状態の数・操作ボタン）を止めておき、仕入先から下だけがスクロールする */
+:host(.focusing) #list .grp.focus>:is(.grp-h,.gsum,.gact){position:sticky;z-index:4}
+:host(.focusing) #list .grp.focus>.gact{background:var(--bg);margin:0;padding:10px 0 12px;box-shadow:0 -4px 0 var(--bg),0 8px 10px -8px rgba(0,0,0,.6)}
+:host(.focusing) #list .grp.focus>.grp-h .ghint{display:none}
 /* 案件を開いたとき・ほかの画面から案件へ飛んだとき、見出しが上の帯に隠れないように */
 .grp{scroll-margin-top:80px}
 :host(.unified.mode-d) .grp{scroll-margin-top:calc(var(--bandh,64px) + 14px)}
@@ -2031,8 +2035,12 @@ function applyFocus(){
   const g=focusKey&&isWide()?bandEl(focusKey):null; if(focusKey&&!g&&!isWide()) focusKey=null;
   host.classList.toggle("focusing",!!g);
   root.querySelectorAll("#list .grp").forEach(x=>x.classList.toggle("focus",!!g&&x===g));
-  if(g){ const L=pjLabel(orders.find(o=>pjKey(o)===focusKey)||{projectId:focusKey}); $("#focusTtl").textContent=`${L.k?L.k+"　":""}${L.who||""}`; }
+  if(g){ const L=pjLabel(orders.find(o=>pjKey(o)===focusKey)||{projectId:focusKey}); $("#focusTtl").textContent=`${L.k?L.k+"　":""}${L.who||""}`; stickFocus(g); }
 }
+// 止めておく部分の「上からの位置」を、見出し・状態・ボタンの順に積み上げて決める
+function stickFocus(g){ const fb=$("#focusBar"); let y=(parseFloat(getComputedStyle(fb).top)||0)+fb.offsetHeight;
+  [...g.children].filter(x=>/(^| )(grp-h|gsum|gact)( |$)/.test(x.className)).forEach(x=>{ x.style.top=y+"px"; y+=x.offsetHeight; }); }
+window.addEventListener("resize",()=>{ const g=root.querySelector("#list .grp.focus"); if(g&&host.classList.contains("focusing")) stickFocus(g); });
 function closeFocus(){ const k=focusKey; if(!k) return; focusKey=null; focusSup.forEach(id=>openSup.delete(id)); focusSup=[]; openGrp.delete(k); grpF.delete(k); renderList(); scrollBox().scrollTo(0,focusY); }
 function renderList(){ renderList0(); applyFocus(); }
 function renderList0(){
@@ -4157,7 +4165,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 14:50<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 15:10<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
