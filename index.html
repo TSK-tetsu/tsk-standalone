@@ -80,6 +80,12 @@
   #tskBand .tb-snd.off { opacity: .55; }
   #tskBand .tb-count { margin-left: auto; text-align: right; font-size: 14px; font-weight: 700; line-height: 1.3; color: #F1E3A6; white-space: nowrap; }
   #tskBand .tb-count b { color: #FF8A80 !important; }
+  #tskBand .tb-upd { height: 40px; padding: 0 14px; border: 2px solid #D4AF37; border-radius: 10px; background: transparent; color: #F1E3A6; font-size: 14px; font-weight: 800; white-space: nowrap; }
+  #tskBand .tb-upd small { margin-left: 6px; font-size: 11px; font-weight: 700; opacity: .75; }
+  #tskBand .tb-upd.new { background: #D4AF37; color: #0B1F3A; animation: updPulse 1.6s ease-in-out infinite; }
+  @keyframes updPulse { 50% { box-shadow: 0 0 0 6px rgba(212,175,55,.25); } }
+  .verUpd { margin-left: 8px; padding: 6px 12px; border: 1.5px solid var(--edge, #A7B2C2); border-radius: 8px; background: var(--card, #fff); color: var(--ink, #0B1F3A); font-size: 13px; font-weight: 700; }
+  .verUpd.new { background: #D4AF37; color: #0B1F3A; border-color: #D4AF37; }
   body.unified .bar { top: var(--bandh, 64px); }
   @media print { #tskBand { display: none !important; } }
   .boardBtn { margin: 16px 16px 0; padding: 14px 16px 14px 20px; min-height: 68px; border: none; border-radius: 14px; background: var(--band); color: #FFFFFF; text-align: left; display: flex; align-items: center; gap: 12px; box-shadow: inset 0 -3px 0 var(--band-gold); }
@@ -105,6 +111,14 @@
     .topgrid .jobMsg { grid-column: 1 / -1; order: 9; }
     .groups { column-count: 2; column-gap: 0; }
     .groups .gsec { display: block; break-inside: avoid; -webkit-column-break-inside: avoid; padding-bottom: 2px; }
+  }
+  /* 横に広い画面（タッチモニターなど）：仕様書もボードと同じ横幅いっぱいに。保存した仕様書は2列、機種は4列、項目は3段 */
+  @media screen and (min-width: 1500px) {
+    #app { max-width: min(1880px, calc(100vw - 32px)); }
+    .stack.models { grid-template-columns: repeat(4, 1fr); }
+    .groups { column-count: 3; }
+    .list:has(> .sw) { display: grid; grid-template-columns: 1fr 1fr; }
+    .list:has(> .sw) > .sw:nth-child(odd) { border-right: 1px solid var(--line); }
   }
   .bar { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
   .head.first { padding-top: calc(4px + env(safe-area-inset-top, 0px)); }
@@ -634,7 +648,7 @@
   // ---- 新しい版が公開されていたら、自分で読み込み直す ----
   // ホーム画面に置いたアプリは裏で開いたままになりやすく、古い版がいつまでも残る。開いた直後と、10分以上離れて戻ったときに確かめる。
   // 未送信の変更があるとき・入力中は読み込み直さない。同じ版への読み込み直しは1回だけ（繰り返さない）。
-  var VER = '11/19 14:10', hiddenAt = 0, lastCheck = 0;
+  var VER = '11/19 14:50', hiddenAt = 0, lastCheck = 0;
   function checkUpdate() {
     if (Date.now() - lastCheck < 60000) return; lastCheck = Date.now();
     fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) {
@@ -647,6 +661,18 @@
       location.replace(location.pathname + '?v=' + m[1].replace(/\D/g, ''));
     }).catch(function () {});
   }
+  // 「更新」ボタン：押すといつでも最新の版を読み込み直す。新しい版が出ていれば金色になって知らせる（5分ごとに確かめる）
+  var newVer = '';
+  function probeVer() { return fetch('./index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }).then(function (t) { var m = /\u7248 (\d\d\/\d\d \d\d:\d\d)/.exec(t || ''); return m ? m[1] : ''; }).catch(function () { return ''; }); }
+  function markUpd() { var has = !!newVer && newVer !== VER; document.querySelectorAll('[data-upd]').forEach(function (b) { b.classList.toggle('new', has); b.innerHTML = has ? '↻ 新しい版に更新' : (b.id === 'tbUpd' ? '↻ 更新<small>版 ' + VER + '</small>' : '最新版に更新'); }); }
+  function forceUpdate(b) {
+    if (inflight || Object.keys(outbox).length) { b.textContent = '送信が済むまで少し待っています…'; setTimeout(function () { forceUpdate(b); }, 2500); return; }
+    b.textContent = '読み込み中…';
+    probeVer().then(function (v) { try { sessionStorage.setItem('tsk-upd', v || VER); } catch (e) {} location.replace(location.pathname + '?v=' + (v || VER).replace(/\D/g, '') + '&r=' + Date.now().toString(36)); });
+  }
+  document.addEventListener('click', function (e) { var b = e.target && e.target.closest && e.target.closest('[data-upd]'); if (b) { e.preventDefault(); forceUpdate(b); } });
+  function pollVer() { probeVer().then(function (v) { if (v) newVer = v; markUpd(); }); }
+  setTimeout(pollVer, 6000); setInterval(pollVer, 300000);
   document.addEventListener('visibilitychange', function () { if (document.hidden) { hiddenAt = Date.now(); return; } if (hiddenAt && Date.now() - hiddenAt > 600000) checkUpdate(); hiddenAt = 0; });
   setTimeout(checkUpdate, 4000);
 
@@ -728,6 +754,7 @@
   <span class="tb-brand">TSK</span>
   <div class="tb-tabs" role="group" aria-label="画面"><button type="button" data-go="spec">仕様書</button><button type="button" data-go="board">発注・納期ボード</button></div>
   <div class="tb-board" hidden><div class="tb-sw" role="group" aria-label="表示切替"><button type="button" data-lay="m">スマホ</button><button type="button" data-lay="d">PC</button></div><button type="button" class="tb-snd" data-snd="1" aria-label="効果音" title="効果音のオン／オフ"><svg viewBox="0 0 24 24"></svg></button></div>
+  <button type="button" class="tb-upd" id="tbUpd" data-upd="1" title="新しい版を読み込む">↻ 更新</button>
   <div class="tb-count" id="tbCount"></div>
 </div></header>
 <div id="app"></div>
@@ -4130,7 +4157,7 @@ return api;
   function screenModels() {
     return '<div class="head first"><div class="appTitle">TSK 仕様書</div><div class="titleRow" style="justify-content:space-between"><h1 class="sub">機種を選ぶ</h1>' + stepHtml(1) + '</div></div>' + boardButton() + savedHtml() + sendHtml('_app') +
       '<div class="sec">新しく作る（機種を選ぶ）</div><div class="stack models" style="margin-top:12px">' + allModels().map(function (m) { return '<button type="button" class="big" data-act="model" data-id="' + m.id + '"><span>' + esc(m.name) + '</span>' + CHEV + '</button>'; }).join('') + '<button type="button" class="big work" data-act="workNew"><span>工事・修理<small>納入済みの機械の交換・修理</small></span>' + CHEV + '</button>' + '</div>' +
-      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 14:10</div><div class="spacer"></div>';
+      (store.readOnly ? '' : '<div class="sec">マスター</div><div class="list"><button type="button" class="saved" data-act="toMaster"><span class="who"><b>機種・選択肢・金額を直す</b><span>金額を入れておくと、品を選んだときに自動で入ります</span></span>' + CHEV + '</button></div>') + '<div class="ver">版 11/19 14:50<button type="button" class="verUpd" data-upd="1">最新版に更新</button></div><div class="spacer"></div>';
   }
   // 納品済みかどうかは、ボードの案件が持っている（仕様書側はそれを読むだけ）。空＝まだ。
   function dlvRO() { return store.readOnly || !board || (board.canWrite && !board.canWrite()); }   // 閲覧のみの人には、納品済みの操作を出さない
@@ -4970,7 +4997,7 @@ return api;
     if (boardHost) boardHost.classList.toggle('unified', wide);
     if (!wide) return;
     var de = document.documentElement;
-    de.style.setProperty('--framew', mode === 'board' ? 'min(1880px, calc(100vw - 32px))' : '1040px');
+    de.style.setProperty('--framew', (mode === 'board' || window.innerWidth >= 1500) ? 'min(1880px, calc(100vw - 32px))' : '1040px');
     de.style.setProperty('--bandh', band.offsetHeight + 'px');
     band.querySelectorAll('[data-go]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-go') === mode)); });
     band.querySelector('.tb-board').hidden = mode !== 'board';
